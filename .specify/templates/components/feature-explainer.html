@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Feature Explainer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* TL;DR box */
+    .tldr {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+
+    .tldr-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .tldr p {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    /* Collapsible steps */
+    .steps-section {
+      margin-bottom: 32px;
+    }
+
+    .steps-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .step-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .step-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      flex: 1;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .step-chevron {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .step-item.open .step-chevron {
+      transform: rotate(90deg);
+    }
+
+    .step-body {
+      display: none;
+      padding: 0 18px 16px 58px;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .step-item.open .step-body {
+      display: block;
+    }
+
+    /* Tabbed code */
+    .code-section {
+      margin-bottom: 32px;
+    }
+
+    .code-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .code-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+
+    .code-tab {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .code-tab:hover {
+      color: var(--text);
+    }
+
+    .code-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .code-panel {
+      display: none;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      padding: 18px 20px;
+      overflow-x: auto;
+    }
+
+    .code-panel.active {
+      display: block;
+    }
+
+    .code-panel pre {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre;
+    }
+
+    .code-panel .comment {
+      color: var(--text-muted);
+    }
+
+    .code-panel .keyword {
+      color: #c084fc;
+    }
+
+    .code-panel .string {
+      color: #34d399;
+    }
+
+    /* FAQ section */
+    .faq-section {
+      margin-bottom: 32px;
+    }
+
+    .faq-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 600;
+      font-size: 15px;
+      transition: background 0.2s;
+    }
+
+    .faq-question:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .faq-toggle {
+      color: var(--text-muted);
+      font-size: 18px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+
+    .faq-item.open .faq-toggle {
+      transform: rotate(45deg);
+    }
+
+    .faq-answer {
+      display: none;
+      padding: 0 18px 16px;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 20px 16px 120px; }
+      .container { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Feature Explainer</h1>
+    <p>A structured breakdown of the feature, including request path, code samples, and FAQs.</p>
+  </div>
+
+  <div class="container">
+
+    <!-- TL;DR -->
+    <div class="tldr">
+      <div class="tldr-title">TL;DR</div>
+      <p>This feature introduces a new authentication middleware that validates JWT tokens on every request, checks refresh token validity, and gracefully handles expired sessions with automatic re-authentication prompts.</p>
+    </div>
+
+    <!-- SLOT:content -->
+    <!-- Request-path steps -->
+    <div class="steps-section">
+      <h2>Request Path</h2>
+
+      <div class="step-item" onclick="toggleStep(this)">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div class="step-title">Client sends request with JWT in Authorization header</div>
+          <div class="step-chevron">&#9654;</div>
+        </div>
+        <div class="step-body">
+          The client includes the JWT token in the <code>Authorization: Bearer &lt;token&gt;</code> header. If no token is present, the middleware immediately returns a 401 Unauthorized response. The middleware extracts and decodes the token for validation.
+        </div>
+      </div>
+
+      <div class="step-item" onclick="toggleStep(this)">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div class="step-title">Middleware validates token signature and claims</div>
+          <div class="step-chevron">&#9654;</div>
+        </div>
+        <div class="step-body">
+          The middleware verifies the JWT signature using the configured public key, checks the <code>exp</code> claim for expiration, validates the <code>iss</code> (issuer) and <code>aud</code> (audience) claims, and ensures the <code>sub</code> claim maps to an active user.
+        </div>
+      </div>
+
+      <div class="step-item" onclick="toggleStep(this)">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <div class="step-title">Token is expired - check refresh token</div>
+          <div class="step-chevron">&#9654;</div>
+        </div>
+        <div class="step-body">
+          If the JWT is expired but the refresh token cookie is present and valid, the middleware automatically issues a new JWT and attaches it to the response headers. The client can then retry the original request with the new token.
+        </div>
+      </div>
+
+      <div class="step-item" onclick="toggleStep(this)">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <div class="step-title">Request proceeds to route handler</div>
+          <div class="step-chevron">&#9654;</div>
+        </div>
+        <div class="step-body">
+          After successful validation, the middleware attaches the decoded user payload to the request object as <code>req.user</code>. The route handler can access user ID, roles, and permissions directly from this object.
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabbed code samples -->
+    <div class="code-section">
+      <h2>Code Samples</h2>
+
+      <div class="code-tabs">
+        <button class="code-tab active" onclick="switchTab(this, 'tab-config')">Config</button>
+        <button class="code-tab" onclick="switchTab(this, 'tab-implementation')">Implementation</button>
+        <button class="code-tab" onclick="switchTab(this, 'tab-usage')">Usage</button>
+      </div>
+
+      <div class="code-panel active" id="tab-config">
+        <pre><span class="comment">// middleware.config.ts</span>
+<span class="keyword">export const</span> authConfig = {
+  jwt: {
+    secret: process.env.<span class="string">JWT_PUBLIC_KEY</span>,
+    algorithm: <span class="string">'RS256'</span>,
+    expiresIn: <span class="string">'15m'</span>,
+  },
+  refresh: {
+    cookieName: <span class="string">'refresh_token'</span>,
+    path: <span class="string">'/auth/refresh'</span>,
+    maxAge: <span class="string">7 * 24 * 60 * 60 * 1000</span>, <span class="comment">// 7 days</span>
+    httpOnly: <span class="keyword">true</span>,
+    secure: <span class="keyword">true</span>,
+    sameSite: <span class="string">'strict'</span>,
+  },
+};</pre>
+      </div>
+
+      <div class="code-panel" id="tab-implementation">
+        <pre><span class="comment">// auth.middleware.ts</span>
+<span class="keyword">import</span> { authConfig } <span class="keyword">from</span> <span class="string">'./middleware.config'</span>;
+
+<span class="keyword">export async function</span> authMiddleware(req, res, next) {
+  <span class="keyword">const</span> token = extractBearerToken(req);
+  <span class="keyword">if</span> (!token) {
+    <span class="keyword">return</span> res.status(401).json({ error: <span class="string">'No token provided'</span> });
+  }
+
+  <span class="keyword">try</span> {
+    req.user = <span class="keyword">await</span> verifyJWT(token, authConfig.jwt);
+    next();
+  } <span class="keyword">catch</span> (err) {
+    <span class="keyword">if</span> (err.name === <span class="string">'TokenExpiredError'</span>) {
+      <span class="keyword">return</span> handleExpiredToken(req, res, next);
+    }
+    <span class="keyword">return</span> res.status(401).json({ error: <span class="string">'Invalid token'</span> });
+  }
+}</pre>
+      </div>
+
+      <div class="code-panel" id="tab-usage">
+        <pre><span class="comment">// app.ts</span>
+<span class="keyword">import</span> { authMiddleware } <span class="keyword">from</span> <span class="string">'./middleware/auth.middleware'</span>;
+
+<span class="comment">// Apply to protected routes</span>
+app.use(<span class="string">'/api'</span>, authMiddleware);
+
+app.get(<span class="string">'/api/profile'</span>, (req, res) => {
+  res.json({
+    id: req.user.sub,
+    roles: req.user.roles,
+  });
+});</pre>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">
+          <span>What happens if both JWT and refresh token are expired?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          The middleware returns a 401 Unauthorized response with a specific error code <code>SESSION_EXPIRED</code>. The client should redirect the user to the login page. The refresh token cookie is cleared server-side to prevent reuse.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">
+          <span>Can this middleware handle role-based access control?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          Yes. The decoded JWT payload includes a <code>roles</code> array. You can create a companion <code>requireRole(...roles)</code> middleware that chains after <code>authMiddleware</code> to enforce role-based access on specific routes.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">
+          <span>How are token rotations handled during refresh?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          When a refresh token is used, the old refresh token is invalidated and a new one is issued (refresh token rotation). This prevents replay attacks. If a previously used refresh token is presented, all refresh tokens for that user are invalidated as a security precaution.
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-question">
+          <span>What is the performance impact of JWT validation on every request?</span>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-answer">
+          JWT validation is a purely computational operation (signature verification) with no database lookups. Typical validation takes under 1ms. For high-throughput scenarios, consider caching decoded tokens in a short-lived LRU cache keyed by the token JTI claim.
+        </div>
+      </div>
+    </div>
+    <!-- END SLOT -->
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Collapsible steps ---
+    function toggleStep(el) {
+      el.classList.toggle('open');
+    }
+
+    // --- FAQ toggles ---
+    function toggleFaq(el) {
+      el.classList.toggle('open');
+    }
+
+    // --- Tab switching ---
+    function switchTab(btn, panelId) {
+      var section = btn.closest('.code-section');
+      section.querySelectorAll('.code-tab').forEach(function(t) { t.classList.remove('active'); });
+      section.querySelectorAll('.code-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById(panelId).classList.add('active');
+    }
+
+    // --- Feedback mechanism ---
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          decisions[key] = checked ? checked.value : null;
+        }
+      });
+      return decisions;
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = { verdict: verdict, timestamp: new Date().toISOString(), decisions: decisions, feedback: feedback };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

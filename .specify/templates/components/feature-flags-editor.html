@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Feature Flags Editor</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Area group */
+    .flag-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .area-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .area-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .area-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .area-chevron {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .flag-area.open .area-chevron {
+      transform: rotate(90deg);
+    }
+
+    .area-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+
+    .area-body {
+      display: none;
+      padding: 0 20px 16px;
+    }
+
+    .flag-area.open .area-body {
+      display: block;
+    }
+
+    /* Flag row */
+    .flag-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    .flag-row:last-child {
+      border-bottom: none;
+    }
+
+    .flag-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .flag-name {
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      margin-bottom: 2px;
+    }
+
+    .flag-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .flag-warning {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--warning);
+      margin-top: 4px;
+    }
+
+    .flag-warning.visible {
+      display: flex;
+    }
+
+    .warning-icon {
+      font-size: 14px;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border);
+      border-radius: 24px;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--success);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    .toggle-switch input:focus + .toggle-slider {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 640px) {
+      .container { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Feature Flags</h1>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="copyChanged()">Copy Changed</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- SLOT:content -->
+
+    <!-- Area: Authentication -->
+    <div class="flag-area open" id="area-auth">
+      <div class="area-header" onclick="toggleArea(this)">
+        <div class="area-title">
+          <span class="area-chevron">&#9654;</span>
+          Authentication
+          <span class="area-count">4 flags</span>
+        </div>
+      </div>
+      <div class="area-body">
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">auth.new_login_flow</div>
+            <div class="flag-desc">Enable the redesigned login experience with SSO support</div>
+            <div class="flag-warning" id="warn-auth-new">
+              <span class="warning-icon">&#9888;</span>
+              Affects: auth.sso_enabled - toggling may leave SSO in inconsistent state
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="auth.new_login_flow" data-initial="true" checked onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">auth.sso_enabled</div>
+            <div class="flag-desc">Allow users to authenticate via SSO providers</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="auth.sso_enabled" data-initial="false" onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">auth.mfa_required</div>
+            <div class="flag-desc">Require multi-factor authentication for all accounts</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="auth.mfa_required" data-initial="false" onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">auth.session_timeout</div>
+            <div class="flag-desc">Enable configurable session timeout policies</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="auth.session_timeout" data-initial="true" checked onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Area: Billing -->
+    <div class="flag-area" id="area-billing">
+      <div class="area-header" onclick="toggleArea(this)">
+        <div class="area-title">
+          <span class="area-chevron">&#9654;</span>
+          Billing
+          <span class="area-count">3 flags</span>
+        </div>
+      </div>
+      <div class="area-body">
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">billing.new_pricing</div>
+            <div class="flag-desc">Activate the 2026 pricing model for new subscriptions</div>
+            <div class="flag-warning" id="warn-billing-new">
+              <span class="warning-icon">&#9888;</span>
+              Affects: billing.trial_extension - pricing change impacts trial conversions
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="billing.new_pricing" data-initial="false" onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">billing.trial_extension</div>
+            <div class="flag-desc">Allow trial periods to be extended by up to 14 days</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="billing.trial_extension" data-initial="true" checked onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">billing.invoice_v2</div>
+            <div class="flag-desc">Use the new invoice generation service with PDF export</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="billing.invoice_v2" data-initial="false" onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Area: Analytics -->
+    <div class="flag-area" id="area-analytics">
+      <div class="area-header" onclick="toggleArea(this)">
+        <div class="area-title">
+          <span class="area-chevron">&#9654;</span>
+          Analytics
+          <span class="area-count">3 flags</span>
+        </div>
+      </div>
+      <div class="area-body">
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">analytics.real_time</div>
+            <div class="flag-desc">Enable real-time dashboard updates via WebSocket</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="analytics.real_time" data-initial="true" checked onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">analytics.export_csv</div>
+            <div class="flag-desc">Allow users to export analytics data as CSV files</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="analytics.export_csv" data-initial="false" onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="flag-row">
+          <div class="flag-info">
+            <div class="flag-name">analytics.custom_reports</div>
+            <div class="flag-desc">Enable custom report builder for enterprise tier</div>
+            <div class="flag-warning" id="warn-analytics-custom">
+              <span class="warning-icon">&#9888;</span>
+              Affects: analytics.export_csv - custom reports depend on CSV export
+            </div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" data-flag="analytics.custom_reports" data-initial="false" onchange="checkDependencies(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- END SLOT -->
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Collapsible areas ---
+    function toggleArea(headerEl) {
+      headerEl.closest('.flag-area').classList.toggle('open');
+    }
+
+    // --- Dependency checks ---
+    var dependencies = {
+      'auth.new_login_flow': { warningId: 'warn-auth-new', message: 'Affects: auth.sso_enabled' },
+      'billing.new_pricing': { warningId: 'warn-billing-new', message: 'Affects: billing.trial_extension' },
+      'analytics.custom_reports': { warningId: 'warn-analytics-custom', message: 'Affects: analytics.export_csv' }
+    };
+
+    function checkDependencies(input) {
+      var flag = input.getAttribute('data-flag');
+      if (dependencies[flag]) {
+        var warn = document.getElementById(dependencies[flag].warningId);
+        if (warn) {
+          warn.classList.toggle('visible', input.checked);
+        }
+      }
+    }
+
+    // --- Copy Changed ---
+    function copyChanged() {
+      var changed = {};
+      var inputs = document.querySelectorAll('[data-flag]');
+      inputs.forEach(function(input) {
+        var flag = input.getAttribute('data-flag');
+        var initial = input.getAttribute('data-initial') === 'true';
+        var current = input.checked;
+        if (initial !== current) {
+          changed[flag] = current;
+        }
+      });
+
+      var keys = Object.keys(changed);
+      if (keys.length === 0) {
+        showToast('No flags have been modified.', 'warning');
+        return;
+      }
+
+      var json = JSON.stringify(changed, null, 2);
+      navigator.clipboard.writeText(json).then(function() {
+        showToast('Copied ' + keys.length + ' changed flag(s) as JSON.', 'success');
+      }).catch(function() {
+        showToast('Could not copy to clipboard.', 'error');
+        console.log(json);
+      });
+    }
+
+    // --- Feedback mechanism ---
+    function collectDecisions() {
+      var flags = {};
+      document.querySelectorAll('[data-flag]').forEach(function(input) {
+        flags[input.getAttribute('data-flag')] = input.checked;
+      });
+      return { flags: flags };
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = { verdict: verdict, timestamp: new Date().toISOString(), decisions: collectDecisions(), feedback: feedback };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>
