@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="design">
+  <meta name="created" content="">
+  <title>API Design - 接口契约设计</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --orange: #ea580c;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .section {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .data-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Overview table wrapper */
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* Method badges */
+    .method {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      min-width: 56px;
+      text-align: center;
+    }
+
+    .method-get { background: rgba(59, 130, 246, 0.15); color: var(--primary); }
+    .method-post { background: rgba(22, 163, 74, 0.15); color: var(--success); }
+    .method-put { background: rgba(234, 88, 12, 0.15); color: var(--orange); }
+    .method-delete { background: rgba(220, 38, 38, 0.15); color: var(--danger); }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.2s, border-color 0.2s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: var(--font);
+    }
+
+    .tab:hover {
+      color: var(--text);
+    }
+
+    .tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* API detail card */
+    .api-detail {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .api-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .api-detail-header.get { border-left: 4px solid var(--primary); }
+    .api-detail-header.post { border-left: 4px solid var(--success); }
+    .api-detail-header.put { border-left: 4px solid var(--orange); }
+    .api-detail-header.delete { border-left: 4px solid var(--danger); }
+
+    .api-detail-header .path {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .api-detail-header .desc {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-left: auto;
+    }
+
+    .api-detail-body {
+      padding: 20px;
+    }
+
+    .api-subsection {
+      margin-bottom: 20px;
+    }
+
+    .api-subsection:last-child {
+      margin-bottom: 0;
+    }
+
+    .api-subsection-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* JSON block */
+    .json-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+      color: var(--text);
+    }
+
+    .json-block .key { color: var(--primary); }
+    .json-block .string { color: var(--success); }
+    .json-block .number { color: var(--warning); }
+    .json-block .bool { color: var(--orange); }
+    .json-block .null { color: var(--text-muted); }
+
+    /* Status code badges */
+    .status-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 8px;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .status-2xx { background: rgba(22, 163, 74, 0.15); color: var(--success); }
+    .status-4xx { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .status-5xx { background: rgba(220, 38, 38, 0.15); color: var(--danger); }
+
+    /* Auth callout */
+    .callout {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .callout-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--primary);
+    }
+
+    .callout-body {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .callout-body code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 20px 16px 120px; }
+      .tabs { overflow-x: auto; }
+      .tab { white-space: nowrap; padding: 10px 16px; font-size: 13px; }
+      .api-detail-header { flex-wrap: wrap; }
+      .api-detail-header .desc { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>接口契约设计</h1>
+    <p>定义 API 接口规范、请求/响应结构和认证方案</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- API Overview -->
+  <div class="section">
+    <h2 class="section-title">API 概览</h2>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Description</th>
+            <th>Auth</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><code>/api/v1/users</code></td>
+            <td>获取用户列表</td>
+            <td>Bearer</td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><code>/api/v1/users/:id</code></td>
+            <td>获取用户详情</td>
+            <td>Bearer</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><code>/api/v1/users</code></td>
+            <td>创建用户</td>
+            <td>Bearer</td>
+          </tr>
+          <tr>
+            <td><span class="method method-put">PUT</span></td>
+            <td><code>/api/v1/users/:id</code></td>
+            <td>更新用户</td>
+            <td>Bearer</td>
+          </tr>
+          <tr>
+            <td><span class="method method-delete">DELETE</span></td>
+            <td><code>/api/v1/users/:id</code></td>
+            <td>删除用户</td>
+            <td>Bearer</td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><code>/api/v1/orders</code></td>
+            <td>获取订单列表</td>
+            <td>Bearer</td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td><code>/api/v1/orders</code></td>
+            <td>创建订单</td>
+            <td>Bearer</td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td><code>/api/v1/orders/:id</code></td>
+            <td>获取订单详情</td>
+            <td>Bearer</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Auth callout -->
+  <div class="section">
+    <div class="callout">
+      <div class="callout-title">认证方案: Bearer Token (JWT)</div>
+      <div class="callout-body">
+        所有 API 请求需在 Header 中携带 <code>Authorization: Bearer &lt;token&gt;</code>。
+        Token 有效期 24 小时，过期后需通过 <code>POST /api/v1/auth/refresh</code> 刷新。
+      </div>
+    </div>
+  </div>
+
+  <!-- Resource tabs -->
+  <div class="section">
+    <h2 class="section-title">接口详情</h2>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(event, 'tab-users')">Users</button>
+      <button class="tab" onclick="switchTab(event, 'tab-orders')">Orders</button>
+    </div>
+
+    <!-- Users tab -->
+    <div class="tab-content active" id="tab-users">
+
+      <!-- GET /users -->
+      <div class="api-detail">
+        <div class="api-detail-header get">
+          <span class="method method-get">GET</span>
+          <span class="path">/api/v1/users</span>
+          <span class="desc">获取用户列表</span>
+        </div>
+        <div class="api-detail-body">
+          <div class="api-subsection">
+            <div class="api-subsection-title">Request Headers</div>
+            <table class="data-table">
+              <thead><tr><th>Header</th><th>Value</th><th>Required</th></tr></thead>
+              <tbody>
+                <tr><td><code>Authorization</code></td><td><code>Bearer {token}</code></td><td>Yes</td></tr>
+                <tr><td><code>Content-Type</code></td><td><code>application/json</code></td><td>No</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Query Parameters</div>
+            <table class="data-table">
+              <thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>page</code></td><td>integer</td><td>No</td><td>页码，默认 1</td></tr>
+                <tr><td><code>limit</code></td><td>integer</td><td>No</td><td>每页条数，默认 20</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Response</div>
+            <div class="json-block"><span class="key">{</span>
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="number">1</span>,
+      <span class="key">"username"</span>: <span class="string">"zhangsan"</span>,
+      <span class="key">"email"</span>: <span class="string">"zhangsan@example.com"</span>,
+      <span class="key">"created_at"</span>: <span class="string">"2025-01-15T08:30:00Z"</span>
+    }
+  ],
+  <span class="key">"meta"</span>: {
+    <span class="key">"total"</span>: <span class="number">100</span>,
+    <span class="key">"page"</span>: <span class="number">1</span>,
+    <span class="key">"limit"</span>: <span class="number">20</span>
+  }
+<span class="key">}</span></div>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Status Codes</div>
+            <table class="data-table">
+              <thead><tr><th>Code</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="status-badge status-2xx">200</span></td><td>成功返回用户列表</td></tr>
+                <tr><td><span class="status-badge status-4xx">401</span></td><td>未认证或 Token 过期</td></tr>
+                <tr><td><span class="status-badge status-5xx">500</span></td><td>服务器内部错误</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- POST /users -->
+      <div class="api-detail">
+        <div class="api-detail-header post">
+          <span class="method method-post">POST</span>
+          <span class="path">/api/v1/users</span>
+          <span class="desc">创建用户</span>
+        </div>
+        <div class="api-detail-body">
+          <div class="api-subsection">
+            <div class="api-subsection-title">Request Headers</div>
+            <table class="data-table">
+              <thead><tr><th>Header</th><th>Value</th><th>Required</th></tr></thead>
+              <tbody>
+                <tr><td><code>Authorization</code></td><td><code>Bearer {token}</code></td><td>Yes</td></tr>
+                <tr><td><code>Content-Type</code></td><td><code>application/json</code></td><td>Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Request Body</div>
+            <div class="json-block"><span class="key">{</span>
+  <span class="key">"username"</span>: <span class="string">"zhangsan"</span>,
+  <span class="key">"email"</span>: <span class="string">"zhangsan@example.com"</span>,
+  <span class="key">"password"</span>: <span class="string">"******"</span>
+<span class="key">}</span></div>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Response</div>
+            <div class="json-block"><span class="key">{</span>
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="number">1</span>,
+    <span class="key">"username"</span>: <span class="string">"zhangsan"</span>,
+    <span class="key">"email"</span>: <span class="string">"zhangsan@example.com"</span>,
+    <span class="key">"created_at"</span>: <span class="string">"2025-01-15T08:30:00Z"</span>
+  }
+<span class="key">}</span></div>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Status Codes</div>
+            <table class="data-table">
+              <thead><tr><th>Code</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="status-badge status-2xx">201</span></td><td>用户创建成功</td></tr>
+                <tr><td><span class="status-badge status-4xx">400</span></td><td>请求参数无效</td></tr>
+                <tr><td><span class="status-badge status-4xx">409</span></td><td>用户名或邮箱已存在</td></tr>
+                <tr><td><span class="status-badge status-4xx">401</span></td><td>未认证或 Token 过期</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Orders tab -->
+    <div class="tab-content" id="tab-orders">
+
+      <!-- POST /orders -->
+      <div class="api-detail">
+        <div class="api-detail-header post">
+          <span class="method method-post">POST</span>
+          <span class="path">/api/v1/orders</span>
+          <span class="desc">创建订单</span>
+        </div>
+        <div class="api-detail-body">
+          <div class="api-subsection">
+            <div class="api-subsection-title">Request Headers</div>
+            <table class="data-table">
+              <thead><tr><th>Header</th><th>Value</th><th>Required</th></tr></thead>
+              <tbody>
+                <tr><td><code>Authorization</code></td><td><code>Bearer {token}</code></td><td>Yes</td></tr>
+                <tr><td><code>Content-Type</code></td><td><code>application/json</code></td><td>Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Request Body</div>
+            <div class="json-block"><span class="key">{</span>
+  <span class="key">"items"</span>: [
+    {
+      <span class="key">"product_id"</span>: <span class="number">101</span>,
+      <span class="key">"quantity"</span>: <span class="number">2</span>
+    }
+  ]
+<span class="key">}</span></div>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Response</div>
+            <div class="json-block"><span class="key">{</span>
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="number">1001</span>,
+    <span class="key">"user_id"</span>: <span class="number">1</span>,
+    <span class="key">"total"</span>: <span class="number">199.80</span>,
+    <span class="key">"status"</span>: <span class="string">"pending"</span>,
+    <span class="key">"items"</span>: [
+      {
+        <span class="key">"product_id"</span>: <span class="number">101</span>,
+        <span class="key">"quantity"</span>: <span class="number">2</span>,
+        <span class="key">"unit_price"</span>: <span class="number">99.90</span>
+      }
+    ],
+    <span class="key">"created_at"</span>: <span class="string">"2025-01-15T10:00:00Z"</span>
+  }
+<span class="key">}</span></div>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Status Codes</div>
+            <table class="data-table">
+              <thead><tr><th>Code</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="status-badge status-2xx">201</span></td><td>订单创建成功</td></tr>
+                <tr><td><span class="status-badge status-4xx">400</span></td><td>请求参数无效</td></tr>
+                <tr><td><span class="status-badge status-4xx">422</span></td><td>商品不存在或库存不足</td></tr>
+                <tr><td><span class="status-badge status-4xx">401</span></td><td>未认证或 Token 过期</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GET /orders/:id -->
+      <div class="api-detail">
+        <div class="api-detail-header get">
+          <span class="method method-get">GET</span>
+          <span class="path">/api/v1/orders/:id</span>
+          <span class="desc">获取订单详情</span>
+        </div>
+        <div class="api-detail-body">
+          <div class="api-subsection">
+            <div class="api-subsection-title">Request Headers</div>
+            <table class="data-table">
+              <thead><tr><th>Header</th><th>Value</th><th>Required</th></tr></thead>
+              <tbody>
+                <tr><td><code>Authorization</code></td><td><code>Bearer {token}</code></td><td>Yes</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Response</div>
+            <div class="json-block"><span class="key">{</span>
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="number">1001</span>,
+    <span class="key">"user_id"</span>: <span class="number">1</span>,
+    <span class="key">"total"</span>: <span class="number">199.80</span>,
+    <span class="key">"status"</span>: <span class="string">"pending"</span>,
+    <span class="key">"items"</span>: [
+      {
+        <span class="key">"product_id"</span>: <span class="number">101</span>,
+        <span class="key">"product_name"</span>: <span class="string">"商品A"</span>,
+        <span class="key">"quantity"</span>: <span class="number">2</span>,
+        <span class="key">"unit_price"</span>: <span class="number">99.90</span>
+      }
+    ],
+    <span class="key">"created_at"</span>: <span class="string">"2025-01-15T10:00:00Z"</span>
+  }
+<span class="key">}</span></div>
+          </div>
+          <div class="api-subsection">
+            <div class="api-subsection-title">Status Codes</div>
+            <table class="data-table">
+              <thead><tr><th>Code</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="status-badge status-2xx">200</span></td><td>成功返回订单详情</td></tr>
+                <tr><td><span class="status-badge status-4xx">404</span></td><td>订单不存在</td></tr>
+                <tr><td><span class="status-badge status-4xx">403</span></td><td>无权访问该订单</td></tr>
+                <tr><td><span class="status-badge status-4xx">401</span></td><td>未认证或 Token 过期</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Error codes -->
+  <div class="section">
+    <h2 class="section-title">错误码定义</h2>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr><th>Code</th><th>HTTP Status</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>AUTH_TOKEN_EXPIRED</code></td><td>401</td><td>Token 已过期</td></tr>
+          <tr><td><code>AUTH_TOKEN_INVALID</code></td><td>401</td><td>Token 无效</td></tr>
+          <tr><td><code>VALIDATION_ERROR</code></td><td>400</td><td>请求参数校验失败</td></tr>
+          <tr><td><code>RESOURCE_NOT_FOUND</code></td><td>404</td><td>资源不存在</td></tr>
+          <tr><td><code>RESOURCE_CONFLICT</code></td><td>409</td><td>资源冲突（唯一约束）</td></tr>
+          <tr><td><code>INSUFFICIENT_STOCK</code></td><td>422</td><td>商品库存不足</td></tr>
+          <tr><td><code>INTERNAL_ERROR</code></td><td>500</td><td>服务器内部错误</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 &#10003;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 &#10007;</button>
+  </div>
+
+  <script>
+    function switchTab(event, tabId) {
+      var tabs = event.target.closest('.section');
+      tabs.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+      tabs.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback,
+        phase: 'design',
+        template: 'api-design'
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="design">
+  <meta name="created" content="">
+  <title>DB Design - 数据表设计</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .section {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ER Diagram */
+    .er-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      min-height: 300px;
+      position: relative;
+      overflow: auto;
+    }
+
+    .er-diagram svg {
+      width: 100%;
+      height: 300px;
+    }
+
+    .er-table {
+      background: var(--bg);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius-sm);
+      min-width: 160px;
+      overflow: hidden;
+    }
+
+    .er-table-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .er-table-body {
+      padding: 4px 0;
+    }
+
+    .er-table-row {
+      padding: 3px 12px;
+      font-size: 12px;
+      display: flex;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+
+    .er-table-row .pk {
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    .er-table-row .fk {
+      color: var(--primary);
+      font-style: italic;
+    }
+
+    .er-canvas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .er-placeholder {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 60px 0;
+      font-size: 14px;
+    }
+
+    /* Table structure cards */
+    .table-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .table-card:hover {
+      border-color: var(--primary);
+    }
+
+    .table-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .table-card-header:hover {
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .table-card-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .table-card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .expand-icon {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .table-card.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .table-card-body {
+      display: none;
+      padding: 0 20px 20px;
+    }
+
+    .table-card.expanded .table-card-body {
+      display: block;
+    }
+
+    /* Data tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .data-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .badge-pk {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .badge-fk {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+    }
+
+    .badge-uk {
+      background: rgba(22, 163, 74, 0.15);
+      color: var(--success);
+    }
+
+    .sub-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Data dictionary */
+    .dict-summary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* Migration */
+    .migration-placeholder {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .migration-placeholder .icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 20px 16px 120px; }
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>数据表设计</h1>
+    <p>定义数据库表结构、关系、索引和约束</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- ER Diagram -->
+  <div class="section">
+    <h2 class="section-title">ER 关系图</h2>
+    <div class="er-diagram">
+      <div class="er-canvas">
+        <!-- Example ER table boxes — replace with actual schema -->
+        <div class="er-table">
+          <div class="er-table-header">users</div>
+          <div class="er-table-body">
+            <div class="er-table-row"><span class="pk">PK</span> id</div>
+            <div class="er-table-row">username</div>
+            <div class="er-table-row">email</div>
+            <div class="er-table-row">created_at</div>
+          </div>
+        </div>
+        <div class="er-table">
+          <div class="er-table-header">orders</div>
+          <div class="er-table-body">
+            <div class="er-table-row"><span class="pk">PK</span> id</div>
+            <div class="er-table-row"><span class="fk">FK</span> user_id</div>
+            <div class="er-table-row">total</div>
+            <div class="er-table-row">status</div>
+          </div>
+        </div>
+        <div class="er-table">
+          <div class="er-table-header">order_items</div>
+          <div class="er-table-body">
+            <div class="er-table-row"><span class="pk">PK</span> id</div>
+            <div class="er-table-row"><span class="fk">FK</span> order_id</div>
+            <div class="er-table-row"><span class="fk">FK</span> product_id</div>
+            <div class="er-table-row">quantity</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table structure definitions -->
+  <div class="section">
+    <h2 class="section-title">表结构定义</h2>
+    <div class="table-cards">
+
+      <!-- Table: users -->
+      <div class="table-card expanded" data-table="users">
+        <div class="table-card-header" onclick="toggleCard(this)">
+          <div>
+            <span class="table-card-name">users</span>
+            <span class="table-card-meta"> — 4 columns</span>
+          </div>
+          <span class="expand-icon">&#9660;</span>
+        </div>
+        <div class="table-card-body">
+          <p class="sub-title">Columns</p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Nullable</th>
+                <th>Default</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code> <span class="badge badge-pk">PK</span></td>
+                <td><code>BIGINT</code></td>
+                <td>NO</td>
+                <td><code>AUTO_INCREMENT</code></td>
+                <td>主键</td>
+              </tr>
+              <tr>
+                <td><code>username</code> <span class="badge badge-uk">UNIQUE</span></td>
+                <td><code>VARCHAR(50)</code></td>
+                <td>NO</td>
+                <td>-</td>
+                <td>用户名</td>
+              </tr>
+              <tr>
+                <td><code>email</code></td>
+                <td><code>VARCHAR(255)</code></td>
+                <td>NO</td>
+                <td>-</td>
+                <td>邮箱地址</td>
+              </tr>
+              <tr>
+                <td><code>created_at</code></td>
+                <td><code>TIMESTAMP</code></td>
+                <td>NO</td>
+                <td><code>CURRENT_TIMESTAMP</code></td>
+                <td>创建时间</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="sub-title">Indexes</p>
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Columns</th><th>Type</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>idx_users_email</code></td><td><code>email</code></td><td>UNIQUE</td></tr>
+            </tbody>
+          </table>
+          <p class="sub-title">Constraints</p>
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Type</th><th>Definition</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>chk_users_email</code></td><td>CHECK</td><td><code>email ~ '^[^@]+@[^@]+\.[^@]+$'</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table: orders -->
+      <div class="table-card" data-table="orders">
+        <div class="table-card-header" onclick="toggleCard(this)">
+          <div>
+            <span class="table-card-name">orders</span>
+            <span class="table-card-meta"> — 5 columns</span>
+          </div>
+          <span class="expand-icon">&#9660;</span>
+        </div>
+        <div class="table-card-body">
+          <p class="sub-title">Columns</p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Nullable</th>
+                <th>Default</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code> <span class="badge badge-pk">PK</span></td>
+                <td><code>BIGINT</code></td>
+                <td>NO</td>
+                <td><code>AUTO_INCREMENT</code></td>
+                <td>主键</td>
+              </tr>
+              <tr>
+                <td><code>user_id</code> <span class="badge badge-fk">FK</span></td>
+                <td><code>BIGINT</code></td>
+                <td>NO</td>
+                <td>-</td>
+                <td>关联用户</td>
+              </tr>
+              <tr>
+                <td><code>total</code></td>
+                <td><code>DECIMAL(10,2)</code></td>
+                <td>NO</td>
+                <td><code>0.00</code></td>
+                <td>订单总额</td>
+              </tr>
+              <tr>
+                <td><code>status</code></td>
+                <td><code>VARCHAR(20)</code></td>
+                <td>NO</td>
+                <td><code>'pending'</code></td>
+                <td>订单状态</td>
+              </tr>
+              <tr>
+                <td><code>created_at</code></td>
+                <td><code>TIMESTAMP</code></td>
+                <td>NO</td>
+                <td><code>CURRENT_TIMESTAMP</code></td>
+                <td>创建时间</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="sub-title">Indexes</p>
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Columns</th><th>Type</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>idx_orders_user_id</code></td><td><code>user_id</code></td><td>BTREE</td></tr>
+              <tr><td><code>idx_orders_status</code></td><td><code>status</code></td><td>BTREE</td></tr>
+            </tbody>
+          </table>
+          <p class="sub-title">Constraints</p>
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Type</th><th>Definition</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>fk_orders_user</code></td><td>FOREIGN KEY</td><td><code>user_id REFERENCES users(id)</code></td></tr>
+              <tr><td><code>chk_orders_status</code></td><td>CHECK</td><td><code>status IN ('pending','paid','shipped','done','cancelled')</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table: order_items -->
+      <div class="table-card" data-table="order_items">
+        <div class="table-card-header" onclick="toggleCard(this)">
+          <div>
+            <span class="table-card-name">order_items</span>
+            <span class="table-card-meta"> — 5 columns</span>
+          </div>
+          <span class="expand-icon">&#9660;</span>
+        </div>
+        <div class="table-card-body">
+          <p class="sub-title">Columns</p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Nullable</th>
+                <th>Default</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code> <span class="badge badge-pk">PK</span></td>
+                <td><code>BIGINT</code></td>
+                <td>NO</td>
+                <td><code>AUTO_INCREMENT</code></td>
+                <td>主键</td>
+              </tr>
+              <tr>
+                <td><code>order_id</code> <span class="badge badge-fk">FK</span></td>
+                <td><code>BIGINT</code></td>
+                <td>NO</td>
+                <td>-</td>
+                <td>关联订单</td>
+              </tr>
+              <tr>
+                <td><code>product_id</code> <span class="badge badge-fk">FK</span></td>
+                <td><code>BIGINT</code></td>
+                <td>NO</td>
+                <td>-</td>
+                <td>关联商品</td>
+              </tr>
+              <tr>
+                <td><code>quantity</code></td>
+                <td><code>INT</code></td>
+                <td>NO</td>
+                <td><code>1</code></td>
+                <td>数量</td>
+              </tr>
+              <tr>
+                <td><code>unit_price</code></td>
+                <td><code>DECIMAL(10,2)</code></td>
+                <td>NO</td>
+                <td>-</td>
+                <td>单价快照</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="sub-title">Indexes</p>
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Columns</th><th>Type</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>idx_oi_order_id</code></td><td><code>order_id</code></td><td>BTREE</td></tr>
+              <tr><td><code>idx_oi_product_id</code></td><td><code>product_id</code></td><td>BTREE</td></tr>
+            </tbody>
+          </table>
+          <p class="sub-title">Constraints</p>
+          <table class="data-table">
+            <thead>
+              <tr><th>Name</th><th>Type</th><th>Definition</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>fk_oi_order</code></td><td>FOREIGN KEY</td><td><code>order_id REFERENCES orders(id) ON DELETE CASCADE</code></td></tr>
+              <tr><td><code>fk_oi_product</code></td><td>FOREIGN KEY</td><td><code>product_id REFERENCES products(id)</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Data dictionary summary -->
+  <div class="section">
+    <h2 class="section-title">数据字典</h2>
+    <div class="dict-summary">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Table</th>
+            <th>Columns</th>
+            <th>Indexes</th>
+            <th>FKs</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>users</code></td><td>4</td><td>1</td><td>0</td><td>用户表</td></tr>
+          <tr><td><code>orders</code></td><td>5</td><td>2</td><td>1</td><td>订单表</td></tr>
+          <tr><td><code>order_items</code></td><td>5</td><td>2</td><td>2</td><td>订单明细表</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Migration strategy -->
+  <div class="section">
+    <h2 class="section-title">迁移策略</h2>
+    <div class="migration-placeholder">
+      <div class="icon">&#9881;</div>
+      <p>迁移脚本和执行计划将在实现阶段填充</p>
+    </div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 &#10003;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 &#10007;</button>
+  </div>
+
+  <script>
+    function toggleCard(header) {
+      var card = header.closest('.table-card');
+      card.classList.toggle('expanded');
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback,
+        phase: 'design',
+        template: 'db-design'
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>
