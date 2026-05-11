@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="design">
+  <meta name="created" content="">
+  <title>UI/UX 设计</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .icon {
+      font-size: 20px;
+    }
+
+    /* Design tokens - color swatches */
+    .swatches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .swatch-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .swatch-color {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .swatch-info {
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .swatch-name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .swatch-value {
+      color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+    }
+
+    /* Typography samples */
+    .typo-samples {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .typo-row {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .typo-label {
+      min-width: 100px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .typo-sample-h1 { font-size: 32px; font-weight: 700; }
+    .typo-sample-h2 { font-size: 24px; font-weight: 700; }
+    .typo-sample-h3 { font-size: 18px; font-weight: 600; }
+    .typo-sample-body { font-size: 14px; font-weight: 400; }
+    .typo-sample-small { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+
+    /* Wireframe grid */
+    .wireframe-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      grid-template-rows: 56px 1fr 40px;
+      gap: 4px;
+      min-height: 320px;
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+    }
+
+    .wireframe-region {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px dashed var(--primary);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .wireframe-region.sidebar {
+      grid-row: 1 / 4;
+      grid-column: 1;
+    }
+
+    .wireframe-region.header {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    .wireframe-region.main {
+      grid-row: 2;
+      grid-column: 2;
+    }
+
+    .wireframe-region.footer {
+      grid-row: 3;
+      grid-column: 2;
+    }
+
+    /* Component spec placeholder */
+    .component-placeholder {
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .component-variants {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .component-variant {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      text-align: center;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .component-variant-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .component-variant-preview {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .variant-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .variant-secondary {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .variant-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .variant-disabled {
+      background: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Interaction spec placeholder */
+    .prototype-placeholder {
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Responsive table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--bg);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .breakpoint-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .bp-mobile { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .bp-tablet { background: rgba(59, 130, 246, 0.15); color: var(--primary); }
+    .bp-desktop { background: rgba(22, 163, 74, 0.15); color: var(--success); }
+    .bp-wide { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
+
+    /* SLOT marker */
+    .slot-marker {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
+      text-align: center;
+      padding: 8px;
+      opacity: 0.5;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .wireframe-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: 56px 48px 1fr 40px;
+      }
+      .wireframe-region.sidebar {
+        grid-row: 2;
+        grid-column: 1;
+      }
+      .wireframe-region.header {
+        grid-row: 1;
+        grid-column: 1;
+      }
+      .wireframe-region.main {
+        grid-row: 3;
+        grid-column: 1;
+      }
+      .wireframe-region.footer {
+        grid-row: 4;
+        grid-column: 1;
+      }
+      .swatches-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>UI/UX 设计</h1>
+    <p>设计令牌、页面结构、组件规范、交互规范与响应式策略</p>
+  </div>
+
+  <div class="container">
+
+    <!-- 设计令牌 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x1F3A8;</span>
+        设计令牌
+      </div>
+      <!-- SLOT:content - design-tokens -->
+      <div class="swatches-grid">
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #3b82f6;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Primary</div>
+            <div class="swatch-value">#3b82f6</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #16a34a;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Success</div>
+            <div class="swatch-value">#16a34a</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #dc2626;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Danger</div>
+            <div class="swatch-value">#dc2626</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #f59e0b;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Warning</div>
+            <div class="swatch-value">#f59e0b</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #0f172a;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Background</div>
+            <div class="swatch-value">#0f172a</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #1e293b; border-bottom: 1px solid #334155;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Surface</div>
+            <div class="swatch-value">#1e293b</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #334155;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Border</div>
+            <div class="swatch-value">#334155</div>
+          </div>
+        </div>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #e2e8f0;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Text</div>
+            <div class="swatch-value">#e2e8f0</div>
+          </div>
+        </div>
+      </div>
+      <div class="typo-samples">
+        <div class="typo-row">
+          <span class="typo-label">H1</span>
+          <span class="typo-sample-h1">Heading Level 1</span>
+        </div>
+        <div class="typo-row">
+          <span class="typo-label">H2</span>
+          <span class="typo-sample-h2">Heading Level 2</span>
+        </div>
+        <div class="typo-row">
+          <span class="typo-label">H3</span>
+          <span class="typo-sample-h3">Heading Level 3</span>
+        </div>
+        <div class="typo-row">
+          <span class="typo-label">Body</span>
+          <span class="typo-sample-body">Body text for paragraphs and general content display.</span>
+        </div>
+        <div class="typo-row">
+          <span class="typo-label">Small</span>
+          <span class="typo-sample-small">Small text for captions, labels and secondary information.</span>
+        </div>
+      </div>
+      <div class="slot-marker">SLOT:content - design-tokens</div>
+    </div>
+
+    <!-- 页面结构 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x1F4D0;</span>
+        页面结构
+      </div>
+      <!-- SLOT:content - page-layout -->
+      <div class="wireframe-grid">
+        <div class="wireframe-region sidebar">Sidebar / Nav</div>
+        <div class="wireframe-region header">Header / Toolbar</div>
+        <div class="wireframe-region main">Main Content Area</div>
+        <div class="wireframe-region footer">Footer / Status</div>
+      </div>
+      <div class="slot-marker">SLOT:content - page-layout</div>
+    </div>
+
+    <!-- 组件规范 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x1F9E9;</span>
+        组件规范
+      </div>
+      <!-- SLOT:content - component-spec -->
+      <div class="component-placeholder">
+        [component-spec: 组件库定义与变体占位区域]
+      </div>
+      <div class="component-variants">
+        <div class="component-variant">
+          <div class="component-variant-label">Primary</div>
+          <div class="component-variant-preview variant-primary">Button</div>
+        </div>
+        <div class="component-variant">
+          <div class="component-variant-label">Secondary</div>
+          <div class="component-variant-preview variant-secondary">Button</div>
+        </div>
+        <div class="component-variant">
+          <div class="component-variant-label">Danger</div>
+          <div class="component-variant-preview variant-danger">Button</div>
+        </div>
+        <div class="component-variant">
+          <div class="component-variant-label">Disabled</div>
+          <div class="component-variant-preview variant-disabled">Button</div>
+        </div>
+      </div>
+      <div class="slot-marker">SLOT:content - component-spec</div>
+    </div>
+
+    <!-- 交互规范 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x1F4AC;</span>
+        交互规范
+      </div>
+      <!-- SLOT:content - interaction-spec -->
+      <div class="prototype-placeholder">
+        [interaction-prototype: 交互原型与动效规范占位区域]
+      </div>
+      <div class="slot-marker">SLOT:content - interaction-spec</div>
+    </div>
+
+    <!-- 响应式策略 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x1F4F1;</span>
+        响应式策略
+      </div>
+      <!-- SLOT:content - responsive-strategy -->
+      <table>
+        <thead>
+          <tr>
+            <th>断点</th>
+            <th>宽度范围</th>
+            <th>布局方式</th>
+            <th>列数</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="breakpoint-tag bp-mobile">Mobile</span></td>
+            <td>&lt; 640px</td>
+            <td>单列堆叠布局，全宽组件</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td><span class="breakpoint-tag bp-tablet">Tablet</span></td>
+            <td>640px - 1024px</td>
+            <td>侧边栏折叠，主内容区自适应</td>
+            <td>2 - 4</td>
+          </tr>
+          <tr>
+            <td><span class="breakpoint-tag bp-desktop">Desktop</span></td>
+            <td>1024px - 1440px</td>
+            <td>标准双栏/三栏布局</td>
+            <td>6 - 8</td>
+          </tr>
+          <tr>
+            <td><span class="breakpoint-tag bp-wide">Wide</span></td>
+            <td>&gt; 1440px</td>
+            <td>最大宽度容器居中，留白边距</td>
+            <td>12</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="slot-marker">SLOT:content - responsive-strategy</div>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 &#x2713;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 &#x2717;</button>
+  </div>
+
+  <script>
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        phase: 'design',
+        decisions: decisions,
+        feedback: feedback
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) { toast.parentNode.removeChild(toast); }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

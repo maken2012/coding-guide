@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="detail">
+  <meta name="created" content="">
+  <title>需求详述</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .badges {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-spec {
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .badge-spec:hover {
+      opacity: 0.85;
+    }
+
+    .badge-phase {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .icon {
+      font-size: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--bg);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tag-required {
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .tag-optional {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .tag-type {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* Flowchart placeholder */
+    .flowchart-placeholder {
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Numbered rules */
+    .rule-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .rule-list li {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--primary);
+      font-size: 14px;
+    }
+
+    .rule-list li .rule-number {
+      font-weight: 700;
+      color: var(--primary);
+      margin-right: 8px;
+    }
+
+    .rule-list li .condition {
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    .rule-list li .action {
+      color: var(--text);
+    }
+
+    /* Constraint bullets */
+    .constraint-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .constraint-list li {
+      padding: 10px 16px 10px 28px;
+      position: relative;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .constraint-list li:last-child {
+      border-bottom: none;
+    }
+
+    .constraint-list li::before {
+      content: '\25B6';
+      position: absolute;
+      left: 8px;
+      color: var(--warning);
+      font-size: 10px;
+      top: 12px;
+    }
+
+    /* SLOT marker */
+    .slot-marker {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
+      text-align: center;
+      padding: 8px;
+      opacity: 0.5;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1 id="featureName">[功能名称]</h1>
+    <p>需求详述文档 - 详细定义输入输出、交互流程、业务规则与约束条件</p>
+    <div class="badges">
+      <a href="#" class="badge badge-spec">Spec</a>
+      <span class="badge badge-phase">Detail</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- 输入输出定义 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x21A0;</span>
+        输入输出定义
+      </div>
+      <!-- SLOT:content - input-output -->
+      <table>
+        <thead>
+          <tr>
+            <th>Input / Output</th>
+            <th>名称</th>
+            <th>类型</th>
+            <th>描述</th>
+            <th>必填</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag-type">Input</span></td>
+            <td>userId</td>
+            <td><span class="tag-type">string</span></td>
+            <td>用户唯一标识符</td>
+            <td><span class="tag-required">Yes</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag-type">Input</span></td>
+            <td>filter</td>
+            <td><span class="tag-type">object</span></td>
+            <td>筛选条件</td>
+            <td><span class="tag-optional">No</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag-type">Output</span></td>
+            <td>data</td>
+            <td><span class="tag-type">array</span></td>
+            <td>返回数据列表</td>
+            <td><span class="tag-required">Yes</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag-type">Output</span></td>
+            <td>total</td>
+            <td><span class="tag-type">number</span></td>
+            <td>总记录数</td>
+            <td><span class="tag-required">Yes</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="slot-marker">SLOT:content - input-output</div>
+    </div>
+
+    <!-- 交互流程 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x27A4;</span>
+        交互流程
+      </div>
+      <!-- SLOT:content - interaction-flow -->
+      <div class="flowchart-placeholder">
+        [flowchart-diagram component: 交互流程图占位区域]
+      </div>
+      <div class="slot-marker">SLOT:content - interaction-flow</div>
+    </div>
+
+    <!-- 业务规则 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x2699;</span>
+        业务规则
+      </div>
+      <!-- SLOT:content - business-rules -->
+      <ol class="rule-list">
+        <li>
+          <span class="rule-number">R1.</span>
+          <span class="condition">当用户未登录</span>
+          <span class="action"> &rarr; 重定向到登录页面并保存原始请求路径</span>
+        </li>
+        <li>
+          <span class="rule-number">R2.</span>
+          <span class="condition">当请求数据超出分页限制</span>
+          <span class="action"> &rarr; 返回最大分页数据并附加警告信息</span>
+        </li>
+        <li>
+          <span class="rule-number">R3.</span>
+          <span class="condition">当并发请求超过阈值</span>
+          <span class="action"> &rarr; 触发限流机制并返回 429 状态码</span>
+        </li>
+      </ol>
+      <div class="slot-marker">SLOT:content - business-rules</div>
+    </div>
+
+    <!-- 异常处理 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x26A0;</span>
+        异常处理
+      </div>
+      <!-- SLOT:content - error-handling -->
+      <table>
+        <thead>
+          <tr>
+            <th>错误码</th>
+            <th>场景</th>
+            <th>响应</th>
+            <th>重试策略</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color: var(--danger); font-weight: 600;">ERR_401</span></td>
+            <td>认证失败 / Token 过期</td>
+            <td>返回 401，引导重新登录</td>
+            <td>不可重试，需重新认证</td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--warning); font-weight: 600;">ERR_429</span></td>
+            <td>请求频率超限</td>
+            <td>返回 429，附带 Retry-After 头</td>
+            <td>指数退避重试</td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--danger); font-weight: 600;">ERR_500</span></td>
+            <td>服务端内部错误</td>
+            <td>返回 500，记录错误日志</td>
+            <td>最多 3 次指数退避</td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--warning); font-weight: 600;">ERR_TIMEOUT</span></td>
+            <td>请求超时</td>
+            <td>返回 504，提示网络异常</td>
+            <td>线性重试，间隔 2s</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="slot-marker">SLOT:content - error-handling</div>
+    </div>
+
+    <!-- 约束条件 -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x1F6AB;</span>
+        约束条件
+      </div>
+      <!-- SLOT:content - constraints -->
+      <ul class="constraint-list">
+        <li>单次请求数据量不得超过 10MB</li>
+        <li>列表查询分页上限为 100 条/页</li>
+        <li>接口响应时间 P99 须低于 500ms</li>
+        <li>所有敏感字段传输必须使用 TLS 加密</li>
+        <li>数据存储需符合 GDPR 合规要求</li>
+      </ul>
+      <div class="slot-marker">SLOT:content - constraints</div>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 &#x2713;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 &#x2717;</button>
+  </div>
+
+  <script>
+    /**
+     * Collects all decisions from [data-decision] elements.
+     * Returns an object mapping decision names to their selected values.
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    /**
+     * Saves feedback data. Tries the File System Access API first,
+     * falls back to copying JSON to clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{
+              description: 'JSON File',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('Save cancelled.', 'warning');
+            return;
+          }
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Collects decisions and feedback, then saves.
+     * @param {string} verdict - 'approved' or 'rejected'
+     */
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+      var feedback = document.getElementById('feedbackInput').value.trim();
+
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        phase: 'detail',
+        decisions: decisions,
+        feedback: feedback
+      };
+
+      await saveFeedback(data);
+    }
+
+    /**
+     * Shows a notification toast.
+     * @param {string} msg - Message to display
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>
