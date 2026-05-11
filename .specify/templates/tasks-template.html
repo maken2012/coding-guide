@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="tasks">
+  <meta name="created" content="">
+  <title>Tasks Template</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    /* ===== Page Header ===== */
+    .page-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .header-row h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      flex: 1;
+    }
+
+    .linked-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .linked-badge:hover {
+      background: rgba(59,130,246,0.25);
+    }
+
+    .phase-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--primary);
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Progress Bar ===== */
+    .progress-section {
+      margin-bottom: 32px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .progress-label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .progress-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: var(--surface);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    /* ===== Task Sections ===== */
+    .task-section {
+      margin-bottom: 28px;
+    }
+
+    .task-section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 4px;
+      transition: background 0.15s;
+    }
+
+    .task-item:hover {
+      background: var(--surface);
+    }
+
+    .task-item input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .task-item input[type="checkbox"]:hover {
+      border-color: var(--primary);
+    }
+
+    .task-item input[type="checkbox"]:checked {
+      border-color: var(--success);
+      background: var(--success);
+    }
+
+    .task-item input[type="checkbox"]:checked::after {
+      content: '';
+      display: block;
+      width: 5px;
+      height: 9px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin: 1px auto;
+    }
+
+    .task-item.completed .task-label {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .task-label {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .task-id {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-right: 6px;
+    }
+
+    .task-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 3px;
+      margin-right: 4px;
+    }
+
+    .task-tag.priority {
+      background: rgba(245,158,11,0.2);
+      color: var(--warning);
+    }
+
+    .task-tag.story {
+      background: rgba(59,130,246,0.2);
+      color: var(--primary);
+    }
+
+    .task-filepath {
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ===== Review bar ===== */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* ===== Toast ===== */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-row">
+      <h1>SLOT:feature_name</h1>
+      <a class="linked-badge" href="plan-template.html">plan: SLOT:plan_id</a>
+      <span class="phase-badge">tasks</span>
+    </div>
+    <div class="header-meta">SLOT:date</div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-label">实施进度</span>
+      <span class="progress-count" id="progressCount">0 / 0</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- SLOT:content — Task sections -->
+
+  <!-- Setup -->
+  <div class="task-section">
+    <div class="task-section-title">Setup</div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T001</span>
+        <span class="task-tag priority">P</span>
+        初始化项目结构与配置文件
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T002</span>
+        <span class="task-tag priority">P</span>
+        配置开发环境和依赖
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <!-- SLOT:content — additional setup tasks -->
+  </div>
+
+  <!-- 基础设施 -->
+  <div class="task-section">
+    <div class="task-section-title">基础设施</div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T003</span>
+        <span class="task-tag priority">P</span>
+        数据库迁移与模型定义
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T004</span>
+        <span class="task-tag priority">P</span>
+        API 路由骨架搭建
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <!-- SLOT:content — additional infrastructure tasks -->
+  </div>
+
+  <!-- 用户故事 P1 -->
+  <div class="task-section">
+    <div class="task-section-title">用户故事 P1</div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T005</span>
+        <span class="task-tag story">US1</span>
+        实现核心功能逻辑
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T006</span>
+        <span class="task-tag story">US1</span>
+        编写单元测试
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <!-- SLOT:content — additional P1 tasks -->
+  </div>
+
+  <!-- 用户故事 P2 -->
+  <div class="task-section">
+    <div class="task-section-title">用户故事 P2</div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T007</span>
+        <span class="task-tag story">US2</span>
+        实现扩展功能
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T008</span>
+        <span class="task-tag story">US2</span>
+        编写集成测试
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <!-- SLOT:content — additional P2 tasks -->
+  </div>
+
+  <!-- 收尾 -->
+  <div class="task-section">
+    <div class="task-section-title">收尾</div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T009</span>
+        <span class="task-tag priority">P</span>
+        代码审查与重构
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <div class="task-item">
+      <input type="checkbox" onchange="updateProgress()">
+      <div class="task-label">
+        <span class="task-id">T010</span>
+        <span class="task-tag priority">P</span>
+        文档更新与部署准备
+        <span class="task-filepath">SLOT:filepath</span>
+      </div>
+    </div>
+
+    <!-- SLOT:content — additional closing tasks -->
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Update the progress bar based on checked tasks.
+     */
+    function updateProgress() {
+      var checkboxes = document.querySelectorAll('.task-item input[type="checkbox"]');
+      var total = checkboxes.length;
+      var checked = 0;
+      checkboxes.forEach(function(cb) {
+        if (cb.checked) {
+          checked++;
+          cb.closest('.task-item').classList.add('completed');
+        } else {
+          cb.closest('.task-item').classList.remove('completed');
+        }
+      });
+
+      var percent = total > 0 ? Math.round((checked / total) * 100) : 0;
+      document.getElementById('progressFill').style.width = percent + '%';
+      document.getElementById('progressCount').textContent = checked + ' / ' + total;
+    }
+
+    /**
+     * Save feedback data.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-tasks-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Submit verdict.
+     */
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var checkboxes = document.querySelectorAll('.task-item input[type="checkbox"]');
+      var total = checkboxes.length;
+      var checked = 0;
+      checkboxes.forEach(function(cb) { if (cb.checked) checked++; });
+
+      var data = {
+        type: 'verdict',
+        phase: 'tasks',
+        verdict: verdict,
+        feedback: feedback,
+        progress: { completed: checked, total: total },
+        timestamp: new Date().toISOString()
+      };
+      window.parent.postMessage(data, '*');
+      await saveFeedback(data);
+    }
+
+    /**
+     * Show a toast notification.
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 3500);
+    }
+
+    // Initialize progress
+    updateProgress();
+
+    // Listen for messages from parent
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'verdict') {
+        showToast('Received verdict: ' + event.data.verdict, event.data.verdict === 'approved' ? 'success' : 'error');
+      }
+    });
+  </script>
+
+</body>
+</html>

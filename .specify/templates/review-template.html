@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="review">
+  <meta name="created" content="">
+  <title>Review Template</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    /* ===== Page Header ===== */
+    .page-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .header-row h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      flex: 1;
+    }
+
+    .scope-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .phase-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--primary);
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Summary Bar ===== */
+    .summary-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .summary-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .summary-badge .count {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .summary-badge .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-badge.pass { border-left: 3px solid var(--success); }
+    .summary-badge.pass .count { color: var(--success); }
+    .summary-badge.warning { border-left: 3px solid var(--warning); }
+    .summary-badge.warning .count { color: var(--warning); }
+    .summary-badge.error { border-left: 3px solid var(--danger); }
+    .summary-badge.error .count { color: var(--danger); }
+
+    /* ===== Sections ===== */
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .section-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(59,130,246,0.15);
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .section-body {
+      padding-left: 4px;
+    }
+
+    /* ===== File Change List ===== */
+    .file-change {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: border-color 0.15s;
+    }
+
+    .file-change:hover {
+      border-color: var(--primary);
+    }
+
+    .change-type {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    .change-type.added { background: rgba(22,163,74,0.2); color: var(--success); }
+    .change-type.modified { background: rgba(59,130,246,0.2); color: var(--primary); }
+    .change-type.deleted { background: rgba(220,38,38,0.2); color: var(--danger); }
+    .change-type.renamed { background: rgba(245,158,11,0.2); color: var(--warning); }
+
+    .file-path {
+      font-family: monospace;
+      font-size: 13px;
+      flex: 1;
+    }
+
+    .file-lines {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Issue Card ===== */
+    .issue-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+
+    .issue-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .severity-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .severity-badge.error { background: rgba(220,38,38,0.2); color: var(--danger); }
+    .severity-badge.warning { background: rgba(245,158,11,0.2); color: var(--warning); }
+    .severity-badge.info { background: rgba(59,130,246,0.2); color: var(--primary); }
+
+    .issue-location {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .issue-description {
+      font-size: 14px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .issue-suggestion {
+      font-size: 13px;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .issue-verdict {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .issue-verdict-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .radio-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .radio-wrapper input[type="radio"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .radio-wrapper input[type="radio"]:hover {
+      border-color: var(--primary);
+    }
+
+    .radio-wrapper input[type="radio"]:checked {
+      border-color: var(--primary);
+    }
+
+    .radio-wrapper input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .radio-wrapper .radio-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Action Items ===== */
+    .action-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .action-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .action-list li:last-child {
+      border-bottom: none;
+    }
+
+    .action-list li input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: border-color 0.2s;
+    }
+
+    .action-list li input[type="checkbox"]:checked {
+      border-color: var(--success);
+      background: var(--success);
+    }
+
+    .action-list li input[type="checkbox"]:checked::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 8px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin: 0px auto;
+    }
+
+    /* ===== Review bar ===== */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* ===== Toast ===== */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-row">
+      <h1>SLOT:feature_name</h1>
+      <span class="scope-badge">SLOT:review_scope</span>
+      <span class="phase-badge">review</span>
+    </div>
+    <div class="header-meta">SLOT:date</div>
+  </div>
+
+  <!-- Summary Bar -->
+  <div class="summary-bar">
+    <div class="summary-badge pass">
+      <span class="count" id="passCount">SLOT:pass_count</span>
+      <span class="label">Pass</span>
+    </div>
+    <div class="summary-badge warning">
+      <span class="count" id="warningCount">SLOT:warning_count</span>
+      <span class="label">Warning</span>
+    </div>
+    <div class="summary-badge error">
+      <span class="count" id="errorCount">SLOT:error_count</span>
+      <span class="label">Error</span>
+    </div>
+  </div>
+
+  <!-- Section: 文件变更列表 -->
+  <div class="section">
+    <div class="section-title">文件变更列表 <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+
+      <div class="file-change">
+        <span class="change-type added">Added</span>
+        <span class="file-path">SLOT:filepath</span>
+        <span class="file-lines">SLOT:lines_changed</span>
+      </div>
+
+      <div class="file-change">
+        <span class="change-type modified">Modified</span>
+        <span class="file-path">SLOT:filepath</span>
+        <span class="file-lines">SLOT:lines_changed</span>
+      </div>
+
+      <div class="file-change">
+        <span class="change-type modified">Modified</span>
+        <span class="file-path">SLOT:filepath</span>
+        <span class="file-lines">SLOT:lines_changed</span>
+      </div>
+
+      <!-- SLOT:content — additional file changes -->
+
+    </div>
+  </div>
+
+  <!-- Section: 逐文件审查 -->
+  <div class="section">
+    <div class="section-title">逐文件审查 <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+
+      <div class="issue-card">
+        <div class="issue-header">
+          <span class="severity-badge error">SLOT:severity</span>
+          <span class="issue-location">SLOT:file:line</span>
+        </div>
+        <div class="issue-description">SLOT:content — 问题描述</div>
+        <div class="issue-suggestion">SLOT:content — 建议的修复方案</div>
+        <div class="issue-verdict">
+          <span class="issue-verdict-label">反馈:</span>
+          <label class="radio-wrapper">
+            <input type="radio" name="issue-1" value="agree">
+            <span class="radio-label">同意</span>
+          </label>
+          <label class="radio-wrapper">
+            <input type="radio" name="issue-1" value="disagree">
+            <span class="radio-label">不同意</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="issue-card">
+        <div class="issue-header">
+          <span class="severity-badge warning">SLOT:severity</span>
+          <span class="issue-location">SLOT:file:line</span>
+        </div>
+        <div class="issue-description">SLOT:content — 问题描述</div>
+        <div class="issue-suggestion">SLOT:content — 建议的修复方案</div>
+        <div class="issue-verdict">
+          <span class="issue-verdict-label">反馈:</span>
+          <label class="radio-wrapper">
+            <input type="radio" name="issue-2" value="agree">
+            <span class="radio-label">同意</span>
+          </label>
+          <label class="radio-wrapper">
+            <input type="radio" name="issue-2" value="disagree">
+            <span class="radio-label">不同意</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- SLOT:content — additional issues -->
+
+    </div>
+  </div>
+
+  <!-- Section: 行动项汇总 -->
+  <div class="section">
+    <div class="section-title">行动项汇总 <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+      <ul class="action-list">
+        <li>
+          <input type="checkbox">
+          <span>SLOT:content — 行动项描述</span>
+        </li>
+        <li>
+          <input type="checkbox">
+          <span>SLOT:content — 行动项描述</span>
+        </li>
+        <li>
+          <input type="checkbox">
+          <span>SLOT:content — 行动项描述</span>
+        </li>
+        <!-- SLOT:content — additional action items -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Collect issue verdicts.
+     */
+    function collectIssueVerdicts() {
+      var verdicts = {};
+      var radios = document.querySelectorAll('.issue-card input[type="radio"]:checked');
+      radios.forEach(function(radio) {
+        var name = radio.getAttribute('name');
+        verdicts[name] = radio.value;
+      });
+      return verdicts;
+    }
+
+    /**
+     * Collect action item states.
+     */
+    function collectActionItems() {
+      var items = [];
+      document.querySelectorAll('.action-list li').forEach(function(li) {
+        var cb = li.querySelector('input[type="checkbox"]');
+        var text = li.querySelector('span').textContent.trim();
+        items.push({ text: text, checked: cb.checked });
+      });
+      return items;
+    }
+
+    /**
+     * Save feedback data.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-review-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Submit verdict.
+     */
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        type: 'verdict',
+        phase: 'review',
+        verdict: verdict,
+        feedback: feedback,
+        issueVerdicts: collectIssueVerdicts(),
+        actionItems: collectActionItems(),
+        timestamp: new Date().toISOString()
+      };
+      window.parent.postMessage(data, '*');
+      await saveFeedback(data);
+    }
+
+    /**
+     * Show a toast notification.
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 3500);
+    }
+
+    // Listen for messages from parent
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'verdict') {
+        showToast('Received verdict: ' + event.data.verdict, event.data.verdict === 'approved' ? 'success' : 'error');
+      }
+    });
+  </script>
+
+</body>
+</html>
