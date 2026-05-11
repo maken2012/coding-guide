@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Prototype - Interactive UI</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .prototype-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 0;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 24px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Drag list */
+    .drag-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .drag-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: grab;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      user-select: none;
+    }
+
+    .drag-item:active {
+      cursor: grabbing;
+    }
+
+    .drag-item:hover {
+      border-color: var(--primary);
+    }
+
+    .drag-item.dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+      border-color: var(--primary);
+      box-shadow: 0 4px 16px rgba(59,130,246,0.2);
+    }
+
+    .drag-item.drag-over {
+      border-color: var(--success);
+      box-shadow: 0 0 0 2px rgba(22,163,74,0.3);
+    }
+
+    .drag-handle {
+      color: var(--text-muted);
+      font-size: 16px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .drag-handle span {
+      display: block;
+      width: 16px;
+      height: 2px;
+      background: var(--text-muted);
+      border-radius: 1px;
+    }
+
+    .drag-content {
+      flex: 1;
+    }
+
+    .drag-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .drag-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .drag-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-high { background: rgba(220,38,38,0.15); color: var(--danger); }
+    .badge-med { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .badge-low { background: rgba(22,163,74,0.15); color: var(--success); }
+
+    /* Tab 2: Click counter */
+    .click-demo {
+      text-align: center;
+    }
+
+    .click-count {
+      font-size: 64px;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 20px 0;
+      line-height: 1;
+    }
+
+    .click-btn {
+      padding: 14px 32px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin: 8px;
+    }
+
+    .click-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .click-btn:active { transform: translateY(0) scale(0.97); }
+
+    .click-btn.reset {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .click-history {
+      margin-top: 24px;
+      text-align: left;
+    }
+
+    .click-history h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+    }
+
+    .history-list {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .history-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pop 0.3s ease-out;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    /* Tab 3: Accordion */
+    .accordion-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .accordion-item:hover {
+      border-color: var(--primary);
+    }
+
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--bg);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .accordion-header:hover {
+      background: rgba(59,130,246,0.05);
+    }
+
+    .accordion-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .accordion-arrow {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .accordion-item.open .accordion-arrow {
+      transform: rotate(180deg);
+    }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .accordion-item.open .accordion-body {
+      max-height: 200px;
+    }
+
+    .accordion-body-inner {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .review-bar .feedback-input:focus { outline: none; border-color: var(--primary); }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Interactive Prototype</h1>
+    <p>A working UI mockup with drag-to-reorder, click interactions, and accordion. Pure JS, no frameworks.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <div class="prototype-container">
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-btn active" data-tab="drag">Drag to Reorder</button>
+      <button class="tab-btn" data-tab="click">Click Counter</button>
+      <button class="tab-btn" data-tab="accordion">Accordion</button>
+    </div>
+
+    <!-- Tab 1: Drag List -->
+    <div class="tab-panel active" id="tab-drag">
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Drag items to reorder the priority list.</p>
+      <div class="drag-list" id="dragList">
+        <div class="drag-item" draggable="true">
+          <div class="drag-handle"><span></span><span></span><span></span></div>
+          <div class="drag-content"><div class="drag-title">User Authentication</div><div class="drag-desc">Login / Register flow</div></div>
+          <span class="drag-badge badge-high">High</span>
+        </div>
+        <div class="drag-item" draggable="true">
+          <div class="drag-handle"><span></span><span></span><span></span></div>
+          <div class="drag-content"><div class="drag-title">Dashboard Layout</div><div class="drag-desc">Main analytics view</div></div>
+          <span class="drag-badge badge-high">High</span>
+        </div>
+        <div class="drag-item" draggable="true">
+          <div class="drag-handle"><span></span><span></span><span></span></div>
+          <div class="drag-content"><div class="drag-title">Notification System</div><div class="drag-desc">Push and in-app alerts</div></div>
+          <span class="drag-badge badge-med">Medium</span>
+        </div>
+        <div class="drag-item" draggable="true">
+          <div class="drag-handle"><span></span><span></span><span></span></div>
+          <div class="drag-content"><div class="drag-title">Settings Page</div><div class="drag-desc">User preferences</div></div>
+          <span class="drag-badge badge-low">Low</span>
+        </div>
+        <div class="drag-item" draggable="true">
+          <div class="drag-handle"><span></span><span></span><span></span></div>
+          <div class="drag-content"><div class="drag-title">Export Feature</div><div class="drag-desc">CSV / PDF data export</div></div>
+          <span class="drag-badge badge-low">Low</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Click Counter -->
+    <div class="tab-panel" id="tab-click">
+      <div class="click-demo">
+        <p style="color:var(--text-muted);font-size:13px;">Click the button to increment the counter.</p>
+        <div class="click-count" id="clickCount">0</div>
+        <button class="click-btn" id="clickBtn">Click Me</button>
+        <button class="click-btn reset" id="resetClickBtn">Reset</button>
+        <div class="click-history">
+          <h3>Click History</h3>
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Accordion -->
+    <div class="tab-panel" id="tab-accordion">
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Click to expand/collapse each section.</p>
+      <div class="accordion-item open">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span class="accordion-title">What is this prototype?</span>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">This is an interactive prototype demonstrating three common UI patterns: drag-to-reorder, click counter with visual history, and an accordion. All interactions are built with vanilla JavaScript and native browser APIs.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span class="accordion-title">How does drag-to-reorder work?</span>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">The drag-to-reorder list uses the HTML5 Drag and Drop API. Each list item has the <code>draggable</code> attribute set to true. When you drag an item over another, they swap positions. Visual feedback shows which item is being dragged and where it will land.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span class="accordion-title">Can I use this in production?</span>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">This prototype is designed for rapid prototyping and design validation. While the patterns are functional, they would need accessibility improvements (ARIA attributes, keyboard support), touch device support, and more robust error handling before production use.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <span class="accordion-title">What technologies are used?</span>
+          <span class="accordion-arrow">&#9660;</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">Pure HTML, CSS, and vanilla JavaScript. No frameworks, no build tools, no external dependencies. The styling uses CSS custom properties for theming and CSS transitions for smooth animations.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Tabs ---
+    document.getElementById('tabBar').addEventListener('click', function(e) {
+      var btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      var tabId = btn.dataset.tab;
+
+      this.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
+      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      document.getElementById('tab-' + tabId).classList.add('active');
+    });
+
+    // --- Drag to Reorder ---
+    var dragList = document.getElementById('dragList');
+    var draggedItem = null;
+
+    dragList.addEventListener('dragstart', function(e) {
+      draggedItem = e.target.closest('.drag-item');
+      if (!draggedItem) return;
+      draggedItem.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    dragList.addEventListener('dragend', function(e) {
+      if (draggedItem) {
+        draggedItem.classList.remove('dragging');
+        draggedItem = null;
+      }
+      dragList.querySelectorAll('.drag-item').forEach(function(item) {
+        item.classList.remove('drag-over');
+      });
+    });
+
+    dragList.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      var target = e.target.closest('.drag-item');
+      if (!target || target === draggedItem) return;
+
+      dragList.querySelectorAll('.drag-item').forEach(function(item) {
+        item.classList.remove('drag-over');
+      });
+      target.classList.add('drag-over');
+    });
+
+    dragList.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var target = e.target.closest('.drag-item');
+      if (!target || !draggedItem || target === draggedItem) return;
+
+      var items = Array.from(dragList.children);
+      var draggedIdx = items.indexOf(draggedItem);
+      var targetIdx = items.indexOf(target);
+
+      if (draggedIdx < targetIdx) {
+        dragList.insertBefore(draggedItem, target.nextSibling);
+      } else {
+        dragList.insertBefore(draggedItem, target);
+      }
+
+      target.classList.remove('drag-over');
+      showToast('Item reordered', 'success');
+    });
+
+    // --- Click Counter ---
+    var count = 0;
+    var clickCountEl = document.getElementById('clickCount');
+    var historyList = document.getElementById('historyList');
+
+    document.getElementById('clickBtn').addEventListener('click', function() {
+      count++;
+      clickCountEl.textContent = count;
+
+      var dot = document.createElement('div');
+      dot.className = 'history-dot';
+      dot.title = 'Click #' + count;
+      historyList.appendChild(dot);
+
+      // Animate the count
+      clickCountEl.style.transform = 'scale(1.15)';
+      setTimeout(function() { clickCountEl.style.transform = 'scale(1)'; }, 100);
+    });
+
+    document.getElementById('resetClickBtn').addEventListener('click', function() {
+      count = 0;
+      clickCountEl.textContent = '0';
+      historyList.innerHTML = '';
+    });
+
+    clickCountEl.style.transition = 'transform 0.1s ease';
+
+    // --- Accordion ---
+    function toggleAccordion(header) {
+      var item = header.closest('.accordion-item');
+      var wasOpen = item.classList.contains('open');
+      item.classList.toggle('open');
+    }
+
+    // --- Feedback & Review ---
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback
+      };
+      await saveFeedback(data);
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

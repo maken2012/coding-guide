@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Flowchart - Interactive Diagram</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .diagram-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+    }
+
+    /* Flowchart Area */
+    .flowchart-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      position: relative;
+    }
+
+    .flow-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 0;
+      position: relative;
+    }
+
+    .flow-row + .flow-row {
+      margin-top: 48px;
+    }
+
+    /* Flow Node */
+    .flow-node {
+      padding: 14px 24px;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      min-width: 140px;
+      z-index: 1;
+    }
+
+    .flow-node:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    .flow-node.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+      background: rgba(59,130,246,0.08);
+    }
+
+    .flow-node.start {
+      border-radius: 30px;
+      border-color: var(--success);
+      background: rgba(22,163,74,0.1);
+    }
+
+    .flow-node.start:hover {
+      border-color: var(--success);
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.15);
+    }
+
+    .flow-node.end {
+      border-radius: 30px;
+      border-color: var(--danger);
+      background: rgba(220,38,38,0.1);
+    }
+
+    .flow-node.end:hover {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(220,38,38,0.15);
+    }
+
+    .flow-node.decision {
+      transform: rotate(0deg);
+      border-color: var(--warning);
+      background: rgba(245,158,11,0.08);
+    }
+
+    .flow-node.decision:hover {
+      border-color: var(--warning);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+    }
+
+    .node-label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .node-sublabel {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* SVG Arrows */
+    .flowchart-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .flowchart-svg line, .flowchart-svg path {
+      stroke: var(--border);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .flowchart-svg .arrow-head {
+      fill: var(--border);
+    }
+
+    /* Detail Panel */
+    .detail-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      align-self: start;
+      position: sticky;
+      top: 32px;
+    }
+
+    .detail-panel.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .detail-header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-step-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .detail-step-type {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .type-start { background: rgba(22,163,74,0.15); color: var(--success); }
+    .type-process { background: rgba(59,130,246,0.15); color: var(--primary); }
+    .type-decision { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .type-end { background: rgba(220,38,38,0.15); color: var(--danger); }
+
+    .detail-section {
+      margin-bottom: 16px;
+    }
+
+    .detail-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .detail-section p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .detail-timing {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .timing-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--primary);
+    }
+
+    .timing-value {
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text);
+    }
+
+    .detail-failure {
+      background: rgba(220,38,38,0.08);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      border-left: 3px solid var(--danger);
+    }
+
+    .detail-failure p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .review-bar .feedback-input:focus { outline: none; border-color: var(--primary); }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 900px) {
+      .diagram-container {
+        grid-template-columns: 1fr;
+      }
+      .detail-panel {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Interactive Flowchart</h1>
+    <p>Click any node to view its details. The flowchart represents a deployment pipeline.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <div class="diagram-container">
+    <!-- Flowchart -->
+    <div class="flowchart-area" id="flowchartArea">
+
+      <!-- Row 1: Start -->
+      <div class="flow-row">
+        <div class="flow-node start" data-node="start" onclick="selectNode(this)">
+          <div class="node-label">Start</div>
+          <div class="node-sublabel">Trigger</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Build + Test -->
+      <div class="flow-row">
+        <div class="flow-node" data-node="build" onclick="selectNode(this)">
+          <div class="node-label">Build</div>
+          <div class="node-sublabel">Compile</div>
+        </div>
+        <div class="flow-node" data-node="test" onclick="selectNode(this)">
+          <div class="node-label">Test</div>
+          <div class="node-sublabel">Unit + Integration</div>
+        </div>
+      </div>
+
+      <!-- Row 3: Decision -->
+      <div class="flow-row">
+        <div class="flow-node decision" data-node="decision" onclick="selectNode(this)">
+          <div class="node-label">QA Gate</div>
+          <div class="node-sublabel">Pass / Fail</div>
+        </div>
+      </div>
+
+      <!-- Row 4: Deploy -->
+      <div class="flow-row">
+        <div class="flow-node" data-node="staging" onclick="selectNode(this)">
+          <div class="node-label">Staging</div>
+          <div class="node-sublabel">Pre-production</div>
+        </div>
+        <div class="flow-node" data-node="rollback" onclick="selectNode(this)">
+          <div class="node-label">Rollback</div>
+          <div class="node-sublabel">Revert</div>
+        </div>
+      </div>
+
+      <!-- Row 5: End -->
+      <div class="flow-row">
+        <div class="flow-node end" data-node="production" onclick="selectNode(this)">
+          <div class="node-label">Production</div>
+          <div class="node-sublabel">Live</div>
+        </div>
+      </div>
+
+      <!-- SVG Arrows (drawn after layout) -->
+      <svg class="flowchart-svg" id="flowSvg"></svg>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="empty-state" id="emptyState">Click a node to see details</div>
+      <div class="detail-content" id="detailContent" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Node Data ---
+    var nodeData = {
+      start: {
+        name: 'Start',
+        type: 'start',
+        description: 'The deployment pipeline is triggered by a git push to the main branch or a manual trigger via CI/CD dashboard.',
+        timing: 0,
+        timingLabel: 'Instant',
+        failure: null
+      },
+      build: {
+        name: 'Build',
+        type: 'process',
+        description: 'Compiles the application, resolves dependencies, and generates the production artifact. Includes tree-shaking and minification.',
+        timing: 60,
+        timingLabel: '~60s',
+        failure: 'Build failure due to syntax errors, missing dependencies, or incompatible type definitions.'
+      },
+      test: {
+        name: 'Test',
+        type: 'process',
+        description: 'Runs the full test suite including unit tests, integration tests, and linting. Coverage reports are generated automatically.',
+        timing: 120,
+        timingLabel: '~120s',
+        failure: 'Test failure causes pipeline to stop. Failed tests are reported back to the PR with inline annotations.'
+      },
+      decision: {
+        name: 'QA Gate',
+        type: 'decision',
+        description: 'Automated quality gate checks if the build meets the minimum quality bar: test pass rate > 95%, no critical vulnerabilities, code review approved.',
+        timing: 5,
+        timingLabel: '~5s',
+        failure: 'If the gate fails, the pipeline branches to rollback. Team is notified via Slack with failure details.'
+      },
+      staging: {
+        name: 'Staging',
+        type: 'process',
+        description: 'Deploys to the staging environment for final smoke tests and stakeholder review. Blue-green deployment strategy is used.',
+        timing: 90,
+        timingLabel: '~90s',
+        failure: 'Staging deployment can fail due to infrastructure issues or configuration mismatches. Automatic retry once before alerting.'
+      },
+      rollback: {
+        name: 'Rollback',
+        type: 'process',
+        description: 'Reverts to the last known good deployment. Database migrations are rolled back if they were part of this deploy.',
+        timing: 45,
+        timingLabel: '~45s',
+        failure: 'Rollback failure triggers a critical alert to the on-call engineer. Manual intervention required.'
+      },
+      production: {
+        name: 'Production',
+        type: 'end',
+        description: 'Promotes the staging deployment to production. Health checks run for 5 minutes before traffic is fully switched. Monitoring dashboards update in real-time.',
+        timing: 180,
+        timingLabel: '~180s',
+        failure: 'Production issues trigger automatic rollback within 2 minutes if error rate exceeds threshold.'
+      }
+    };
+
+    // Max timing for bar width calculation
+    var maxTiming = 180;
+
+    // --- Node Selection ---
+    var activeNode = null;
+
+    function selectNode(el) {
+      var nodeId = el.dataset.node;
+
+      // Update active state
+      document.querySelectorAll('.flow-node').forEach(function(n) { n.classList.remove('active'); });
+      el.classList.add('active');
+      activeNode = nodeId;
+
+      // Render detail
+      var data = nodeData[nodeId];
+      var panel = document.getElementById('detailPanel');
+      var emptyState = document.getElementById('emptyState');
+      var content = document.getElementById('detailContent');
+
+      emptyState.style.display = 'none';
+      content.style.display = 'block';
+
+      var html =
+        '<div class="detail-header">' +
+          '<div class="detail-step-name">' + data.name + '</div>' +
+          '<span class="detail-step-type type-' + data.type + '">' + data.type + '</span>' +
+        '</div>' +
+        '<div class="detail-section">' +
+          '<div class="detail-section-title">Description</div>' +
+          '<p>' + data.description + '</p>' +
+        '</div>' +
+        '<div class="detail-section">' +
+          '<div class="detail-section-title">Timing</div>' +
+          '<div class="detail-timing">' +
+            '<div class="timing-bar" style="width:' + Math.max(8, (data.timing / maxTiming) * 100) + '%"></div>' +
+            '<span class="timing-value">' + data.timingLabel + '</span>' +
+          '</div>' +
+        '</div>';
+
+      if (data.failure) {
+        html +=
+          '<div class="detail-section">' +
+            '<div class="detail-section-title">Failure Path</div>' +
+            '<div class="detail-failure"><p>' + data.failure + '</p></div>' +
+          '</div>';
+      }
+
+      content.innerHTML = html;
+    }
+
+    // --- Draw Arrows ---
+    function drawArrows() {
+      var svg = document.getElementById('flowSvg');
+      var area = document.getElementById('flowchartArea');
+      var areaRect = area.getBoundingClientRect();
+
+      svg.setAttribute('viewBox', '0 0 ' + area.offsetWidth + ' ' + area.offsetHeight);
+      svg.innerHTML = '';
+
+      var connections = [
+        ['start', 'build'],
+        ['start', 'test'],
+        ['build', 'decision'],
+        ['test', 'decision'],
+        ['decision', 'staging'],
+        ['decision', 'rollback'],
+        ['staging', 'production'],
+        ['rollback', 'production']
+      ];
+
+      connections.forEach(function(pair) {
+        var fromEl = area.querySelector('[data-node="' + pair[0] + '"]');
+        var toEl = area.querySelector('[data-node="' + pair[1] + '"]');
+        if (!fromEl || !toEl) return;
+
+        var fromRect = fromEl.getBoundingClientRect();
+        var toRect = toEl.getBoundingClientRect();
+
+        var x1 = fromRect.left + fromRect.width / 2 - areaRect.left;
+        var y1 = fromRect.bottom - areaRect.top;
+        var x2 = toRect.left + toRect.width / 2 - areaRect.left;
+        var y2 = toRect.top - areaRect.top;
+
+        // Draw line
+        var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        svg.appendChild(line);
+
+        // Arrow head
+        var angle = Math.atan2(y2 - y1, x2 - x1);
+        var headLen = 8;
+        var hx1 = x2 - headLen * Math.cos(angle - Math.PI / 6);
+        var hy1 = y2 - headLen * Math.sin(angle - Math.PI / 6);
+        var hx2 = x2 - headLen * Math.cos(angle + Math.PI / 6);
+        var hy2 = y2 - headLen * Math.sin(angle + Math.PI / 6);
+
+        var head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        head.setAttribute('points', x2 + ',' + y2 + ' ' + hx1 + ',' + hy1 + ' ' + hx2 + ',' + hy2);
+        head.setAttribute('class', 'arrow-head');
+        svg.appendChild(head);
+      });
+    }
+
+    // Draw arrows on load and resize
+    window.addEventListener('load', drawArrows);
+    window.addEventListener('resize', drawArrows);
+
+    // --- Feedback & Review ---
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback,
+        selectedNode: activeNode
+      };
+      await saveFeedback(data);
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

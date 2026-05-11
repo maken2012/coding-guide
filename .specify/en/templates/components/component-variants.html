@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="spec">
+  <meta name="created" content="">
+  <title>Component Variants - Matrix</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Controls */
+    .controls {
+      max-width: 1200px;
+      margin: 0 auto 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .control-options {
+      display: flex;
+      gap: 6px;
+    }
+
+    .control-btn {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .control-btn:hover {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+
+    .control-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* Variant Grid */
+    .variant-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .variant-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .variant-card:hover {
+      border-color: var(--primary);
+    }
+
+    .variant-card.hidden {
+      display: none;
+    }
+
+    .variant-preview {
+      width: 100%;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+    }
+
+    /* Demo Button Styles */
+    .demo-btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 6px;
+      font-family: var(--font);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .demo-btn.size-sm { padding: 4px 12px; font-size: 12px; }
+    .demo-btn.size-md { padding: 8px 20px; font-size: 14px; }
+    .demo-btn.size-lg { padding: 12px 28px; font-size: 16px; }
+
+    .demo-btn.state-default { background: var(--primary); color: #fff; }
+    .demo-btn.state-default:hover { opacity: 0.9; }
+    .demo-btn.state-hover { background: #2563eb; color: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
+    .demo-btn.state-active { background: #1d4ed8; color: #fff; transform: scale(0.97); }
+    .demo-btn.state-disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; opacity: 0.6; }
+
+    .variant-props {
+      width: 100%;
+      font-size: 12px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text-muted);
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .variant-props span {
+      display: block;
+    }
+
+    .prop-key { color: var(--primary); }
+    .prop-val { color: var(--text); }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .controls { flex-direction: column; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Button Component Variants</h1>
+    <p>Explore all size and state combinations for the Button component.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="control-group">
+      <span class="control-label">Size</span>
+      <div class="control-options" id="sizeControls">
+        <button class="control-btn active" data-size="all">All</button>
+        <button class="control-btn" data-size="sm">SM</button>
+        <button class="control-btn" data-size="md">MD</button>
+        <button class="control-btn" data-size="lg">LG</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <span class="control-label">State</span>
+      <div class="control-options" id="stateControls">
+        <button class="control-btn active" data-state="all">All</button>
+        <button class="control-btn" data-state="default">Default</button>
+        <button class="control-btn" data-state="hover">Hover</button>
+        <button class="control-btn" data-state="active">Active</button>
+        <button class="control-btn" data-state="disabled">Disabled</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Variant Grid -->
+  <div class="variant-grid" id="variantGrid"></div>
+
+  <!-- END SLOT -->
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Generate Variants ---
+    var sizes = ['sm', 'md', 'lg'];
+    var states = ['default', 'hover', 'active', 'disabled'];
+    var grid = document.getElementById('variantGrid');
+
+    sizes.forEach(function(size) {
+      states.forEach(function(state) {
+        var card = document.createElement('div');
+        card.className = 'variant-card';
+        card.dataset.size = size;
+        card.dataset.state = state;
+
+        var btnLabel = state === 'disabled' ? 'Disabled' : 'Click Me';
+        card.innerHTML =
+          '<div class="variant-preview">' +
+            '<button class="demo-btn size-' + size + ' state-' + state + '" ' +
+              (state === 'disabled' ? 'disabled' : '') + '>' + btnLabel + '</button>' +
+          '</div>' +
+          '<div class="variant-props">' +
+            '<span><span class="prop-key">size:</span> <span class="prop-val">"' + size + '"</span></span>' +
+            '<span><span class="prop-key">state:</span> <span class="prop-val">"' + state + '"</span></span>' +
+          '</div>';
+
+        grid.appendChild(card);
+      });
+    });
+
+    // --- Filter Controls ---
+    var activeSize = 'all';
+    var activeState = 'all';
+
+    document.getElementById('sizeControls').addEventListener('click', function(e) {
+      var btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      this.querySelectorAll('.control-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      activeSize = btn.dataset.size;
+      filterVariants();
+    });
+
+    document.getElementById('stateControls').addEventListener('click', function(e) {
+      var btn = e.target.closest('.control-btn');
+      if (!btn) return;
+      this.querySelectorAll('.control-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      activeState = btn.dataset.state;
+      filterVariants();
+    });
+
+    function filterVariants() {
+      document.querySelectorAll('.variant-card').forEach(function(card) {
+        var matchSize = activeSize === 'all' || card.dataset.size === activeSize;
+        var matchState = activeState === 'all' || card.dataset.state === activeState;
+        if (matchSize && matchState) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    }
+
+    // --- Feedback & Review ---
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback,
+        filter: { size: activeSize, state: activeState }
+      };
+      await saveFeedback(data);
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

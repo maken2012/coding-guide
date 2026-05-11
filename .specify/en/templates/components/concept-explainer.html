@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Concept Explainer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .concept-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+      margin-bottom: 32px;
+    }
+
+    /* Diagram area */
+    .diagram-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .diagram-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .diagram-controls button {
+      flex: 1;
+      padding: 8px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .diagram-controls button:hover {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .diagram-controls button.btn-remove:hover {
+      border-color: var(--danger);
+      background: rgba(220, 38, 38, 0.1);
+      color: var(--danger);
+    }
+
+    .diagram-svg-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 320px;
+    }
+
+    .diagram-svg-container svg {
+      width: 300px;
+      height: 300px;
+    }
+
+    .node-circle {
+      fill: var(--primary);
+      stroke: rgba(59, 130, 246, 0.3);
+      stroke-width: 2;
+      cursor: pointer;
+      transition: fill 0.2s;
+    }
+
+    .node-circle:hover {
+      fill: #60a5fa;
+    }
+
+    .node-label {
+      fill: var(--text);
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 600;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+
+    .center-label {
+      fill: var(--text-muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+
+    .connection-line {
+      stroke: var(--border);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 3;
+      transition: stroke 0.3s;
+    }
+
+    /* Explanation panel */
+    .explanation-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .explanation-panel h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .explanation-panel p {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .node-info {
+      margin-top: 16px;
+    }
+
+    .node-info-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .node-info-list {
+      list-style: none;
+    }
+
+    .node-info-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+
+    .node-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .node-count-display {
+      margin-top: 20px;
+      padding: 12px 16px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .node-count-display strong {
+      color: var(--text);
+    }
+
+    /* SLOT:content area */
+    .slot-content {
+      margin-top: 32px;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .concept-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Concept Explainer</h1>
+    <p>An interactive visual diagram to explore the concept and its relationships.</p>
+  </div>
+
+  <div class="container">
+
+    <div class="concept-layout">
+      <!-- Diagram -->
+      <div class="diagram-panel">
+        <div class="diagram-controls">
+          <button onclick="addNode()">+ Add Node</button>
+          <button class="btn-remove" onclick="removeNode()">- Remove Node</button>
+        </div>
+        <div class="diagram-svg-container">
+          <svg id="ringDiagram" viewBox="0 0 300 300"></svg>
+        </div>
+      </div>
+
+      <!-- Explanation -->
+      <div class="explanation-panel">
+        <h2>How It Works</h2>
+        <p>
+          Each node in the ring represents a key component of the system. The dashed lines
+          show relationships and data flow between components and the central concept.
+          Add or remove nodes to explore how the system adapts to different configurations.
+        </p>
+        <p>
+          Nodes are evenly distributed around the ring. As you add more components,
+          the system illustrates how complexity increases and more connections are required
+          to maintain coherence.
+        </p>
+
+        <div class="node-info">
+          <div class="node-info-title">Active Nodes</div>
+          <ul class="node-info-list" id="nodeInfoList"></ul>
+        </div>
+
+        <div class="node-count-display" id="nodeCountDisplay">
+          <strong>0</strong> nodes connected to the central concept.
+        </div>
+      </div>
+    </div>
+
+    <!-- SLOT:content -->
+    <div class="slot-content">
+    </div>
+    <!-- END SLOT -->
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Node data ---
+    var defaultNodes = [
+      { label: 'Auth' },
+      { label: 'Cache' },
+      { label: 'API' },
+      { label: 'Queue' },
+      { label: 'Storage' }
+    ];
+    var extraLabels = ['Logger', 'Metrics', 'Gateway', 'Scheduler', 'Proxy', 'Monitor', 'Config', 'Secrets'];
+    var nodes = defaultNodes.slice();
+    var extraIndex = 0;
+
+    function renderDiagram() {
+      var svg = document.getElementById('ringDiagram');
+      var cx = 150, cy = 150, ringR = 105, nodeR = 22;
+      var count = nodes.length;
+      var html = '';
+
+      // Center circle
+      html += '<circle cx="' + cx + '" cy="' + cy + '" r="30" fill="none" stroke="' + 'var(--border)' + '" stroke-width="1.5" stroke-dasharray="3 3" />';
+      html += '<text x="' + cx + '" y="' + cy + '" class="center-label">Core</text>';
+
+      // Connection lines
+      for (var i = 0; i < count; i++) {
+        var angle = (2 * Math.PI * i / count) - Math.PI / 2;
+        var nx = cx + ringR * Math.cos(angle);
+        var ny = cy + ringR * Math.sin(angle);
+        html += '<line x1="' + cx + '" y1="' + cy + '" x2="' + nx + '" y2="' + ny + '" class="connection-line" />';
+      }
+
+      // Node circles
+      for (var i = 0; i < count; i++) {
+        var angle = (2 * Math.PI * i / count) - Math.PI / 2;
+        var nx = cx + ringR * Math.cos(angle);
+        var ny = cy + ringR * Math.sin(angle);
+        html += '<circle cx="' + nx + '" cy="' + ny + '" r="' + nodeR + '" class="node-circle" />';
+        html += '<text x="' + nx + '" y="' + ny + '" class="node-label">' + nodes[i].label + '</text>';
+      }
+
+      svg.innerHTML = html;
+      updateNodeInfo();
+    }
+
+    function updateNodeInfo() {
+      var list = document.getElementById('nodeInfoList');
+      var display = document.getElementById('nodeCountDisplay');
+      list.innerHTML = '';
+      nodes.forEach(function(n) {
+        var li = document.createElement('li');
+        li.innerHTML = '<span class="node-dot"></span>' + n.label;
+        list.appendChild(li);
+      });
+      display.innerHTML = '<strong>' + nodes.length + '</strong> nodes connected to the central concept.';
+    }
+
+    function addNode() {
+      if (nodes.length >= 12) {
+        showToast('Maximum 12 nodes reached.', 'warning');
+        return;
+      }
+      var label = extraLabels[extraIndex % extraLabels.length];
+      extraIndex++;
+      nodes.push({ label: label });
+      renderDiagram();
+    }
+
+    function removeNode() {
+      if (nodes.length <= 1) {
+        showToast('At least 1 node required.', 'warning');
+        return;
+      }
+      nodes.pop();
+      renderDiagram();
+    }
+
+    // Initial render
+    renderDiagram();
+
+    // --- Feedback mechanism ---
+    function collectDecisions() {
+      var decisions = {};
+      return decisions;
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = { verdict: verdict, timestamp: new Date().toISOString(), decisions: collectDecisions(), feedback: feedback };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="">
+  <meta name="created" content="">
+  <title>Report - Status Report / Incident Review</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    /* Top tab switcher */
+    .top-tabs {
+      display: flex;
+      gap: 0;
+      max-width: 1000px;
+      margin: 0 auto 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .top-tab-btn {
+      flex: 1;
+      padding: 14px 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      text-align: center;
+    }
+
+    .top-tab-btn:hover {
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    .top-tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* Tab content */
+    .tab-content {
+      display: none;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .section {
+      margin-bottom: 36px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Date range header */
+    .date-range {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+
+    .date-range strong {
+      color: var(--text);
+    }
+
+    /* Summary cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .summary-card-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .summary-card-value {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .summary-card-value.shipped { color: var(--success); }
+    .summary-card-value.slipped { color: var(--danger); }
+    .summary-card-value.next { color: var(--primary); }
+
+    /* Bar chart */
+    .bar-chart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .bar-chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-muted);
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .bar-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .bar-label {
+      width: 120px;
+      font-size: 13px;
+      color: var(--text);
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 24px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .bar-fill.green { background: var(--success); }
+    .bar-fill.blue { background: var(--primary); }
+    .bar-fill.red { background: var(--danger); }
+    .bar-fill.yellow { background: var(--warning); color: #000; }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+      padding-left: 20px;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid var(--bg);
+    }
+
+    .timeline-item.done::before {
+      background: var(--success);
+    }
+
+    .timeline-item.in-progress::before {
+      background: var(--warning);
+    }
+
+    .timeline-date {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .timeline-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .timeline-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Incident specifics */
+    .incident-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .incident-id {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .severity-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .severity-badge.sev1 { background: var(--danger); color: #fff; }
+    .severity-badge.sev2 { background: var(--warning); color: #000; }
+    .severity-badge.sev3 { background: var(--primary); color: #fff; }
+    .severity-badge.sev4 { background: var(--border); color: var(--text); }
+
+    /* Impact metrics */
+    .impact-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .impact-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .impact-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .impact-card-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--danger);
+    }
+
+    /* Minute-by-minute timeline */
+    .incident-timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+
+    .incident-timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .incident-timeline-item {
+      position: relative;
+      margin-bottom: 16px;
+      padding-left: 20px;
+    }
+
+    .incident-timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--danger);
+      border: 2px solid var(--bg);
+    }
+
+    .incident-timeline-item.resolved::before {
+      background: var(--success);
+    }
+
+    .incident-timeline-item.detected::before {
+      background: var(--warning);
+    }
+
+    .incident-time {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--primary);
+      margin-bottom: 2px;
+    }
+
+    .incident-event {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .incident-detail {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Root cause */
+    .root-cause-box {
+      background: rgba(220, 38, 38, 0.06);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      border-left: 4px solid var(--danger);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+    }
+
+    .root-cause-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--danger);
+      margin-bottom: 8px;
+    }
+
+    .root-cause-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* Action items checklist */
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .checklist-item:hover {
+      border-color: var(--primary);
+    }
+
+    .checklist-checkbox {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .checklist-checkbox:hover {
+      border-color: var(--primary);
+    }
+
+    .checklist-checkbox:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .checklist-checkbox:checked::after {
+      content: '\2713';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .checklist-text {
+      font-size: 14px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .checklist-text .assignee {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .checklist-item.completed .checklist-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .summary-cards { grid-template-columns: 1fr; }
+      .impact-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top tab switcher -->
+  <div class="top-tabs">
+    <button class="top-tab-btn active" onclick="switchTopTab('status')">Status Report</button>
+    <button class="top-tab-btn" onclick="switchTopTab('incident')">Incident Review</button>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- ===== Status Report Tab ===== -->
+  <div class="tab-content active" id="tab-status">
+
+    <!-- Date range -->
+    <div class="date-range">
+      <strong>2024-01-01</strong> &mdash; <strong>2024-01-31</strong>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="summary-card-label">Shipped</div>
+        <div class="summary-card-value shipped">12</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">Slipped</div>
+        <div class="summary-card-value slipped">3</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">Next</div>
+        <div class="summary-card-value next">5</div>
+      </div>
+    </div>
+
+    <!-- Bar chart -->
+    <div class="section">
+      <h2 class="section-title">Completion Overview</h2>
+      <div class="bar-chart">
+        <div class="bar-chart-title">Tasks by Category</div>
+        <div class="bar-row">
+          <span class="bar-label">Features</span>
+          <div class="bar-track">
+            <div class="bar-fill green" style="width: 70%;">7 / 10</div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Bug Fixes</span>
+          <div class="bar-track">
+            <div class="bar-fill blue" style="width: 90%;">9 / 10</div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Tech Debt</span>
+          <div class="bar-track">
+            <div class="bar-fill yellow" style="width: 40%;">2 / 5</div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Slipped</span>
+          <div class="bar-track">
+            <div class="bar-fill red" style="width: 25%;">3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="section">
+      <h2 class="section-title">Timeline</h2>
+      <div class="timeline">
+        <div class="timeline-item done">
+          <div class="timeline-date">2024-01-05</div>
+          <div class="timeline-title">User authentication module launched</div>
+          <div class="timeline-desc">OAuth2 integration completed, verified in production.</div>
+        </div>
+        <div class="timeline-item done">
+          <div class="timeline-date">2024-01-12</div>
+          <div class="timeline-title">Payment flow optimization</div>
+          <div class="timeline-desc">Checkout flow simplified, conversion rate increased by 15%.</div>
+        </div>
+        <div class="timeline-item in-progress">
+          <div class="timeline-date">2024-01-20</div>
+          <div class="timeline-title">Data export feature</div>
+          <div class="timeline-desc">CSV/Excel export, in development.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">2024-01-28</div>
+          <div class="timeline-title">Performance monitoring dashboard</div>
+          <div class="timeline-desc">Planned, awaiting design mockups.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== Incident Review Tab ===== -->
+  <div class="tab-content" id="tab-incident">
+
+    <!-- Incident header -->
+    <div class="incident-header">
+      <span class="incident-id">INC-2024-001</span>
+      <span class="severity-badge sev1">SEV1</span>
+    </div>
+
+    <!-- Impact metrics -->
+    <div class="section">
+      <h2 class="section-title">Impact Scope</h2>
+      <div class="impact-cards">
+        <div class="impact-card">
+          <div class="impact-card-label">Duration</div>
+          <div class="impact-card-value">47m</div>
+        </div>
+        <div class="impact-card">
+          <div class="impact-card-label">Users Affected</div>
+          <div class="impact-card-value">2.3K</div>
+        </div>
+        <div class="impact-card">
+          <div class="impact-card-label">Error Rate</div>
+          <div class="impact-card-value">12%</div>
+        </div>
+        <div class="impact-card">
+          <div class="impact-card-label">Revenue Loss</div>
+          <div class="impact-card-value">$8.5K</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Minute-by-minute timeline -->
+    <div class="section">
+      <h2 class="section-title">Incident Timeline</h2>
+      <div class="incident-timeline">
+        <div class="incident-timeline-item detected">
+          <div class="incident-time">14:23</div>
+          <div class="incident-event">Alert triggered</div>
+          <div class="incident-detail">Monitoring system detected abnormal API response time increase, error rate exceeded threshold.</div>
+        </div>
+        <div class="incident-timeline-item">
+          <div class="incident-time">14:25</div>
+          <div class="incident-event">On-call engineer paged</div>
+          <div class="incident-detail">On-call engineer received alert and began investigation.</div>
+        </div>
+        <div class="incident-timeline-item">
+          <div class="incident-time">14:32</div>
+          <div class="incident-event">Root cause identified</div>
+          <div class="incident-detail">Database connection pool exhausted, causing request queue timeouts.</div>
+        </div>
+        <div class="incident-timeline-item">
+          <div class="incident-time">14:38</div>
+          <div class="incident-event">Mitigation applied</div>
+          <div class="incident-detail">Temporarily increased connection pool limit, restarted affected services.</div>
+        </div>
+        <div class="incident-timeline-item resolved">
+          <div class="incident-time">15:10</div>
+          <div class="incident-event">Resolved</div>
+          <div class="incident-detail">Error rate returned to normal, monitoring confirmed system stability.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Root cause analysis -->
+    <div class="section">
+      <h2 class="section-title">Root Cause Analysis</h2>
+      <div class="root-cause-box">
+        <div class="root-cause-label">Root Cause</div>
+        <div class="root-cause-text">
+          <p>The database connection pool's maximum connection limit (50) was insufficient to handle burst traffic. The newly launched reporting feature introduced multiple long-running queries that occupied a large number of connections, preventing regular API requests from obtaining database connections.</p>
+          <p style="margin-top: 8px;">The connection pool monitoring alert threshold was set too high, failing to provide early warning before connections were exhausted.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action items -->
+    <div class="section">
+      <h2 class="section-title">Action Items</h2>
+      <ul class="checklist">
+        <li class="checklist-item">
+          <input type="checkbox" class="checklist-checkbox">
+          <span class="checklist-text">
+            Increase database connection pool limit to 200 and configure auto-scaling policy
+            <br><span class="assignee">@backend-team / Due: 2024-02-01</span>
+          </span>
+        </li>
+        <li class="checklist-item">
+          <input type="checkbox" class="checklist-checkbox">
+          <span class="checklist-text">
+            Add timeout limits and connection pool isolation for report queries
+            <br><span class="assignee">@backend-team / Due: 2024-02-03</span>
+          </span>
+        </li>
+        <li class="checklist-item">
+          <input type="checkbox" class="checklist-checkbox">
+          <span class="checklist-text">
+            Lower connection pool alert threshold to 70%
+            <br><span class="assignee">@sre-team / Due: 2024-01-28</span>
+          </span>
+        </li>
+        <li class="checklist-item">
+          <input type="checkbox" class="checklist-checkbox">
+          <span class="checklist-text">
+            Add connection pool utilization dashboard to monitoring panel
+            <br><span class="assignee">@sre-team / Due: 2024-02-05</span>
+          </span>
+        </li>
+        <li class="checklist-item">
+          <input type="checkbox" class="checklist-checkbox">
+          <span class="checklist-text">
+            Write connection pool best practices documentation
+            <br><span class="assignee">@tech-lead / Due: 2024-02-10</span>
+          </span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject ✗</button>
+  </div>
+
+  <script>
+    // --- Top tab switching ---
+    function switchTopTab(tab) {
+      document.querySelectorAll('.top-tab-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(function(content) {
+        content.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    // --- Checklist completion toggle ---
+    document.querySelectorAll('.checklist-checkbox').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var item = this.closest('.checklist-item');
+        if (this.checked) {
+          item.classList.add('completed');
+        } else {
+          item.classList.remove('completed');
+        }
+      });
+    });
+
+    // --- Feedback ---
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var activeTab = document.querySelector('.tab-content.active').id;
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        activeTab: activeTab,
+        feedback: feedback
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="spec">
+  <meta name="created" content="">
+  <title>Design System - Token Reference</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .section {
+      max-width: 1200px;
+      margin: 0 auto 48px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    /* Color palette */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .color-swatch {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+
+    .color-swatch:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .color-swatch:active {
+      transform: translateY(0);
+    }
+
+    .color-preview {
+      height: 80px;
+      display: flex;
+      align-items: flex-end;
+      padding: 8px 12px;
+    }
+
+    .color-preview .color-name {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(0,0,0,0.4);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .color-info {
+      padding: 10px 12px;
+    }
+
+    .color-hex {
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: var(--text);
+    }
+
+    .color-var {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Typography */
+    .type-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .type-row {
+      display: grid;
+      grid-template-columns: 200px 120px 1fr;
+      align-items: baseline;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+
+    .type-sample {
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .type-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .type-meta span {
+      display: block;
+    }
+
+    .type-description {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Spacing */
+    .spacing-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .spacing-row {
+      display: grid;
+      grid-template-columns: 100px 80px 1fr 80px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+
+    .spacing-name {
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .spacing-value {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .spacing-bar-wrapper {
+      height: 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    .spacing-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), rgba(59, 130, 246, 0.3));
+      border-radius: 4px;
+      min-width: 4px;
+    }
+
+    .spacing-px {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    /* Copied toast */
+    .copied-indicator {
+      position: fixed;
+      pointer-events: none;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--success);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 300;
+    }
+
+    .copied-indicator.visible {
+      opacity: 1;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .type-row {
+        grid-template-columns: 1fr;
+      }
+      .spacing-row {
+        grid-template-columns: 80px 60px 1fr 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Design System Tokens</h1>
+    <p>Reference for color palette, typography scale, and spacing values. Click any color to copy.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- Color Palette -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon" style="background:rgba(59,130,246,0.15);color:var(--primary);">C</span>
+      Color Palette
+    </div>
+    <div class="color-grid" id="colorGrid"></div>
+  </div>
+
+  <!-- Typography Scale -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon" style="background:rgba(22,163,74,0.15);color:var(--success);">T</span>
+      Typography Scale
+    </div>
+    <div class="type-scale" id="typeScale"></div>
+  </div>
+
+  <!-- Spacing Scale -->
+  <div class="section">
+    <div class="section-title">
+      <span class="icon" style="background:rgba(245,158,11,0.15);color:var(--warning);">S</span>
+      Spacing Scale
+    </div>
+    <div class="spacing-scale" id="spacingScale"></div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <div class="copied-indicator" id="copiedIndicator">Copied!</div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Color Palette Data ---
+    var colors = [
+      { name: 'Background', var: '--bg', hex: '#0f172a' },
+      { name: 'Surface', var: '--surface', hex: '#1e293b' },
+      { name: 'Border', var: '--border', hex: '#334155' },
+      { name: 'Text', var: '--text', hex: '#e2e8f0' },
+      { name: 'Text Muted', var: '--text-muted', hex: '#94a3b8' },
+      { name: 'Primary', var: '--primary', hex: '#3b82f6' },
+      { name: 'Success', var: '--success', hex: '#16a34a' },
+      { name: 'Danger', var: '--danger', hex: '#dc2626' },
+      { name: 'Warning', var: '--warning', hex: '#f59e0b' },
+    ];
+
+    var colorGrid = document.getElementById('colorGrid');
+    colors.forEach(function(c) {
+      var swatch = document.createElement('div');
+      swatch.className = 'color-swatch';
+      swatch.innerHTML =
+        '<div class="color-preview" style="background:' + c.hex + '">' +
+          '<span class="color-name" style="color:#fff">' + c.name + '</span>' +
+        '</div>' +
+        '<div class="color-info">' +
+          '<div class="color-hex">' + c.hex + '</div>' +
+          '<div class="color-var">' + c.var + '</div>' +
+        '</div>';
+      swatch.addEventListener('click', function(e) {
+        copyToClipboard(c.hex, e);
+      });
+      colorGrid.appendChild(swatch);
+    });
+
+    // --- Typography Scale Data ---
+    var typeScale = [
+      { name: 'Display', size: '36px', weight: 800, desc: 'Hero headings' },
+      { name: 'H1', size: '28px', weight: 700, desc: 'Page titles' },
+      { name: 'H2', size: '22px', weight: 700, desc: 'Section headings' },
+      { name: 'H3', size: '18px', weight: 600, desc: 'Sub-sections' },
+      { name: 'Body', size: '15px', weight: 400, desc: 'Paragraph text' },
+      { name: 'Body Sm', size: '14px', weight: 400, desc: 'Secondary text' },
+      { name: 'Caption', size: '12px', weight: 500, desc: 'Labels and hints' },
+      { name: 'Micro', size: '11px', weight: 600, desc: 'Badges and tags' },
+    ];
+
+    var typeEl = document.getElementById('typeScale');
+    typeScale.forEach(function(t) {
+      var row = document.createElement('div');
+      row.className = 'type-row';
+      row.innerHTML =
+        '<span class="type-sample" style="font-size:' + t.size + ';font-weight:' + t.weight + '">' + t.name + '</span>' +
+        '<div class="type-meta"><span>' + t.size + '</span><span>weight ' + t.weight + '</span></div>' +
+        '<span class="type-description">' + t.desc + '</span>';
+      typeEl.appendChild(row);
+    });
+
+    // --- Spacing Scale Data ---
+    var spacingScale = [
+      { name: 'xs', value: '4px', px: 4 },
+      { name: 'sm', value: '8px', px: 8 },
+      { name: 'md', value: '16px', px: 16 },
+      { name: 'lg', value: '24px', px: 24 },
+      { name: 'xl', value: '32px', px: 32 },
+      { name: '2xl', value: '48px', px: 48 },
+      { name: '3xl', value: '64px', px: 64 },
+    ];
+
+    var spacingEl = document.getElementById('spacingScale');
+    var maxPx = 64;
+    spacingScale.forEach(function(s) {
+      var row = document.createElement('div');
+      row.className = 'spacing-row';
+      var barWidth = Math.max(4, (s.px / maxPx) * 100);
+      row.innerHTML =
+        '<span class="spacing-name">' + s.name + '</span>' +
+        '<span class="spacing-value">' + s.value + '</span>' +
+        '<div class="spacing-bar-wrapper"><div class="spacing-bar" style="width:' + barWidth + '%"></div></div>' +
+        '<span class="spacing-px">' + s.px + 'px</span>';
+      spacingEl.appendChild(row);
+    });
+
+    // --- Copy to Clipboard ---
+    function copyToClipboard(text, event) {
+      navigator.clipboard.writeText(text).then(function() {
+        var indicator = document.getElementById('copiedIndicator');
+        indicator.textContent = 'Copied: ' + text;
+        if (event) {
+          var rect = event.target.closest('.color-swatch').getBoundingClientRect();
+          indicator.style.left = rect.left + 'px';
+          indicator.style.top = (rect.top - 30) + 'px';
+        }
+        indicator.classList.add('visible');
+        setTimeout(function() {
+          indicator.classList.remove('visible');
+        }, 1200);
+      }).catch(function() {
+        showToast('Copy failed', 'error');
+      });
+    }
+
+    // --- Feedback & Review ---
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback
+      };
+      await saveFeedback(data);
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

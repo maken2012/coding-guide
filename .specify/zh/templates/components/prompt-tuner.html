@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Prompt Tuner</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Split pane */
+    .split-pane {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .pane {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pane-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* Editor */
+    .editor-pane textarea {
+      width: 100%;
+      height: 500px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    .editor-pane textarea::placeholder {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .editor-pane textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .var-hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .var-hint code {
+      background: var(--surface);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--primary);
+    }
+
+    /* Preview */
+    .preview-pane {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sample-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 0;
+    }
+
+    .sample-tab {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: color 0.2s, background 0.2s;
+      margin-right: -1px;
+    }
+
+    .sample-tab:hover {
+      color: var(--text);
+    }
+
+    .sample-tab.active {
+      color: var(--primary);
+      background: var(--bg);
+      border-bottom-color: var(--bg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .preview-output {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 18px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      min-height: 450px;
+    }
+
+    .preview-output .placeholder-text {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    /* SLOT:content area */
+    .slot-content { margin-top: 32px; }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .split-pane {
+        grid-template-columns: 1fr;
+      }
+      .editor-pane textarea {
+        height: 250px;
+      }
+      .preview-output {
+        min-height: 250px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Prompt Tuner</h1>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="copyTemplate()">Copy Template</button>
+    </div>
+  </div>
+
+  <!-- SLOT:content -->
+  <div class="split-pane">
+
+    <!-- Left: Editor -->
+    <div class="pane editor-pane">
+      <div class="pane-title">Prompt Template</div>
+      <textarea id="templateEditor" placeholder="Write your prompt template here...&#10;&#10;Use {{variable}} for placeholders." oninput="updatePreview()">You are a {{role}} assistant specialized in {{domain}}.
+
+Your task: {{task}}
+
+Guidelines:
+- Tone: {{tone}}
+- Audience: {{audience}}
+- Format: {{format}}
+
+Context: {{context}}
+
+Begin your response now.</textarea>
+      <div class="var-hint">
+        Use <code>{{variable}}</code> syntax for template placeholders.
+      </div>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="pane preview-pane">
+      <div class="pane-title">Live Preview</div>
+      <div class="sample-tabs">
+        <button class="sample-tab active" onclick="switchSample(this, 0)">Sample 1</button>
+        <button class="sample-tab" onclick="switchSample(this, 1)">Sample 2</button>
+        <button class="sample-tab" onclick="switchSample(this, 2)">Sample 3</button>
+      </div>
+      <div class="preview-output" id="previewOutput">
+        <span class="placeholder-text">Preview will appear here as you type...</span>
+      </div>
+    </div>
+
+  </div>
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Sample inputs ---
+    var samples = [
+      {
+        role: 'senior technical writing',
+        domain: 'software documentation',
+        task: 'Write a getting started guide for the new REST API v2',
+        tone: 'professional but approachable',
+        audience: 'developers with basic HTTP knowledge',
+        format: 'step-by-step with code examples',
+        context: 'The API was recently redesigned with OAuth2 authentication. Previous v1 users need migration guidance.'
+      },
+      {
+        role: 'creative copywriting',
+        domain: 'product marketing',
+        task: 'Create landing page copy for the new team collaboration feature',
+        tone: 'energetic and persuasive',
+        audience: 'CTOs and engineering managers at mid-size companies',
+        format: 'headline, subheadline, 3 benefit sections, and CTA',
+        context: 'Competitor launched a similar feature last quarter. We differentiate on real-time editing and async support.'
+      },
+      {
+        role: 'analytical data science',
+        domain: 'business intelligence',
+        task: 'Summarize Q1 revenue trends and identify top 3 growth opportunities',
+        tone: 'objective and data-driven',
+        audience: 'executive leadership team',
+        format: 'executive summary with supporting bullet points',
+        context: 'Q1 revenue grew 12% YoY but missed target by 3%. Enterprise segment outperformed; SMB segment declined.'
+      }
+    ];
+
+    var currentSample = 0;
+
+    function switchSample(btn, index) {
+      document.querySelectorAll('.sample-tab').forEach(function(t) { t.classList.remove('active'); });
+      btn.classList.add('active');
+      currentSample = index;
+      updatePreview();
+    }
+
+    function updatePreview() {
+      var template = document.getElementById('templateEditor').value;
+      var output = document.getElementById('previewOutput');
+      var data = samples[currentSample];
+
+      if (!template.trim()) {
+        output.innerHTML = '<span class="placeholder-text">Preview will appear here as you type...</span>';
+        return;
+      }
+
+      var rendered = template;
+      var matches = template.match(/\{\{(\w+)\}\}/g);
+      if (matches) {
+        matches.forEach(function(match) {
+          var key = match.replace(/\{\{|\}\}/g, '');
+          var value = data[key] || match;
+          rendered = rendered.replace(match, value);
+        });
+      }
+
+      // Escape HTML for safe display
+      rendered = rendered.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      output.textContent = rendered;
+    }
+
+    // --- Copy Template ---
+    function copyTemplate() {
+      var template = document.getElementById('templateEditor').value;
+      if (!template.trim()) {
+        showToast('Template is empty.', 'warning');
+        return;
+      }
+      navigator.clipboard.writeText(template).then(function() {
+        showToast('Template copied to clipboard.', 'success');
+      }).catch(function() {
+        showToast('Could not copy to clipboard.', 'error');
+      });
+    }
+
+    // --- Feedback mechanism ---
+    function collectDecisions() {
+      return {
+        template: document.getElementById('templateEditor').value,
+        sampleIndex: currentSample
+      };
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = { verdict: verdict, timestamp: new Date().toISOString(), decisions: collectDecisions(), feedback: feedback };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+
+    // Initial preview
+    updatePreview();
+  </script>
+
+</body>
+</html>

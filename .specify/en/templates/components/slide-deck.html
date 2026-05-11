@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Slide Deck - Presentation</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Slide container */
+    .slide-deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 80px;
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+
+    /* Slide content styles */
+    .slide-number {
+      position: absolute;
+      top: 32px;
+      left: 40px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .slide-title {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+      text-align: center;
+      max-width: 900px;
+      line-height: 1.15;
+    }
+
+    .slide-subtitle {
+      font-size: 20px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 700px;
+      margin-bottom: 48px;
+      line-height: 1.6;
+    }
+
+    .slide-content {
+      max-width: 800px;
+      width: 100%;
+      text-align: left;
+    }
+
+    .slide-content p {
+      font-size: 18px;
+      color: var(--text);
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    .slide-content ul {
+      list-style: none;
+      margin-bottom: 16px;
+    }
+
+    .slide-content ul li {
+      font-size: 17px;
+      padding: 8px 0 8px 28px;
+      position: relative;
+      color: var(--text);
+    }
+
+    .slide-content ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 18px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    /* Feature grid for one slide */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 24px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .feature-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .feature-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Timeline slide */
+    .timeline {
+      display: flex;
+      gap: 0;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 24px;
+    }
+
+    .timeline-item {
+      flex: 1;
+      text-align: center;
+      position: relative;
+      padding: 0 12px;
+    }
+
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      right: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+    }
+
+    .timeline-item:last-child::after {
+      display: none;
+    }
+
+    .timeline-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      position: relative;
+      z-index: 1;
+    }
+
+    .timeline-item h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .timeline-item p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Thank you slide */
+    .thank-you {
+      text-align: center;
+    }
+
+    .thank-you h1 {
+      font-size: 64px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 16px;
+    }
+
+    .thank-you p {
+      font-size: 20px;
+      color: var(--text-muted);
+    }
+
+    /* Slide counter */
+    .slide-counter {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 16px;
+      z-index: 50;
+    }
+
+    /* Navigation arrows */
+    .nav-arrows {
+      position: fixed;
+      bottom: 24px;
+      right: 40px;
+      display: flex;
+      gap: 8px;
+      z-index: 50;
+    }
+
+    .nav-arrow {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .nav-arrow:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .nav-arrow:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-arrow:disabled:hover {
+      background: var(--surface);
+      border-color: var(--border);
+    }
+
+    /* Feedback overlay */
+    .feedback-overlay {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: none;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .feedback-overlay.visible {
+      display: flex;
+    }
+
+    .feedback-overlay .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .feedback-overlay .feedback-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .feedback-overlay .feedback-input:focus { outline: none; border-color: var(--primary); }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Feedback toggle */
+    .feedback-toggle {
+      position: fixed;
+      bottom: 24px;
+      left: 40px;
+      z-index: 50;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .feedback-toggle:hover {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .slide { padding: 40px 24px; }
+      .slide-title { font-size: 32px; }
+      .slide-subtitle { font-size: 16px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .timeline { flex-direction: column; gap: 16px; }
+      .timeline-item::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slide-deck" id="slideDeck">
+
+    <!-- SLOT:content -->
+
+    <!-- Slide 1: Title -->
+    <section class="slide active" data-slide="0">
+      <span class="slide-number">Slide 1 / 5</span>
+      <div class="slide-title">Product Roadmap 2026</div>
+      <div class="slide-subtitle">A comprehensive plan for delivering the next generation of features, improving platform reliability, and scaling our infrastructure.</div>
+    </section>
+
+    <!-- Slide 2: Problem -->
+    <section class="slide" data-slide="1">
+      <span class="slide-number">Slide 2 / 5</span>
+      <div class="slide-title">Current Challenges</div>
+      <div class="slide-subtitle">Key areas that need improvement</div>
+      <div class="slide-content">
+        <ul>
+          <li>Onboarding flow has a 60% drop-off rate at step 3</li>
+          <li>API response times exceed 2s during peak hours</li>
+          <li>Mobile experience lacks feature parity with desktop</li>
+          <li>Customer support ticket volume has increased 3x in 6 months</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Slide 3: Features -->
+    <section class="slide" data-slide="2">
+      <span class="slide-number">Slide 3 / 5</span>
+      <div class="slide-title">Key Features</div>
+      <div class="slide-subtitle">Three pillars of the next release</div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(59,130,246,0.15);color:var(--primary);">1</div>
+          <h3>Smart Onboarding</h3>
+          <p>Adaptive flow that personalizes based on user role and intent, reducing drop-off.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(22,163,74,0.15);color:var(--success);">2</div>
+          <h3>Performance Layer</h3>
+          <p>Edge caching, query optimization, and lazy loading to achieve sub-500ms responses.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(245,158,11,0.15);color:var(--warning);">3</div>
+          <h3>AI Assistant</h3>
+          <p>Context-aware help that resolves common issues before they become support tickets.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Timeline -->
+    <section class="slide" data-slide="3">
+      <span class="slide-number">Slide 4 / 5</span>
+      <div class="slide-title">Timeline</div>
+      <div class="slide-subtitle">Phased delivery across four quarters</div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot">Q1</div>
+          <h4>Foundation</h4>
+          <p>Infrastructure upgrades, onboarding redesign, API optimization</p>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">Q2</div>
+          <h4>Build</h4>
+          <p>Smart onboarding launch, performance benchmarks, mobile parity</p>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">Q3</div>
+          <h4>Enhance</h4>
+          <p>AI assistant beta, advanced analytics, enterprise features</p>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">Q4</div>
+          <h4>Scale</h4>
+          <p>Global rollout, AI assistant GA, platform extensibility</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: Thank You -->
+    <section class="slide" data-slide="4">
+      <span class="slide-number">Slide 5 / 5</span>
+      <div class="thank-you">
+        <h1>Thank You</h1>
+        <p>Questions and feedback are welcome.</p>
+      </div>
+    </section>
+
+    <!-- END SLOT -->
+
+  </div>
+
+  <!-- Slide Counter -->
+  <div class="slide-counter" id="slideCounter">1 / 5</div>
+
+  <!-- Navigation Arrows -->
+  <div class="nav-arrows">
+    <button class="nav-arrow" id="prevBtn" onclick="prevSlide()" disabled>&#8592;</button>
+    <button class="nav-arrow" id="nextBtn" onclick="nextSlide()">&#8594;</button>
+  </div>
+
+  <!-- Feedback Toggle -->
+  <button class="feedback-toggle" onclick="toggleFeedback()">Feedback</button>
+
+  <!-- Feedback Overlay -->
+  <div class="feedback-overlay" id="feedbackOverlay">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    var currentSlide = 0;
+    var slides = document.querySelectorAll('.slide');
+    var totalSlides = slides.length;
+
+    // --- Keyboard Navigation ---
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+
+    function goToSlide(index) {
+      if (index < 0 || index >= totalSlides || index === currentSlide) return;
+
+      var direction = index > currentSlide ? 1 : -1;
+
+      // Exit current
+      slides[currentSlide].classList.remove('active');
+      slides[currentSlide].classList.add(direction > 0 ? 'exit-left' : '');
+      if (direction < 0) {
+        slides[currentSlide].style.transform = 'translateX(40px)';
+      }
+
+      // Enter new
+      slides[index].classList.add('active');
+
+      currentSlide = index;
+      updateCounter();
+      updateNavButtons();
+    }
+
+    function nextSlide() {
+      goToSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      goToSlide(currentSlide - 1);
+    }
+
+    function updateCounter() {
+      document.getElementById('slideCounter').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    }
+
+    function updateNavButtons() {
+      document.getElementById('prevBtn').disabled = currentSlide === 0;
+      document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+    }
+
+    // --- Feedback ---
+    function toggleFeedback() {
+      var overlay = document.getElementById('feedbackOverlay');
+      overlay.classList.toggle('visible');
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback,
+        currentSlide: currentSlide
+      };
+      await saveFeedback(data);
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

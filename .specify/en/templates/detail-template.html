@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="detail">
+  <meta name="created" content="">
+  <title>Requirement Details</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .badges {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-spec {
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .badge-spec:hover {
+      opacity: 0.85;
+    }
+
+    .badge-phase {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .icon {
+      font-size: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--bg);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .tag-required {
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .tag-optional {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .tag-type {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* Flowchart placeholder */
+    .flowchart-placeholder {
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Numbered rules */
+    .rule-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .rule-list li {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--primary);
+      font-size: 14px;
+    }
+
+    .rule-list li .rule-number {
+      font-weight: 700;
+      color: var(--primary);
+      margin-right: 8px;
+    }
+
+    .rule-list li .condition {
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    .rule-list li .action {
+      color: var(--text);
+    }
+
+    /* Constraint bullets */
+    .constraint-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .constraint-list li {
+      padding: 10px 16px 10px 28px;
+      position: relative;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .constraint-list li:last-child {
+      border-bottom: none;
+    }
+
+    .constraint-list li::before {
+      content: '\25B6';
+      position: absolute;
+      left: 8px;
+      color: var(--warning);
+      font-size: 10px;
+      top: 12px;
+    }
+
+    /* SLOT marker */
+    .slot-marker {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
+      text-align: center;
+      padding: 8px;
+      opacity: 0.5;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1 id="featureName">[Feature Name]</h1>
+    <p>Requirement Details - Detailed definition of inputs/outputs, interaction flows, business rules, and constraints</p>
+    <div class="badges">
+      <a href="#" class="badge badge-spec">Spec</a>
+      <span class="badge badge-phase">Detail</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Input/Output Definition -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x21A0;</span>
+        Input/Output Definition
+      </div>
+      <!-- SLOT:content - input-output -->
+      <table>
+        <thead>
+          <tr>
+            <th>Input / Output</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag-type">Input</span></td>
+            <td>userId</td>
+            <td><span class="tag-type">string</span></td>
+            <td>Unique user identifier</td>
+            <td><span class="tag-required">Yes</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag-type">Input</span></td>
+            <td>filter</td>
+            <td><span class="tag-type">object</span></td>
+            <td>Filter criteria</td>
+            <td><span class="tag-optional">No</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag-type">Output</span></td>
+            <td>data</td>
+            <td><span class="tag-type">array</span></td>
+            <td>Returned data list</td>
+            <td><span class="tag-required">Yes</span></td>
+          </tr>
+          <tr>
+            <td><span class="tag-type">Output</span></td>
+            <td>total</td>
+            <td><span class="tag-type">number</span></td>
+            <td>Total record count</td>
+            <td><span class="tag-required">Yes</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="slot-marker">SLOT:content - input-output</div>
+    </div>
+
+    <!-- Interaction Flow -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x27A4;</span>
+        Interaction Flow
+      </div>
+      <!-- SLOT:content - interaction-flow -->
+      <div class="flowchart-placeholder">
+        [flowchart-diagram component: Interaction flow diagram placeholder area]
+      </div>
+      <div class="slot-marker">SLOT:content - interaction-flow</div>
+    </div>
+
+    <!-- Business Rules -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x2699;</span>
+        Business Rules
+      </div>
+      <!-- SLOT:content - business-rules -->
+      <ol class="rule-list">
+        <li>
+          <span class="rule-number">R1.</span>
+          <span class="condition">When the user is not logged in</span>
+          <span class="action"> &rarr; redirect to the login page and save the original request path</span>
+        </li>
+        <li>
+          <span class="rule-number">R2.</span>
+          <span class="condition">When request data exceeds pagination limit</span>
+          <span class="action"> &rarr; return maximum paginated data with a warning message</span>
+        </li>
+        <li>
+          <span class="rule-number">R3.</span>
+          <span class="condition">When concurrent requests exceed the threshold</span>
+          <span class="action"> &rarr; trigger rate limiting and return a 429 status code</span>
+        </li>
+      </ol>
+      <div class="slot-marker">SLOT:content - business-rules</div>
+    </div>
+
+    <!-- Error Handling -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x26A0;</span>
+        Error Handling
+      </div>
+      <!-- SLOT:content - error-handling -->
+      <table>
+        <thead>
+          <tr>
+            <th>Error Code</th>
+            <th>Scenario</th>
+            <th>Response</th>
+            <th>Retry Strategy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color: var(--danger); font-weight: 600;">ERR_401</span></td>
+            <td>Authentication failed / Token expired</td>
+            <td>Return 401, guide user to re-login</td>
+            <td>Not retryable, requires re-authentication</td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--warning); font-weight: 600;">ERR_429</span></td>
+            <td>Request rate exceeded</td>
+            <td>Return 429 with Retry-After header</td>
+            <td>Exponential backoff retry</td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--danger); font-weight: 600;">ERR_500</span></td>
+            <td>Server internal error</td>
+            <td>Return 500, log error details</td>
+            <td>Up to 3 exponential backoff retries</td>
+          </tr>
+          <tr>
+            <td><span style="color: var(--warning); font-weight: 600;">ERR_TIMEOUT</span></td>
+            <td>Request timeout</td>
+            <td>Return 504, indicate network error</td>
+            <td>Linear retry, 2s interval</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="slot-marker">SLOT:content - error-handling</div>
+    </div>
+
+    <!-- Constraints -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x1F6AB;</span>
+        Constraints
+      </div>
+      <!-- SLOT:content - constraints -->
+      <ul class="constraint-list">
+        <li>Single request data size must not exceed 10MB</li>
+        <li>List query pagination limit is 100 records per page</li>
+        <li>API response time P99 must be under 500ms</li>
+        <li>All sensitive fields must be transmitted with TLS encryption</li>
+        <li>Data storage must comply with GDPR requirements</li>
+      </ul>
+      <div class="slot-marker">SLOT:content - constraints</div>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve &#x2713;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject &#x2717;</button>
+  </div>
+
+  <script>
+    /**
+     * Collects all decisions from [data-decision] elements.
+     * Returns an object mapping decision names to their selected values.
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    /**
+     * Saves feedback data. Tries the File System Access API first,
+     * falls back to copying JSON to clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{
+              description: 'JSON File',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('Save cancelled.', 'warning');
+            return;
+          }
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Collects decisions and feedback, then saves.
+     * @param {string} verdict - 'approved' or 'rejected'
+     */
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+      var feedback = document.getElementById('feedbackInput').value.trim();
+
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        phase: 'detail',
+        decisions: decisions,
+        feedback: feedback
+      };
+
+      await saveFeedback(data);
+    }
+
+    /**
+     * Shows a notification toast.
+     * @param {string} msg - Message to display
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

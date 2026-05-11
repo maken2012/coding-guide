@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="design">
+  <meta name="created" content="">
+  <title>Business Flow Design</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .icon {
+      font-size: 20px;
+    }
+
+    /* Flowchart placeholder */
+    .flowchart-area {
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      min-height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Sequence diagram */
+    .sequence-diagram {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      position: relative;
+      padding: 24px 16px;
+      overflow-x: auto;
+    }
+
+    .sequence-lane {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 160px;
+      flex: 1;
+    }
+
+    .sequence-actor {
+      background: var(--primary);
+      color: #fff;
+      padding: 8px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 16px;
+      white-space: nowrap;
+    }
+
+    .sequence-lifeline {
+      width: 2px;
+      background: var(--border);
+      flex: 1;
+      min-height: 200px;
+      position: relative;
+    }
+
+    .sequence-message {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .sequence-message.request {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .sequence-message.response {
+      background: rgba(22, 163, 74, 0.15);
+      color: var(--success);
+      border: 1px dashed var(--success);
+    }
+
+    /* State transition table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--bg);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .state-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .state-badge.idle { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+    .state-badge.active { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+    .state-badge.success { background: rgba(22, 163, 74, 0.2); color: var(--success); }
+    .state-badge.error { background: rgba(220, 38, 38, 0.2); color: var(--danger); }
+    .state-badge.pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+    /* Critical path callout */
+    .callout {
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .callout-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .callout-content {
+      flex: 1;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .callout-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .callout.critical {
+      background: rgba(220, 38, 38, 0.1);
+      border-left: 4px solid var(--danger);
+    }
+
+    .callout.critical .callout-title { color: var(--danger); }
+
+    .callout.warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid var(--warning);
+    }
+
+    .callout.warning .callout-title { color: var(--warning); }
+
+    .callout.info {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 4px solid var(--primary);
+    }
+
+    .callout.info .callout-title { color: var(--primary); }
+
+    .slot-marker {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-style: italic;
+      text-align: center;
+      padding: 8px;
+      opacity: 0.5;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Business Flow Design</h1>
+    <p>Define system-level flow, sequence interactions, state machines, and critical paths</p>
+  </div>
+
+  <div class="container">
+
+    <!-- Overall Flowchart -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x25CE;</span>
+        Overall Flowchart
+      </div>
+      <!-- SLOT:content - overall-flow -->
+      <div class="flowchart-area">
+        [flowchart-diagram component: Overall business flowchart - large placeholder area]
+      </div>
+      <div class="slot-marker">SLOT:content - overall-flow</div>
+    </div>
+
+    <!-- Sequence Diagram -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x2935;</span>
+        Sequence Diagram
+      </div>
+      <!-- SLOT:content - sequence-diagram -->
+      <div class="sequence-diagram">
+        <div class="sequence-lane">
+          <div class="sequence-actor">Client</div>
+          <div class="sequence-lifeline">
+            <div class="sequence-message request" style="top: 20px;">POST /api/order</div>
+          </div>
+        </div>
+        <div class="sequence-lane">
+          <div class="sequence-actor">API Gateway</div>
+          <div class="sequence-lifeline">
+            <div class="sequence-message request" style="top: 20px;">Auth + Route</div>
+          </div>
+        </div>
+        <div class="sequence-lane">
+          <div class="sequence-actor">Order Service</div>
+          <div class="sequence-lifeline">
+            <div class="sequence-message request" style="top: 20px;">Create Order</div>
+          </div>
+        </div>
+        <div class="sequence-lane">
+          <div class="sequence-actor">Database</div>
+          <div class="sequence-lifeline">
+            <div class="sequence-message response" style="top: 60px;">INSERT + Confirm</div>
+          </div>
+        </div>
+      </div>
+      <div class="slot-marker">SLOT:content - sequence-diagram</div>
+    </div>
+
+    <!-- State Machine -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x27F3;</span>
+        State Machine
+      </div>
+      <!-- SLOT:content - state-machine -->
+      <table>
+        <thead>
+          <tr>
+            <th>Current State</th>
+            <th>Event</th>
+            <th>Next State</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="state-badge idle">idle</span></td>
+            <td>user_submit</td>
+            <td><span class="state-badge pending">pending</span></td>
+            <td>Create order, send confirmation email</td>
+          </tr>
+          <tr>
+            <td><span class="state-badge pending">pending</span></td>
+            <td>payment_success</td>
+            <td><span class="state-badge active">processing</span></td>
+            <td>Trigger processing flow, notify warehouse</td>
+          </tr>
+          <tr>
+            <td><span class="state-badge pending">pending</span></td>
+            <td>payment_failed</td>
+            <td><span class="state-badge error">failed</span></td>
+            <td>Mark as failed, send notification to user</td>
+          </tr>
+          <tr>
+            <td><span class="state-badge active">processing</span></td>
+            <td>shipment_complete</td>
+            <td><span class="state-badge success">completed</span></td>
+            <td>Complete order, update inventory</td>
+          </tr>
+          <tr>
+            <td><span class="state-badge active">processing</span></td>
+            <td>timeout</td>
+            <td><span class="state-badge error">error</span></td>
+            <td>Trigger alert, escalate for manual intervention</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="slot-marker">SLOT:content - state-machine</div>
+    </div>
+
+    <!-- Critical Path Annotations -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">&#x26A1;</span>
+        Critical Path Annotations
+      </div>
+      <!-- SLOT:content - critical-paths -->
+      <div class="callout critical">
+        <span class="callout-icon">&#x1F534;</span>
+        <div class="callout-content">
+          <div class="callout-title">Payment Callback Critical Path</div>
+          <div class="callout-desc">Payment callbacks must respond within 3 seconds; timeouts will trigger duplicate callbacks. Implement idempotent handling and fast response mechanisms.</div>
+        </div>
+      </div>
+      <div class="callout warning">
+        <span class="callout-icon">&#x1F7E1;</span>
+        <div class="callout-content">
+          <div class="callout-title">Inventory Deduction Race Condition</div>
+          <div class="callout-desc">Under high concurrency, inventory deduction may cause overselling. Use distributed locks or database optimistic locking to ensure consistency.</div>
+        </div>
+      </div>
+      <div class="callout info">
+        <span class="callout-icon">&#x1F535;</span>
+        <div class="callout-content">
+          <div class="callout-title">Async Notification Chain</div>
+          <div class="callout-desc">Order status changes must notify downstream systems. Use message queues for decoupling to ensure eventual consistency.</div>
+        </div>
+      </div>
+      <div class="slot-marker">SLOT:content - critical-paths</div>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve &#x2713;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject &#x2717;</button>
+  </div>
+
+  <script>
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        phase: 'design',
+        decisions: decisions,
+        feedback: feedback
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) { toast.parentNode.removeChild(toast); }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

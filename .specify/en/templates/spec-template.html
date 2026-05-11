@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="spec">
+  <meta name="created" content="">
+  <title>Spec Template</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    /* ===== Page Header ===== */
+    .page-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .header-row h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      flex: 1;
+    }
+
+    .header-row h1[contenteditable="true"] {
+      outline: none;
+      border-bottom: 2px dashed var(--border);
+      padding-bottom: 2px;
+      transition: border-color 0.2s;
+    }
+
+    .header-row h1[contenteditable="true"]:focus {
+      border-bottom-color: var(--primary);
+    }
+
+    .id-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .phase-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--primary);
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Sections ===== */
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .section-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(59,130,246,0.15);
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .section-body {
+      padding-left: 4px;
+    }
+
+    .placeholder {
+      color: var(--text-muted);
+      opacity: 0.5;
+      font-style: italic;
+      padding: 12px 0;
+    }
+
+    /* ===== User Story ===== */
+    .user-story {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+
+    .user-story-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .story-id {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: monospace;
+    }
+
+    .story-text {
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .story-text .role { color: var(--warning); font-weight: 600; }
+    .story-text .action { color: var(--primary); font-weight: 600; }
+    .story-text .purpose { color: var(--success); font-weight: 600; }
+
+    .acceptance-criteria {
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .acceptance-criteria-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .criteria-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .criteria-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 14px;
+      padding: 4px 0;
+    }
+
+    .criteria-list li input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: border-color 0.2s;
+    }
+
+    .criteria-list li input[type="checkbox"]:checked {
+      border-color: var(--success);
+      background: var(--success);
+    }
+
+    .criteria-list li input[type="checkbox"]:checked::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 8px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin: 0px auto;
+    }
+
+    /* ===== Clarification ===== */
+    .clarification-area {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      min-height: 80px;
+    }
+
+    .clarification-area .placeholder {
+      text-align: center;
+    }
+
+    /* ===== Review bar ===== */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* ===== Toast ===== */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-row">
+      <h1 contenteditable="true">SLOT:feature_name</h1>
+      <span class="id-badge">SLOT:id</span>
+      <span class="phase-badge">spec</span>
+    </div>
+    <div class="header-meta">SLOT:date</div>
+  </div>
+
+  <!-- Section: Overview -->
+  <div class="section">
+    <div class="section-title">Overview <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+      <p class="placeholder">SLOT:summary — A one-sentence description of the feature goal</p>
+    </div>
+  </div>
+
+  <!-- Section: Background & Motivation -->
+  <div class="section">
+    <div class="section-title">Background & Motivation <span class="section-tag">WHY</span></div>
+    <div class="section-body">
+      <p class="placeholder">SLOT:content — Why is this feature needed? What problem does it solve?</p>
+    </div>
+  </div>
+
+  <!-- Section: Functional Requirements -->
+  <div class="section">
+    <div class="section-title">Functional Requirements <span class="section-tag">WHAT</span></div>
+    <div class="section-body">
+
+      <!-- SLOT:content — User stories -->
+      <div class="user-story">
+        <div class="user-story-header">
+          <span class="story-id">US1</span>
+        </div>
+        <div class="story-text">
+          As a <span class="role">SLOT:role</span>, I want to <span class="action">SLOT:action</span>, so that <span class="purpose">SLOT:purpose</span>.
+        </div>
+        <div class="acceptance-criteria">
+          <div class="acceptance-criteria-title">Acceptance Criteria</div>
+          <ul class="criteria-list">
+            <li><input type="checkbox"> SLOT:criterion_1</li>
+            <li><input type="checkbox"> SLOT:criterion_2</li>
+            <li><input type="checkbox"> SLOT:criterion_3</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="user-story">
+        <div class="user-story-header">
+          <span class="story-id">US2</span>
+        </div>
+        <div class="story-text">
+          As a <span class="role">SLOT:role</span>, I want to <span class="action">SLOT:action</span>, so that <span class="purpose">SLOT:purpose</span>.
+        </div>
+        <div class="acceptance-criteria">
+          <div class="acceptance-criteria-title">Acceptance Criteria</div>
+          <ul class="criteria-list">
+            <li><input type="checkbox"> SLOT:criterion_1</li>
+            <li><input type="checkbox"> SLOT:criterion_2</li>
+          </ul>
+        </div>
+      </div>
+      <!-- END SLOT:content -->
+
+    </div>
+  </div>
+
+  <!-- Section: Non-Functional Requirements -->
+  <div class="section">
+    <div class="section-title">Non-Functional Requirements</div>
+    <div class="section-body">
+      <p class="placeholder">SLOT:content — Performance, security, usability and other non-functional requirements</p>
+    </div>
+  </div>
+
+  <!-- Section: Constraints & Assumptions -->
+  <div class="section">
+    <div class="section-title">Constraints & Assumptions</div>
+    <div class="section-body">
+      <p class="placeholder">SLOT:content — Technical constraints, business constraints, and assumptions</p>
+    </div>
+  </div>
+
+  <!-- Section: Clarification -->
+  <div class="section">
+    <div class="section-title">Clarification Log <span class="section-tag">/spec-clarify</span></div>
+    <div class="clarification-area">
+      <p class="placeholder">SLOT:content — This area displays clarification Q&A output from the /spec-clarify command</p>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Collects decisions from the page (checkboxes, editable areas).
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var checked = [];
+      document.querySelectorAll('.criteria-list input[type="checkbox"]').forEach(function(cb) {
+        if (cb.checked) {
+          checked.push(cb.closest('li').textContent.trim());
+        }
+      });
+      decisions.checked_criteria = checked;
+      decisions.feature_name = document.querySelector('.header-row h1').textContent.trim();
+      return decisions;
+    }
+
+    /**
+     * Save feedback data to file or clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-spec-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Submit a verdict with feedback.
+     */
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var decisions = collectDecisions();
+      var data = {
+        type: 'verdict',
+        phase: 'spec',
+        verdict: verdict,
+        feedback: feedback,
+        decisions: decisions,
+        timestamp: new Date().toISOString()
+      };
+      window.parent.postMessage(data, '*');
+      await saveFeedback(data);
+    }
+
+    /**
+     * Show a toast notification.
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 3500);
+    }
+
+    // Listen for verdict messages from parent
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'verdict') {
+        showToast('Received verdict: ' + event.data.verdict, event.data.verdict === 'approved' ? 'success' : 'error');
+      }
+    });
+  </script>
+
+</body>
+</html>

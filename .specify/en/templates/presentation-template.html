@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="">
+  <meta name="created" content="">
+  <title>Presentation - Slideshow</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Slide container */
+    .slide-deck {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 64px 80px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* Slide counter */
+    .slide-counter {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      z-index: 100;
+      user-select: none;
+    }
+
+    .slide-counter .current {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Navigation hints */
+    .nav-hint {
+      position: fixed;
+      bottom: 24px;
+      right: 32px;
+      font-size: 12px;
+      color: var(--text-muted);
+      opacity: 0.5;
+      z-index: 100;
+    }
+
+    /* ---- Slide type styles ---- */
+
+    /* Title slide */
+    .slide-title {
+      text-align: center;
+    }
+
+    .slide-title h1 {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+
+    .slide-title .subtitle {
+      font-size: 22px;
+      color: var(--text-muted);
+      font-weight: 400;
+      max-width: 600px;
+    }
+
+    .slide-title .meta {
+      margin-top: 32px;
+      font-size: 14px;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    /* Problem slide */
+    .slide-problem {
+      align-items: flex-start;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .slide-problem h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 32px;
+    }
+
+    .slide-problem .bullet-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .slide-problem .bullet-list li {
+      font-size: 22px;
+      padding: 12px 0 12px 36px;
+      position: relative;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .slide-problem .bullet-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 22px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    /* Solution slide */
+    .slide-solution {
+      width: 100%;
+      padding-left: 80px;
+      padding-right: 80px;
+    }
+
+    .slide-solution h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .solution-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .solution-description {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .solution-description p {
+      font-size: 18px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .solution-diagram {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .solution-diagram .placeholder-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Demo slide */
+    .slide-demo {
+      width: 100%;
+      padding-left: 80px;
+      padding-right: 80px;
+    }
+
+    .slide-demo h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .demo-area {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 900px;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      color: var(--text-muted);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .demo-area .placeholder-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .demo-area .browser-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 36px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 6px;
+    }
+
+    .demo-area .browser-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    /* Summary slide */
+    .slide-summary {
+      align-items: flex-start;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .slide-summary h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 32px;
+    }
+
+    .takeaway-list {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 40px;
+    }
+
+    .takeaway-list li {
+      font-size: 20px;
+      padding: 10px 0 10px 36px;
+      position: relative;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .takeaway-list li::before {
+      content: '\2713';
+      position: absolute;
+      left: 0;
+      color: var(--success);
+      font-weight: 700;
+      font-size: 22px;
+    }
+
+    .next-steps-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+      width: 100%;
+    }
+
+    .next-steps-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .next-steps-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .next-steps-list li {
+      font-size: 16px;
+      padding: 6px 0 6px 24px;
+      position: relative;
+      color: var(--text-muted);
+    }
+
+    .next-steps-list li::before {
+      content: '\2192';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+    }
+
+    /* SLOT:content marker (hidden) */
+    .slot-marker {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slide-deck" id="slideDeck">
+
+    <!-- SLOT:content -->
+    <span class="slot-marker"><!-- SLOT:content --></span>
+
+    <!-- Slide 1: Title -->
+    <section class="slide slide-title active" data-slide="1">
+      <h1>Project Title</h1>
+      <div class="subtitle">Subtitle or tagline for this presentation</div>
+      <div class="meta">Author Name &middot; Date</div>
+    </section>
+
+    <!-- Slide 2: Problem -->
+    <section class="slide slide-problem" data-slide="2">
+      <h2>Problem Statement</h2>
+      <ul class="bullet-list">
+        <li>Current system has performance bottlenecks in scenario X</li>
+        <li>User feedback indicates Y flow is overly complex, conversion rate declining</li>
+        <li>Accumulated technical debt is causing continuously rising maintenance costs</li>
+        <li>Lack of Z capability prevents meeting business growth demands</li>
+      </ul>
+    </section>
+
+    <!-- Slide 3: Solution -->
+    <section class="slide slide-solution" data-slide="3">
+      <h2>Proposed Solution</h2>
+      <div class="solution-columns">
+        <div class="solution-description">
+          <p>By introducing a new architectural pattern, optimizing critical paths, and improving system performance and maintainability. The approach uses an incremental migration strategy to ensure business continuity.</p>
+        </div>
+        <div class="solution-diagram">
+          <span class="placeholder-label">Architecture Diagram</span>
+          <span>Insert diagram or visual here</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Demo -->
+    <section class="slide slide-demo" data-slide="4">
+      <h2>Demo</h2>
+      <div class="demo-area">
+        <div class="browser-bar">
+          <div class="browser-dot"></div>
+          <div class="browser-dot"></div>
+          <div class="browser-dot"></div>
+        </div>
+        <span class="placeholder-label">Screenshot / Mockup</span>
+        <span>Insert screenshot or live demo area here</span>
+      </div>
+    </section>
+
+    <!-- Slide 5: Summary -->
+    <section class="slide slide-summary" data-slide="5">
+      <h2>Summary &amp; Next Steps</h2>
+      <ul class="takeaway-list">
+        <li>Solution can improve system performance by 40%</li>
+        <li>Incremental migration ensures zero downtime</li>
+        <li>Estimated 3 sprints to complete core transformation</li>
+      </ul>
+      <div class="next-steps-box">
+        <div class="next-steps-label">Next Steps</div>
+        <ul class="next-steps-list">
+          <li>Complete technical solution review</li>
+          <li>Build PoC to validate core assumptions</li>
+          <li>Create detailed migration plan with milestones</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- END SLOT -->
+    <span class="slot-marker"><!-- END SLOT --></span>
+
+  </div>
+
+  <!-- Slide counter -->
+  <div class="slide-counter" id="slideCounter">
+    <span class="current" id="currentSlide">1</span> / <span id="totalSlides">5</span>
+  </div>
+
+  <!-- Navigation hint -->
+  <div class="nav-hint">Arrow keys to navigate</div>
+
+  <script>
+    var slides = document.querySelectorAll('.slide');
+    var currentIndex = 0;
+
+    document.getElementById('totalSlides').textContent = slides.length;
+
+    function goToSlide(index) {
+      if (index < 0 || index >= slides.length) return;
+      slides[currentIndex].classList.remove('active');
+      currentIndex = index;
+      slides[currentIndex].classList.add('active');
+      document.getElementById('currentSlide').textContent = currentIndex + 1;
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        goToSlide(currentIndex + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        goToSlide(currentIndex - 1);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goToSlide(slides.length - 1);
+      }
+    });
+
+    // Touch navigation
+    var touchStartX = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+      var diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) {
+          goToSlide(currentIndex + 1);
+        } else {
+          goToSlide(currentIndex - 1);
+        }
+      }
+    }, { passive: true });
+  </script>
+
+</body>
+</html>

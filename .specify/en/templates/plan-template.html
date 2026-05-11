@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Plan Template</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    /* ===== Page Header ===== */
+    .page-header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .header-row h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      flex: 1;
+    }
+
+    .linked-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .linked-badge:hover {
+      background: rgba(59,130,246,0.25);
+    }
+
+    .phase-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--primary);
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Sections ===== */
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title .section-tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(59,130,246,0.15);
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .section-body {
+      padding-left: 4px;
+    }
+
+    .placeholder {
+      color: var(--text-muted);
+      opacity: 0.5;
+      font-style: italic;
+      padding: 12px 0;
+    }
+
+    /* ===== Architecture Diagram ===== */
+    .diagram-area {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .diagram-area .placeholder {
+      text-align: center;
+    }
+
+    /* ===== Data Model ===== */
+    .entity-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .entity-header {
+      background: rgba(59,130,246,0.1);
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .entity-fields {
+      padding: 8px 16px;
+    }
+
+    .entity-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      padding: 4px 0;
+      font-family: monospace;
+    }
+
+    .field-type {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .field-key {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(245,158,11,0.2);
+      color: var(--warning);
+      font-family: var(--font);
+    }
+
+    /* ===== API Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .api-endpoint {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-bottom: 10px;
+    }
+
+    .api-method {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 8px;
+    }
+
+    .api-method.get { background: rgba(22,163,74,0.2); color: var(--success); }
+    .api-method.post { background: rgba(59,130,246,0.2); color: var(--primary); }
+    .api-method.put { background: rgba(245,158,11,0.2); color: var(--warning); }
+    .api-method.delete { background: rgba(220,38,38,0.2); color: var(--danger); }
+
+    .api-path {
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .api-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ===== Component Placeholder ===== */
+    .component-slot {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .component-slot .placeholder {
+      text-align: center;
+    }
+
+    /* ===== Risk Table ===== */
+    .risk-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-bottom: 10px;
+    }
+
+    .risk-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .risk-level {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .risk-level.high { background: rgba(220,38,38,0.2); color: var(--danger); }
+    .risk-level.medium { background: rgba(245,158,11,0.2); color: var(--warning); }
+    .risk-level.low { background: rgba(22,163,74,0.2); color: var(--success); }
+
+    .risk-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .risk-mitigation {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ===== Review bar ===== */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* ===== Toast ===== */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-row">
+      <h1>SLOT:feature_name</h1>
+      <a class="linked-badge" href="spec-template.html">spec: SLOT:spec_id</a>
+      <span class="phase-badge">plan</span>
+    </div>
+    <div class="header-meta">SLOT:date</div>
+  </div>
+
+  <!-- Section: Solution Overview -->
+  <div class="section">
+    <div class="section-title">Solution Overview <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+      <p class="placeholder">SLOT:content — Overall description of the technical solution and design approach</p>
+    </div>
+  </div>
+
+  <!-- Section: Architecture Design -->
+  <div class="section">
+    <div class="section-title">Architecture Design <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+      <div class="diagram-area">
+        <p class="placeholder">SLOT:content — System architecture diagram / flowchart / component relationship diagram</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Data Model -->
+  <div class="section">
+    <div class="section-title">Data Model <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+
+      <div class="entity-card">
+        <div class="entity-header">SLOT:entity_name</div>
+        <div class="entity-fields">
+          <div class="entity-field">
+            <span class="field-key">PK</span> id <span class="field-type">: UUID</span>
+          </div>
+          <div class="entity-field">
+            name <span class="field-type">: String</span>
+          </div>
+          <div class="entity-field">
+            created_at <span class="field-type">: DateTime</span>
+          </div>
+        </div>
+      </div>
+      <!-- SLOT:content — additional entities -->
+
+    </div>
+  </div>
+
+  <!-- Section: API Contract -->
+  <div class="section">
+    <div class="section-title">API Contract <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'rest')">REST</button>
+        <button class="tab-btn" onclick="switchTab(event, 'graphql')">GraphQL</button>
+      </div>
+
+      <div class="tab-content active" id="tab-rest">
+        <div class="api-endpoint">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/v1/SLOT:resource</span>
+          <div class="api-desc">SLOT:content — Describe the purpose of this endpoint</div>
+        </div>
+        <div class="api-endpoint">
+          <span class="api-method post">POST</span>
+          <span class="api-path">/api/v1/SLOT:resource</span>
+          <div class="api-desc">SLOT:content — Describe the purpose of this endpoint</div>
+        </div>
+        <div class="api-endpoint">
+          <span class="api-method put">PUT</span>
+          <span class="api-path">/api/v1/SLOT:resource/:id</span>
+          <div class="api-desc">SLOT:content — Describe the purpose of this endpoint</div>
+        </div>
+        <div class="api-endpoint">
+          <span class="api-method delete">DELETE</span>
+          <span class="api-path">/api/v1/SLOT:resource/:id</span>
+          <div class="api-desc">SLOT:content — Describe the purpose of this endpoint</div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-graphql">
+        <div class="api-endpoint">
+          <span class="api-method get">Query</span>
+          <span class="api-path">SLOT:queryName(input): Result</span>
+          <div class="api-desc">SLOT:content — Describe the purpose of this query</div>
+        </div>
+        <div class="api-endpoint">
+          <span class="api-method post">Mutation</span>
+          <span class="api-path">SLOT:mutationName(input): Result</span>
+          <div class="api-desc">SLOT:content — Describe the purpose of this mutation</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Technology Stack -->
+  <div class="section">
+    <div class="section-title">Technology Stack <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+      <div class="component-slot">
+        <p class="placeholder">SLOT:content — Use the exploration-approaches component to display technology stack comparison</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Phased Implementation Plan -->
+  <div class="section">
+    <div class="section-title">Phased Implementation Plan <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+      <div class="component-slot">
+        <p class="placeholder">SLOT:content — Use the implementation-plan component to display the phased implementation plan</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Risks & Mitigation -->
+  <div class="section">
+    <div class="section-title">Risks & Mitigation <span class="section-tag">SLOT:content</span></div>
+    <div class="section-body">
+
+      <div class="risk-item">
+        <div class="risk-header">
+          <span class="risk-level high">SLOT:level</span>
+          <span class="risk-name">SLOT:risk_name</span>
+        </div>
+        <div class="risk-mitigation">SLOT:content — Mitigation strategy</div>
+      </div>
+
+      <div class="risk-item">
+        <div class="risk-header">
+          <span class="risk-level medium">SLOT:level</span>
+          <span class="risk-name">SLOT:risk_name</span>
+        </div>
+        <div class="risk-mitigation">SLOT:content — Mitigation strategy</div>
+      </div>
+
+      <!-- SLOT:content — additional risks -->
+
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Switch API tabs.
+     */
+    function switchTab(event, tabId) {
+      document.querySelectorAll('.tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+      document.querySelectorAll('.tab-content').forEach(function(content) { content.classList.remove('active'); });
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    /**
+     * Save feedback data.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-plan-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Submit verdict.
+     */
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        type: 'verdict',
+        phase: 'plan',
+        verdict: verdict,
+        feedback: feedback,
+        timestamp: new Date().toISOString()
+      };
+      window.parent.postMessage(data, '*');
+      await saveFeedback(data);
+    }
+
+    /**
+     * Show a toast notification.
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 3500);
+    }
+
+    // Listen for messages from parent
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'verdict') {
+        showToast('Received verdict: ' + event.data.verdict, event.data.verdict === 'approved' ? 'success' : 'error');
+      }
+    });
+  </script>
+
+</body>
+</html>

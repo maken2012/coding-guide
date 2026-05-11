@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="tasks">
+  <meta name="created" content="">
+  <title>Triage Board</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Board */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      min-height: 400px;
+    }
+
+    .column {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      min-height: 300px;
+    }
+
+    .column-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .column-header .count {
+      background: var(--bg);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .col-now .column-header { color: var(--danger); }
+    .col-next .column-header { color: var(--warning); }
+    .col-later .column-header { color: var(--primary); }
+    .col-cut .column-header { color: var(--text-muted); }
+
+    .column-body {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 100px;
+    }
+
+    .column-body.drag-over {
+      background: rgba(59, 130, 246, 0.06);
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    /* Cards */
+    .triage-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      cursor: grab;
+      transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+    }
+
+    .triage-card:active {
+      cursor: grabbing;
+    }
+
+    .triage-card.dragging {
+      opacity: 0.4;
+    }
+
+    .triage-card:hover {
+      border-color: var(--primary);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .priority-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .priority-badge.p0 { background: rgba(220, 38, 38, 0.2); color: var(--danger); }
+    .priority-badge.p1 { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .priority-badge.p2 { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+    .priority-badge.p3 { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+
+    .tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--surface);
+      color: var(--text-muted);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 900px) {
+      .board {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .board {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Triage Board</h1>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="exportMarkdown()">Export as Markdown</button>
+    </div>
+  </div>
+
+  <!-- SLOT:content -->
+  <div class="board" id="board">
+
+    <!-- Now -->
+    <div class="column col-now">
+      <div class="column-header">
+        <span>Now</span>
+        <span class="count" id="count-now">0</span>
+      </div>
+      <div class="column-body" id="col-now"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'now')">
+        <div class="triage-card" draggable="true" data-id="1" data-priority="p0" data-tag="backend"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Fix authentication token expiry loop</div>
+          <div class="card-meta">
+            <span class="priority-badge p0">P0</span>
+            <span class="tag">backend</span>
+          </div>
+        </div>
+        <div class="triage-card" draggable="true" data-id="2" data-priority="p1" data-tag="infra"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Scale database connection pool</div>
+          <div class="card-meta">
+            <span class="priority-badge p1">P1</span>
+            <span class="tag">infra</span>
+          </div>
+        </div>
+        <div class="triage-card" draggable="true" data-id="3" data-priority="p0" data-tag="security"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Patch SSRF vulnerability in webhook handler</div>
+          <div class="card-meta">
+            <span class="priority-badge p0">P0</span>
+            <span class="tag">security</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next -->
+    <div class="column col-next">
+      <div class="column-header">
+        <span>Next</span>
+        <span class="count" id="count-next">0</span>
+      </div>
+      <div class="column-body" id="col-next"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'next')">
+        <div class="triage-card" draggable="true" data-id="4" data-priority="p1" data-tag="frontend"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Redesign settings page layout</div>
+          <div class="card-meta">
+            <span class="priority-badge p1">P1</span>
+            <span class="tag">frontend</span>
+          </div>
+        </div>
+        <div class="triage-card" draggable="true" data-id="5" data-priority="p2" data-tag="api"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Add GraphQL subscription support</div>
+          <div class="card-meta">
+            <span class="priority-badge p2">P2</span>
+            <span class="tag">api</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Later -->
+    <div class="column col-later">
+      <div class="column-header">
+        <span>Later</span>
+        <span class="count" id="count-later">0</span>
+      </div>
+      <div class="column-body" id="col-later"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'later')">
+        <div class="triage-card" draggable="true" data-id="6" data-priority="p2" data-tag="ux"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Onboarding tour for new users</div>
+          <div class="card-meta">
+            <span class="priority-badge p2">P2</span>
+            <span class="tag">ux</span>
+          </div>
+        </div>
+        <div class="triage-card" draggable="true" data-id="7" data-priority="p3" data-tag="docs"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">API documentation v2 migration</div>
+          <div class="card-meta">
+            <span class="priority-badge p3">P3</span>
+            <span class="tag">docs</span>
+          </div>
+        </div>
+        <div class="triage-card" draggable="true" data-id="8" data-priority="p2" data-tag="perf"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Image lazy loading for product pages</div>
+          <div class="card-meta">
+            <span class="priority-badge p2">P2</span>
+            <span class="tag">perf</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cut -->
+    <div class="column col-cut">
+      <div class="column-header">
+        <span>Cut</span>
+        <span class="count" id="count-cut">0</span>
+      </div>
+      <div class="column-body" id="col-cut"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'cut')">
+        <div class="triage-card" draggable="true" data-id="9" data-priority="p3" data-tag="feature"
+          ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)">
+          <div class="card-title">Custom emoji reactions</div>
+          <div class="card-meta">
+            <span class="priority-badge p3">P3</span>
+            <span class="tag">feature</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    // --- Drag and Drop ---
+    var draggedCard = null;
+
+    function handleDragStart(e) {
+      draggedCard = e.target.closest('.triage-card');
+      draggedCard.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedCard.getAttribute('data-id'));
+    }
+
+    function handleDragEnd(e) {
+      if (draggedCard) {
+        draggedCard.classList.remove('dragging');
+        draggedCard = null;
+      }
+      document.querySelectorAll('.column-body').forEach(function(col) {
+        col.classList.remove('drag-over');
+      });
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e, column) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      if (draggedCard) {
+        e.currentTarget.appendChild(draggedCard);
+        draggedCard.classList.remove('dragging');
+        draggedCard = null;
+        updateCounts();
+      }
+    }
+
+    function updateCounts() {
+      ['now', 'next', 'later', 'cut'].forEach(function(col) {
+        var body = document.getElementById('col-' + col);
+        var count = body.querySelectorAll('.triage-card').length;
+        document.getElementById('count-' + col).textContent = count;
+      });
+    }
+
+    // Initial count
+    updateCounts();
+
+    // --- Export as Markdown ---
+    function exportMarkdown() {
+      var lines = ['# Triage Board', ''];
+      ['now', 'next', 'later', 'cut'].forEach(function(col) {
+        var label = col.charAt(0).toUpperCase() + col.slice(1);
+        lines.push('## ' + label);
+        lines.push('');
+        var body = document.getElementById('col-' + col);
+        var cards = body.querySelectorAll('.triage-card');
+        if (cards.length === 0) {
+          lines.push('_No items_');
+          lines.push('');
+          return;
+        }
+        cards.forEach(function(card) {
+          var title = card.querySelector('.card-title').textContent;
+          var priority = card.querySelector('.priority-badge').textContent;
+          var tag = card.querySelector('.tag').textContent;
+          lines.push('- [ ] **' + title + '** [' + priority + '] #' + tag);
+        });
+        lines.push('');
+      });
+
+      var md = lines.join('\n');
+      navigator.clipboard.writeText(md).then(function() {
+        showToast('Markdown copied to clipboard.', 'success');
+      }).catch(function() {
+        showToast('Could not copy to clipboard.', 'error');
+        console.log(md);
+      });
+    }
+
+    // --- Feedback mechanism ---
+    function collectDecisions() {
+      var board = {};
+      ['now', 'next', 'later', 'cut'].forEach(function(col) {
+        var body = document.getElementById('col-' + col);
+        var cards = [];
+        body.querySelectorAll('.triage-card').forEach(function(card) {
+          cards.push({
+            id: card.getAttribute('data-id'),
+            title: card.querySelector('.card-title').textContent,
+            priority: card.getAttribute('data-priority'),
+            tag: card.getAttribute('data-tag')
+          });
+        });
+        board[col] = cards;
+      });
+      return { board: board };
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = { verdict: verdict, timestamp: new Date().toISOString(), decisions: collectDecisions(), feedback: feedback };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

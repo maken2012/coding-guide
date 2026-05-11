@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="review">
+  <meta name="created" content="">
+  <title>Deploy Plan</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .section {
+      max-width: 1000px;
+      margin: 0 auto 36px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Flowchart placeholder */
+    .diagram-placeholder {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .diagram-placeholder .placeholder-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+
+    .tab-btn {
+      padding: 10px 24px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 20px 24px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .config-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .config-row:last-child {
+      border-bottom: none;
+    }
+
+    .config-key {
+      color: var(--primary);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+    }
+
+    .config-value {
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+    }
+
+    /* Migration steps */
+    .migration-step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .sql-preview {
+      display: flex;
+      gap: 12px;
+    }
+
+    .sql-block {
+      flex: 1;
+    }
+
+    .sql-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .sql-label.up { color: var(--success); }
+    .sql-label.down { color: var(--danger); }
+
+    .sql-code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .data-table th {
+      background: var(--surface);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.04);
+    }
+
+    .version-badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+    }
+
+    /* Code block with copy */
+    .code-block-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .code-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      padding: 8px 16px;
+    }
+
+    .code-block-lang {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .copy-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 12px;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 12px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      border-color: var(--primary);
+    }
+
+    .code-block-body {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+
+    /* Feature flags placeholder */
+    .feature-flags-placeholder {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .feature-flags-placeholder .placeholder-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    /* Rollback steps */
+    .rollback-step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: rgba(220, 38, 38, 0.06);
+      border: 1px solid rgba(220, 38, 38, 0.15);
+      border-radius: var(--radius-sm);
+    }
+
+    .rollback-step .step-number {
+      background: var(--danger);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .sql-preview { flex-direction: column; }
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Deployment Plan</h1>
+    <p>Define deployment architecture, environment configuration, migration strategy, and rollback plan.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- Deployment Architecture Diagram -->
+  <div class="section">
+    <h2 class="section-title">Deployment Architecture Diagram</h2>
+    <div class="diagram-placeholder" data-component="flowchart-diagram">
+      <span class="placeholder-label">Deployment Pipeline Diagram</span>
+      <span>Insert flowchart-diagram component here to visualize the deployment pipeline.</span>
+    </div>
+  </div>
+
+  <!-- Environment Configuration -->
+  <div class="section">
+    <h2 class="section-title">Environment Configuration</h2>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(event, 'env-dev')">Development</button>
+      <button class="tab-btn" onclick="switchTab(event, 'env-staging')">Staging</button>
+      <button class="tab-btn" onclick="switchTab(event, 'env-prod')">Production</button>
+    </div>
+    <div class="tab-panel active" id="env-dev">
+      <div class="config-row">
+        <span class="config-key">APP_ENV</span>
+        <span class="config-value">development</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">DATABASE_URL</span>
+        <span class="config-value">postgresql://localhost:5432/app_dev</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">REDIS_URL</span>
+        <span class="config-value">redis://localhost:6379/0</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">LOG_LEVEL</span>
+        <span class="config-value">debug</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">PORT</span>
+        <span class="config-value">3000</span>
+      </div>
+    </div>
+    <div class="tab-panel" id="env-staging">
+      <div class="config-row">
+        <span class="config-key">APP_ENV</span>
+        <span class="config-value">staging</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">DATABASE_URL</span>
+        <span class="config-value">postgresql://staging-db.internal:5432/app_staging</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">REDIS_URL</span>
+        <span class="config-value">redis://staging-cache.internal:6379/0</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">LOG_LEVEL</span>
+        <span class="config-value">info</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">PORT</span>
+        <span class="config-value">8080</span>
+      </div>
+    </div>
+    <div class="tab-panel" id="env-prod">
+      <div class="config-row">
+        <span class="config-key">APP_ENV</span>
+        <span class="config-value">production</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">DATABASE_URL</span>
+        <span class="config-value">postgresql://prod-db.internal:5432/app_prod</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">REDIS_URL</span>
+        <span class="config-value">redis://prod-cache.internal:6379/0</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">LOG_LEVEL</span>
+        <span class="config-value">warn</span>
+      </div>
+      <div class="config-row">
+        <span class="config-key">PORT</span>
+        <span class="config-value">8080</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Migrations -->
+  <div class="section">
+    <h2 class="section-title">Database Migrations</h2>
+    <div class="migration-step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <div class="step-title">Create user preferences table</div>
+        <div class="sql-preview">
+          <div class="sql-block">
+            <div class="sql-label up">UP</div>
+            <pre class="sql-code">CREATE TABLE user_preferences (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  preference_key VARCHAR(255) NOT NULL,
+  preference_value JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);</pre>
+          </div>
+          <div class="sql-block">
+            <div class="sql-label down">DOWN</div>
+            <pre class="sql-code">DROP TABLE IF EXISTS user_preferences;</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="migration-step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <div class="step-title">Add notification settings columns</div>
+        <div class="sql-preview">
+          <div class="sql-block">
+            <div class="sql-label up">UP</div>
+            <pre class="sql-code">ALTER TABLE users
+	ADD COLUMN notification_enabled BOOLEAN DEFAULT true,
+	ADD COLUMN notification_frequency VARCHAR(20) DEFAULT 'daily';</pre>
+          </div>
+          <div class="sql-block">
+            <div class="sql-label down">DOWN</div>
+            <pre class="sql-code">ALTER TABLE users
+	DROP COLUMN notification_enabled,
+	DROP COLUMN notification_frequency;</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dependencies -->
+  <div class="section">
+    <h2 class="section-title">Dependencies</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Version</th>
+          <th>Purpose</th>
+          <th>Config</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Node.js</td>
+          <td><span class="version-badge">20.11.0</span></td>
+          <td>Runtime environment</td>
+          <td>--max-old-space-size=4096</td>
+        </tr>
+        <tr>
+          <td>PostgreSQL</td>
+          <td><span class="version-badge">16.1</span></td>
+          <td>Primary database</td>
+          <td>shared_buffers=256MB</td>
+        </tr>
+        <tr>
+          <td>Redis</td>
+          <td><span class="version-badge">7.2.4</span></td>
+          <td>Cache & sessions</td>
+          <td>maxmemory 512mb</td>
+        </tr>
+        <tr>
+          <td>Nginx</td>
+          <td><span class="version-badge">1.25.3</span></td>
+          <td>Reverse proxy & SSL</td>
+          <td>worker_connections=1024</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Initialization Scripts -->
+  <div class="section">
+    <h2 class="section-title">Initialization Scripts</h2>
+    <div class="code-block-wrapper">
+      <div class="code-block-header">
+        <span class="code-block-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre class="code-block-body">#!/bin/bash
+set -euo pipefail
+
+echo "==> Running database migrations..."
+npx db-migrate up
+
+echo "==> Seeding initial data..."
+node scripts/seed.js
+
+echo "==> Building static assets..."
+npm run build
+
+echo "==> Running health check..."
+curl -f http://localhost:8080/health || exit 1
+
+echo "==> Deployment complete!"</pre>
+    </div>
+    <div class="code-block-wrapper">
+      <div class="code-block-header">
+        <span class="code-block-lang">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre class="code-block-body">#!/bin/bash
+# Rollback script
+set -euo pipefail
+
+echo "==> Rolling back database migrations..."
+npx db-migrate down
+
+echo "==> Restoring previous build..."
+cp -r .backup/latest ./dist
+
+echo "==> Restarting service..."
+pm2 restart app --update-env
+
+echo "==> Rollback complete!"</pre>
+    </div>
+  </div>
+
+  <!-- Feature Flags -->
+  <div class="section">
+    <h2 class="section-title">Feature Flags</h2>
+    <div class="feature-flags-placeholder" data-component="feature-flags-editor">
+      <div class="placeholder-label">Feature Flags Editor</div>
+      <span>Insert feature-flags-editor component to manage feature toggles for this deployment.</span>
+    </div>
+  </div>
+
+  <!-- Rollback Plan -->
+  <div class="section">
+    <h2 class="section-title">Rollback Plan</h2>
+    <div class="rollback-step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <div class="step-title">Switch traffic to previous version</div>
+        <p style="color: var(--text-muted); font-size: 14px;">Route traffic to the instance tagged as previous via the load balancer.</p>
+      </div>
+    </div>
+    <div class="rollback-step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <div class="step-title">Roll back database migrations</div>
+        <p style="color: var(--text-muted); font-size: 14px;">Execute down migration scripts to restore the database to its pre-migration state.</p>
+      </div>
+    </div>
+    <div class="rollback-step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <div class="step-title">Flush cache</div>
+        <p style="color: var(--text-muted); font-size: 14px;">Flush the Redis cache to ensure no stale data remains.</p>
+      </div>
+    </div>
+    <div class="rollback-step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <div class="step-title">Verify service health</div>
+        <p style="color: var(--text-muted); font-size: 14px;">Run health checks and smoke tests to confirm the system is operating normally after rollback.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve &#10003;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject &#10007;</button>
+  </div>
+
+  <script>
+    // --- Tab switching ---
+    function switchTab(event, panelId) {
+      var section = event.target.closest('.section');
+      section.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      section.querySelectorAll('.tab-panel').forEach(function(panel) {
+        panel.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      document.getElementById(panelId).classList.add('active');
+    }
+
+    // --- Copy code ---
+    function copyCode(btn) {
+      var wrapper = btn.closest('.code-block-wrapper');
+      var code = wrapper.querySelector('.code-block-body').textContent;
+      navigator.clipboard.writeText(code).then(function() {
+        showToast('Copied to clipboard.', 'success');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+      }).catch(function() {
+        showToast('Failed to copy.', 'error');
+      });
+    }
+
+    // --- Feedback submission ---
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

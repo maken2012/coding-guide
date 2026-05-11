@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Implementation Plan</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Timeline */
+    .timeline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      max-width: 900px;
+      margin: 0 auto 48px;
+      position: relative;
+    }
+
+    .timeline-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .timeline-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .timeline-node.active .timeline-dot {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .timeline-node.completed .timeline-dot {
+      border-color: var(--success);
+      background: var(--success);
+      color: #fff;
+    }
+
+    .timeline-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .timeline-node.active .timeline-label {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .timeline-node.completed .timeline-label {
+      color: var(--success);
+    }
+
+    .timeline-arrow {
+      width: 80px;
+      height: 2px;
+      background: var(--border);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .timeline-arrow::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: -4px;
+      width: 0;
+      height: 0;
+      border-left: 8px solid var(--border);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    .timeline-arrow.active {
+      background: var(--primary);
+    }
+
+    .timeline-arrow.active::after {
+      border-left-color: var(--primary);
+    }
+
+    .timeline-arrow.completed {
+      background: var(--success);
+    }
+
+    .timeline-arrow.completed::after {
+      border-left-color: var(--success);
+    }
+
+    /* Phases */
+    .phases-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .phase-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .phase-section:hover {
+      border-color: var(--primary);
+    }
+
+    .phase-section.active-phase {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary), 0 4px 24px rgba(59, 130, 246, 0.1);
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .phase-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .phase-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .phase-estimate {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .phase-description {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* File changes */
+    .file-changes {
+      list-style: none;
+    }
+
+    .file-change {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .file-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .file-badge.added {
+      background: rgba(22, 163, 74, 0.15);
+      color: var(--success);
+    }
+
+    .file-badge.modified {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+    }
+
+    .file-badge.removed {
+      background: rgba(220, 38, 38, 0.15);
+      color: var(--danger);
+    }
+
+    .file-path {
+      color: var(--text);
+    }
+
+    /* Dependency arrows */
+    .dep-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .dep-arrow {
+      font-size: 16px;
+      color: var(--primary);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .timeline { flex-wrap: wrap; gap: 8px; }
+      .timeline-arrow { width: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Implementation Plan</h1>
+    <p>Phased plan with file changes and dependencies. Review and submit your verdict.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- Timeline -->
+  <div class="timeline">
+    <div class="timeline-node completed">
+      <div class="timeline-dot">1</div>
+      <span class="timeline-label">Phase 1</span>
+    </div>
+    <div class="timeline-arrow completed"></div>
+    <div class="timeline-node active">
+      <div class="timeline-dot">2</div>
+      <span class="timeline-label">Phase 2</span>
+    </div>
+    <div class="timeline-arrow active"></div>
+    <div class="timeline-node">
+      <div class="timeline-dot">3</div>
+      <span class="timeline-label">Phase 3</span>
+    </div>
+    <div class="timeline-arrow"></div>
+    <div class="timeline-node">
+      <div class="timeline-dot">4</div>
+      <span class="timeline-label">Phase 4</span>
+    </div>
+  </div>
+
+  <!-- Phase sections -->
+  <div class="phases-container">
+
+    <!-- Phase 1 -->
+    <div class="phase-section">
+      <div class="phase-header">
+        <div class="phase-number">1</div>
+        <span class="phase-title">Project Scaffolding</span>
+        <span class="phase-estimate">Estimate: 2 days</span>
+      </div>
+      <p class="phase-description">
+        Create the base project structure, configure build tools, and define core types.
+      </p>
+      <ul class="file-changes">
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">src/types/index.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">src/config/default.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge modified">MODIFIED</span>
+          <span class="file-path">tsconfig.json</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">package.json</span>
+        </li>
+      </ul>
+      <div class="dep-note">
+        <span class="dep-arrow">&rarr;</span>
+        Phase 2 depends on this phase being completed
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase-section active-phase">
+      <div class="phase-header">
+        <div class="phase-number">2</div>
+        <span class="phase-title">Core Feature Implementation</span>
+        <span class="phase-estimate">Estimate: 4 days</span>
+      </div>
+      <p class="phase-description">
+        Implement core business logic modules, including data processing and primary APIs.
+      </p>
+      <ul class="file-changes">
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">src/core/engine.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">src/core/processor.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge modified">MODIFIED</span>
+          <span class="file-path">src/types/index.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge removed">REMOVED</span>
+          <span class="file-path">src/legacy/handler.js</span>
+        </li>
+      </ul>
+      <div class="dep-note">
+        <span class="dep-arrow">&rarr;</span>
+        Phase 3 depends on this phase being completed
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase-section">
+      <div class="phase-header">
+        <div class="phase-number">3</div>
+        <span class="phase-title">Integration &amp; API Layer</span>
+        <span class="phase-estimate">Estimate: 3 days</span>
+      </div>
+      <p class="phase-description">
+        Build the external interface layer, integrate third-party services, and implement API endpoints.
+      </p>
+      <ul class="file-changes">
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">src/api/routes.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">src/api/middleware.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge modified">MODIFIED</span>
+          <span class="file-path">src/core/engine.ts</span>
+        </li>
+      </ul>
+      <div class="dep-note">
+        <span class="dep-arrow">&rarr;</span>
+        Phase 4 depends on this phase being completed
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase-section">
+      <div class="phase-header">
+        <div class="phase-number">4</div>
+        <span class="phase-title">Testing &amp; Optimization</span>
+        <span class="phase-estimate">Estimate: 2 days</span>
+      </div>
+      <p class="phase-description">
+        Write unit and integration tests, optimize performance, and finalize documentation.
+      </p>
+      <ul class="file-changes">
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">tests/unit/engine.test.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge added">ADDED</span>
+          <span class="file-path">tests/integration/api.test.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge modified">MODIFIED</span>
+          <span class="file-path">src/core/processor.ts</span>
+        </li>
+        <li class="file-change">
+          <span class="file-badge modified">MODIFIED</span>
+          <span class="file-path">README.md</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Collects all decisions from [data-decision] elements.
+     * Returns an object mapping decision names to their selected values.
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    /**
+     * Saves feedback data. Tries the File System Access API first,
+     * falls back to copying JSON to clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{
+              description: 'JSON File',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('Save cancelled.', 'warning');
+            return;
+          }
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Collects decisions and feedback, then saves.
+     * @param {string} verdict - 'approved' or 'rejected'
+     */
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+
+      var feedback = document.getElementById('feedbackInput').value.trim();
+
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        decisions: decisions,
+        feedback: feedback
+      };
+
+      await saveFeedback(data);
+    }
+
+    /**
+     * Shows a notification toast.
+     * @param {string} msg - Message to display
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

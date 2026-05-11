@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="review">
+  <meta name="created" content="">
+  <title>Incident Report</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .incident-header {
+      margin-bottom: 32px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .incident-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .incident-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .severity-badge {
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .severity-badge.sev-1 {
+      background: rgba(220, 38, 38, 0.2);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .severity-badge.sev-2 {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+      border: 1px solid var(--warning);
+    }
+
+    .severity-badge.sev-3 {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .incident-id {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .incident-datetime {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Impact metrics */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .metric-card.affected {
+      border-top: 3px solid var(--danger);
+    }
+
+    .metric-card.duration {
+      border-top: 3px solid var(--warning);
+    }
+
+    .metric-card.error-rate {
+      border-top: 3px solid var(--primary);
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .metric-card.affected .metric-value { color: var(--danger); }
+    .metric-card.duration .metric-value { color: var(--warning); }
+    .metric-card.error-rate .metric-value { color: var(--primary); }
+
+    .metric-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Timeline */
+    .timeline-section {
+      margin-bottom: 36px;
+    }
+
+    .timeline-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .incident-timeline {
+      position: relative;
+      padding-left: 80px;
+    }
+
+    .incident-timeline::before {
+      content: '';
+      position: absolute;
+      left: 62px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .itimeline-item {
+      position: relative;
+      padding-bottom: 20px;
+    }
+
+    .itimeline-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .itimeline-time {
+      position: absolute;
+      left: -80px;
+      top: 2px;
+      width: 56px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: right;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    }
+
+    .itimeline-marker {
+      position: absolute;
+      left: -14px;
+      top: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    .itimeline-marker.red { background: var(--danger); }
+    .itimeline-marker.yellow { background: var(--warning); }
+    .itimeline-marker.green { background: var(--success); }
+    .itimeline-marker.blue { background: var(--primary); }
+
+    .itimeline-content {
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .itimeline-content .label {
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    /* Log excerpts */
+    .logs-section {
+      margin-bottom: 36px;
+    }
+
+    .logs-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .log-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .log-block pre {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .log-block .ts {
+      color: var(--text-muted);
+    }
+
+    .log-block .level-error {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .log-block .level-warn {
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    .log-block .level-info {
+      color: var(--primary);
+    }
+
+    /* Root cause */
+    .root-cause-section {
+      margin-bottom: 36px;
+    }
+
+    .root-cause-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .root-cause-box {
+      background: rgba(220, 38, 38, 0.08);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      border-left: 4px solid var(--danger);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    /* Action items */
+    .actions-section {
+      margin-bottom: 32px;
+    }
+
+    .actions-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .action-list {
+      list-style: none;
+    }
+
+    .action-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .action-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      margin-top: 1px;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .action-checkbox:checked {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .action-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 5px;
+      height: 9px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .action-item.done {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    .action-text {
+      flex: 1;
+    }
+
+    .action-owner {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 700px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+      .incident-timeline { padding-left: 68px; }
+      .itimeline-time { left: -68px; width: 50px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header -->
+    <div class="incident-header">
+      <div>
+        <h1>Database Connection Pool Exhaustion</h1>
+        <div class="incident-id">INC-2026-0510-042</div>
+        <div class="incident-datetime">May 10, 2026 -- 14:23 UTC to 15:47 UTC</div>
+      </div>
+      <div class="incident-meta">
+        <span class="severity-badge sev-1">SEV-1</span>
+      </div>
+    </div>
+
+    <!-- Impact metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card affected">
+        <div class="metric-value">12,340</div>
+        <div class="metric-label">Affected Users</div>
+      </div>
+      <div class="metric-card duration">
+        <div class="metric-value">84 min</div>
+        <div class="metric-label">Duration</div>
+      </div>
+      <div class="metric-card error-rate">
+        <div class="metric-value">23.7%</div>
+        <div class="metric-label">Error Rate (Peak)</div>
+      </div>
+    </div>
+
+    <!-- Minute-by-minute timeline -->
+    <div class="timeline-section">
+      <h2>Timeline of Events</h2>
+      <div class="incident-timeline">
+        <div class="itimeline-item">
+          <div class="itimeline-time">14:23</div>
+          <div class="itimeline-marker red"></div>
+          <div class="itimeline-content">
+            <div class="label">Alert Triggered</div>
+            PagerDuty alert: DB connection pool at 100% capacity. Response times spiking.
+          </div>
+        </div>
+        <div class="itimeline-item">
+          <div class="itimeline-time">14:25</div>
+          <div class="itimeline-marker yellow"></div>
+          <div class="itimeline-content">
+            <div class="label">On-Call Engaged</div>
+            On-call engineer begins investigation. Initial hypothesis: traffic spike.
+          </div>
+        </div>
+        <div class="itimeline-item">
+          <div class="itimeline-time">14:31</div>
+          <div class="itimeline-marker red"></div>
+          <div class="itimeline-content">
+            <div class="label">Escalation</div>
+            Database team paged. Active connections: 500/500 (max). 200 requests queued and timing out.
+          </div>
+        </div>
+        <div class="itimeline-item">
+          <div class="itimeline-time">14:38</div>
+          <div class="itimeline-marker yellow"></div>
+          <div class="itimeline-content">
+            <div class="label">Root Cause Identified</div>
+            Long-running analytics query from batch job holding connections without releasing. Connection leak confirmed.
+          </div>
+        </div>
+        <div class="itimeline-item">
+          <div class="itimeline-time">14:45</div>
+          <div class="itimeline-marker blue"></div>
+          <div class="itimeline-content">
+            <div class="label">Mitigation</div>
+            Batch job killed. Connection pool manually reset. Pool size temporarily increased to 750.
+          </div>
+        </div>
+        <div class="itimeline-item">
+          <div class="itimeline-time">15:12</div>
+          <div class="itimeline-marker green"></div>
+          <div class="itimeline-content">
+            <div class="label">Recovery</div>
+            Error rate returning to baseline. Connection pool utilization at 45%.
+          </div>
+        </div>
+        <div class="itimeline-item">
+          <div class="itimeline-time">15:47</div>
+          <div class="itimeline-marker green"></div>
+          <div class="itimeline-content">
+            <div class="label">Resolved</div>
+            All systems nominal. Monitoring confirmed stable for 30 minutes. Incident closed.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log excerpts -->
+    <div class="logs-section">
+      <h2>Log Excerpts</h2>
+
+      <div class="log-block">
+        <pre><span class="ts">[14:23:01]</span> <span class="level-error">[ERROR]</span> Pool exhausted: no available connections (active=500, idle=0, waiters=47)
+<span class="ts">[14:23:02]</span> <span class="level-error">[ERROR]</span> Query timeout: SELECT * FROM analytics_events WHERE date > $1 (waited 30s)
+<span class="ts">[14:23:05]</span> <span class="level-warn"> [WARN]</span>  Connection pool health check failed: avg acquire time 28432ms (threshold: 1000ms)</pre>
+      </div>
+
+      <div class="log-block">
+        <pre><span class="ts">[14:38:12]</span> <span class="level-warn"> [WARN]</span>  Long-running query detected: PID 28471, duration 23m 41s, state: active
+<span class="ts">[14:38:12]</span> <span class="level-info"> [INFO]</span>  Query: SELECT ae.*, u.email, u.plan FROM analytics_events ae JOIN users u ON ae.user_id = u.id
+<span class="ts">[14:38:13]</span> <span class="level-error">[ERROR]</span> Connection leak: session 0x7F3A holds 47 connections without activity for &gt;10min</pre>
+      </div>
+    </div>
+
+    <!-- Root cause -->
+    <div class="root-cause-section">
+      <h2>Root Cause</h2>
+      <div class="root-cause-box">
+        The nightly analytics batch job was refactored in release v3.14.2 (deployed May 9) to use a shared connection pool instead of a dedicated read replica. A missing <code>finally</code> block in the batch processing loop caused connections to not be released after query completion. Over 8 hours, connections accumulated until the pool was fully exhausted, blocking all database-dependent services.
+      </div>
+    </div>
+
+    <!-- SLOT:content -->
+    <!-- Action items -->
+    <div class="actions-section">
+      <h2>Action Items</h2>
+      <ul class="action-list">
+        <li class="action-item">
+          <input type="checkbox" class="action-checkbox" onchange="toggleAction(this)">
+          <div class="action-text">
+            Add connection pool monitoring alert at 80% capacity (5-minute window)
+            <div class="action-owner">Owner: @db-team -- Due: May 14</div>
+          </div>
+        </li>
+        <li class="action-item">
+          <input type="checkbox" class="action-checkbox" onchange="toggleAction(this)">
+          <div class="action-text">
+            Refactor batch jobs to use dedicated read replica connection pool
+            <div class="action-owner">Owner: @analytics-team -- Due: May 16</div>
+          </div>
+        </li>
+        <li class="action-item">
+          <input type="checkbox" class="action-checkbox" onchange="toggleAction(this)">
+          <div class="action-text">
+            Add <code>finally</code> blocks with connection release to all batch processing loops
+            <div class="action-owner">Owner: @analytics-team -- Due: May 13</div>
+          </div>
+        </li>
+        <li class="action-item">
+          <input type="checkbox" class="action-checkbox" onchange="toggleAction(this)">
+          <div class="action-text">
+            Implement connection leak detection in pool wrapper (warn after 60s idle)
+            <div class="action-owner">Owner: @platform-team -- Due: May 18</div>
+          </div>
+        </li>
+        <li class="action-item">
+          <input type="checkbox" class="action-checkbox" onchange="toggleAction(this)">
+          <div class="action-text">
+            Add automated load test for batch job scenarios to CI pipeline
+            <div class="action-owner">Owner: @qa-team -- Due: May 20</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <!-- END SLOT -->
+
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject</button>
+  </div>
+
+  <script>
+    function toggleAction(cb) {
+      var item = cb.closest('.action-item');
+      if (cb.checked) {
+        item.classList.add('done');
+      } else {
+        item.classList.remove('done');
+      }
+    }
+
+    function collectDecisions() {
+      var checked = [];
+      document.querySelectorAll('.action-checkbox:checked').forEach(function(cb) {
+        checked.push(cb.closest('.action-item').querySelector('.action-text').childNodes[0].textContent.trim());
+      });
+      return { completedActions: checked };
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = { verdict: verdict, timestamp: new Date().toISOString(), decisions: collectDecisions(), feedback: feedback };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

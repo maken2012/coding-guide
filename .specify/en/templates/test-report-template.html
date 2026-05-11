@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="implement">
+  <meta name="created" content="">
+  <title>Test Report</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .section {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Stat cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-card .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .stat-card .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .stat-card.total { border-top: 3px solid var(--primary); }
+    .stat-card.total .stat-value { color: var(--primary); }
+    .stat-card.passed { border-top: 3px solid var(--success); }
+    .stat-card.passed .stat-value { color: var(--success); }
+    .stat-card.failed { border-top: 3px solid var(--danger); }
+    .stat-card.failed .stat-value { color: var(--danger); }
+    .stat-card.skipped { border-top: 3px solid var(--warning); }
+    .stat-card.skipped .stat-value { color: var(--warning); }
+
+    /* Coverage bar chart */
+    .coverage-chart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .coverage-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .coverage-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 60px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .coverage-module {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .coverage-bar-track {
+      height: 24px;
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .coverage-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease-out;
+      position: relative;
+    }
+
+    .coverage-bar-fill.high { background: var(--success); }
+    .coverage-bar-fill.medium { background: var(--warning); }
+    .coverage-bar-fill.low { background: var(--danger); }
+
+    .coverage-pct {
+      font-size: 13px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .coverage-pct.high { color: var(--success); }
+    .coverage-pct.medium { color: var(--warning); }
+    .coverage-pct.low { color: var(--danger); }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .data-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .status-badge.passed {
+      background: rgba(22, 163, 74, 0.15);
+      color: var(--success);
+    }
+
+    .status-badge.failed {
+      background: rgba(220, 38, 38, 0.15);
+      color: var(--danger);
+    }
+
+    .status-badge.skipped {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    /* Failure detail expandable */
+    .failure-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .failure-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .failure-header:hover {
+      background: rgba(220, 38, 38, 0.05);
+    }
+
+    .failure-header .test-name {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .failure-header .expand-icon {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .failure-section.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .failure-body {
+      display: none;
+      padding: 0 20px 20px;
+    }
+
+    .failure-section.expanded .failure-body {
+      display: block;
+    }
+
+    .error-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--danger);
+      margin-bottom: 12px;
+    }
+
+    .stack-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text-muted);
+    }
+
+    .block-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: var(--font);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 20px 16px 120px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .coverage-row { grid-template-columns: 100px 1fr 50px; }
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Test Report</h1>
+    <p>Unit tests, integration tests, and coverage summary</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- Test overview stats -->
+  <div class="section">
+    <h2 class="section-title">Test Overview</h2>
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-value">42</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card passed">
+        <div class="stat-value">38</div>
+        <div class="stat-label">Passed</div>
+      </div>
+      <div class="stat-card failed">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat-card skipped">
+        <div class="stat-value">1</div>
+        <div class="stat-label">Skipped</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coverage -->
+  <div class="section">
+    <h2 class="section-title">Code Coverage</h2>
+    <div class="coverage-chart">
+      <div class="coverage-bars">
+        <div class="coverage-row">
+          <span class="coverage-module">models/user</span>
+          <div class="coverage-bar-track">
+            <div class="coverage-bar-fill high" style="width: 92%"></div>
+          </div>
+          <span class="coverage-pct high">92%</span>
+        </div>
+        <div class="coverage-row">
+          <span class="coverage-module">models/order</span>
+          <div class="coverage-bar-track">
+            <div class="coverage-bar-fill high" style="width: 87%"></div>
+          </div>
+          <span class="coverage-pct high">87%</span>
+        </div>
+        <div class="coverage-row">
+          <span class="coverage-module">services/auth</span>
+          <div class="coverage-bar-track">
+            <div class="coverage-bar-fill medium" style="width: 75%"></div>
+          </div>
+          <span class="coverage-pct medium">75%</span>
+        </div>
+        <div class="coverage-row">
+          <span class="coverage-module">services/order</span>
+          <div class="coverage-bar-track">
+            <div class="coverage-bar-fill high" style="width: 83%"></div>
+          </div>
+          <span class="coverage-pct high">83%</span>
+        </div>
+        <div class="coverage-row">
+          <span class="coverage-module">controllers/api</span>
+          <div class="coverage-bar-track">
+            <div class="coverage-bar-fill low" style="width: 54%"></div>
+          </div>
+          <span class="coverage-pct low">54%</span>
+        </div>
+        <div class="coverage-row">
+          <span class="coverage-module">utils/validators</span>
+          <div class="coverage-bar-track">
+            <div class="coverage-bar-fill high" style="width: 100%"></div>
+          </div>
+          <span class="coverage-pct high">100%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unit test results -->
+  <div class="section">
+    <h2 class="section-title">Unit Test Results</h2>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Test Name</th>
+            <th>Module</th>
+            <th>Status</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>should create a new user</td>
+            <td><code>models/user</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>12ms</td>
+          </tr>
+          <tr>
+            <td>should validate email format</td>
+            <td><code>utils/validators</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>3ms</td>
+          </tr>
+          <tr>
+            <td>should hash password before save</td>
+            <td><code>models/user</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>45ms</td>
+          </tr>
+          <tr>
+            <td>should reject duplicate username</td>
+            <td><code>models/user</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>18ms</td>
+          </tr>
+          <tr>
+            <td>should create order with items</td>
+            <td><code>models/order</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>22ms</td>
+          </tr>
+          <tr>
+            <td>should calculate order total</td>
+            <td><code>services/order</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>8ms</td>
+          </tr>
+          <tr>
+            <td>should generate JWT token</td>
+            <td><code>services/auth</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>6ms</td>
+          </tr>
+          <tr>
+            <td>should verify expired token</td>
+            <td><code>services/auth</code></td>
+            <td><span class="status-badge failed">Failed</span></td>
+            <td>15ms</td>
+          </tr>
+          <tr>
+            <td>should paginate user list</td>
+            <td><code>controllers/api</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>10ms</td>
+          </tr>
+          <tr>
+            <td>should update user profile</td>
+            <td><code>controllers/api</code></td>
+            <td><span class="status-badge failed">Failed</span></td>
+            <td>25ms</td>
+          </tr>
+          <tr>
+            <td>should delete inactive users</td>
+            <td><code>controllers/api</code></td>
+            <td><span class="status-badge skipped">Skipped</span></td>
+            <td>-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Integration test results -->
+  <div class="section">
+    <h2 class="section-title">Integration Test Results</h2>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Endpoints</th>
+            <th>Status</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>User registration and login flow</td>
+            <td><code>POST /users</code>, <code>POST /auth/login</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>340ms</td>
+          </tr>
+          <tr>
+            <td>Create order and verify total</td>
+            <td><code>POST /orders</code>, <code>GET /orders/:id</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>280ms</td>
+          </tr>
+          <tr>
+            <td>Full checkout with payment</td>
+            <td><code>POST /orders</code>, <code>POST /payments</code></td>
+            <td><span class="status-badge failed">Failed</span></td>
+            <td>520ms</td>
+          </tr>
+          <tr>
+            <td>Auth token refresh flow</td>
+            <td><code>POST /auth/refresh</code></td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>150ms</td>
+          </tr>
+          <tr>
+            <td>Concurrent order creation</td>
+            <td><code>POST /orders</code> (x5)</td>
+            <td><span class="status-badge passed">Passed</span></td>
+            <td>890ms</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Failure details -->
+  <div class="section">
+    <h2 class="section-title">Failure Details</h2>
+
+    <div class="failure-section expanded">
+      <div class="failure-header" onclick="toggleFailure(this)">
+        <span class="status-badge failed">Failed</span>
+        <span class="test-name">should verify expired token</span>
+        <span class="expand-icon">&#9660;</span>
+      </div>
+      <div class="failure-body">
+        <div class="block-label">Error</div>
+        <div class="error-block">AssertionError: expected false to be true
+  + expected - actual
+  -false
+  +true</div>
+        <div class="block-label">Stack Trace</div>
+        <div class="stack-block">at Context.&lt;anonymous&gt; (test/services/auth.test.js:45:18)
+  at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  at async runTest (node_modules/mocha/lib/runner.js:425:12)</div>
+      </div>
+    </div>
+
+    <div class="failure-section">
+      <div class="failure-header" onclick="toggleFailure(this)">
+        <span class="status-badge failed">Failed</span>
+        <span class="test-name">should update user profile</span>
+        <span class="expand-icon">&#9660;</span>
+      </div>
+      <div class="failure-body">
+        <div class="block-label">Error</div>
+        <div class="error-block">TypeError: Cannot read properties of undefined (reading 'email')
+  The response body was missing the 'email' field after update.</div>
+        <div class="block-label">Stack Trace</div>
+        <div class="stack-block">at Context.&lt;anonymous&gt; (test/controllers/api.test.js:112:24)
+  at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  at async runTest (node_modules/mocha/lib/runner.js:425:12)</div>
+      </div>
+    </div>
+
+    <div class="failure-section">
+      <div class="failure-header" onclick="toggleFailure(this)">
+        <span class="status-badge failed">Failed</span>
+        <span class="test-name">Full checkout with payment</span>
+        <span class="expand-icon">&#9660;</span>
+      </div>
+      <div class="failure-body">
+        <div class="block-label">Error</div>
+        <div class="error-block">AssertionError: expected 500 to equal 201
+  Payment endpoint returned internal server error during integration test.</div>
+        <div class="block-label">Stack Trace</div>
+        <div class="stack-block">at Context.&lt;anonymous&gt; (test/integration/checkout.test.js:67:16)
+  at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  at async runTest (node_modules/mocha/lib/runner.js:425:12)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve &#10003;</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject &#10007;</button>
+  </div>
+
+  <script>
+    function toggleFailure(header) {
+      var section = header.closest('.failure-section');
+      section.classList.toggle('expanded');
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        feedback: feedback,
+        phase: 'implement',
+        template: 'test-report'
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>
