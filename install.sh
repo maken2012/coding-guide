@@ -29,7 +29,7 @@ if [ ! -d "${SCRIPT_DIR}/.specify" ]; then
   echo ""
   echo -e "${BLUE}检测到远程安装模式，正在下载框架文件...${NC}"
   TEMP_DIR="$(mktemp -d)"
-  git clone --depth 1 "${REMOTE_REPO}" "${TEMP_DIR}/vibe-coding-guide" 2>/dev/null
+  git clone --depth 1 "${REMOTE_REPO}" "${TEMP_DIR}/vibe-coding-guide"
   SOURCE_DIR="${TEMP_DIR}/vibe-coding-guide"
   CLEANUP_TEMP=1
   echo -e "${GREEN}✓ 框架文件已下载${NC}"
