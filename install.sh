@@ -6,7 +6,7 @@ set -e
 # ============================================================
 # 用法:
 #   1. 本地安装:  ./install.sh [/path/to/target/project]
-#   2. 远程安装:  bash <(curl -sL https://raw.githubusercontent.com/maken2012/vibe-coding-guide/main/install.sh)
+#   2. 远程安装:  bash <(curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh)
 # ============================================================
 
 # 颜色定义
@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ---- 检测安装模式 ----
 
-REMOTE_REPO="https://github.com/maken2012/vibe-coding-guide.git"
+REMOTE_REPO="https://github.com/maken2012/coding-guide.git"
 CLEANUP_TEMP=0
 
 if [ ! -d "${SCRIPT_DIR}/.specify" ]; then
