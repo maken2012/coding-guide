@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="plan">
+  <meta name="created" content="">
+  <title>Code Understanding</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Architecture flow */
+    .flow-container {
+      max-width: 1000px;
+      margin: 0 auto 40px;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 0;
+    }
+
+    .flow-node {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      min-width: 140px;
+      user-select: none;
+    }
+
+    .flow-node:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+    }
+
+    .flow-node.active {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.08);
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+    }
+
+    .flow-node-icon {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .flow-node-label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .flow-node-sublabel {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Arrows */
+    .flow-arrow-h {
+      width: 48px;
+      height: 2px;
+      background: var(--border);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .flow-arrow-h::after {
+      content: '';
+      position: absolute;
+      right: -5px;
+      top: -4px;
+      width: 0;
+      height: 0;
+      border-left: 8px solid var(--border);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    .flow-arrow-down {
+      width: 2px;
+      height: 32px;
+      background: var(--border);
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .flow-arrow-down::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: -4px;
+      width: 0;
+      height: 0;
+      border-top: 8px solid var(--border);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+    }
+
+    .flow-spacer {
+      width: 48px;
+      flex-shrink: 0;
+    }
+
+    /* Detail sections */
+    .details-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .detail-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+      display: none;
+      border-left: 4px solid var(--primary);
+    }
+
+    .detail-section.visible {
+      display: block;
+      animation: slide-in 0.3s ease-out;
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .detail-icon {
+      font-size: 20px;
+    }
+
+    .detail-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .detail-close {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .detail-close:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    .detail-body {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .detail-body p + p {
+      margin-top: 10px;
+    }
+
+    .detail-list {
+      list-style: none;
+      margin-top: 10px;
+    }
+
+    .detail-list li {
+      padding: 4px 0 4px 20px;
+      position: relative;
+    }
+
+    .detail-list li::before {
+      content: '\25B8';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+    }
+
+    .detail-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .detail-tag {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .detail-file-path {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 768px) {
+      .flow-row { flex-wrap: wrap; gap: 8px; }
+      .flow-arrow-h, .flow-spacer { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Architecture Understanding</h1>
+    <p>Click any node to expand its details. Explore the codebase structure below.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- Architecture flow diagram -->
+  <div class="flow-container">
+
+    <!-- Row 1: Client layer -->
+    <div class="flow-row">
+      <div class="flow-node" data-detail="client" onclick="toggleDetail('client', this)">
+        <div class="flow-node-icon">&#128187;</div>
+        <div class="flow-node-label">Client</div>
+        <div class="flow-node-sublabel">Browser / App</div>
+      </div>
+      <div class="flow-arrow-h"></div>
+      <div class="flow-node" data-detail="api-gateway" onclick="toggleDetail('api-gateway', this)">
+        <div class="flow-node-icon">&#128268;</div>
+        <div class="flow-node-label">API Gateway</div>
+        <div class="flow-node-sublabel">路由 &amp; 认证</div>
+      </div>
+      <div class="flow-arrow-h"></div>
+      <div class="flow-node" data-detail="controller" onclick="toggleDetail('controller', this)">
+        <div class="flow-node-icon">&#9881;</div>
+        <div class="flow-node-label">Controller</div>
+        <div class="flow-node-sublabel">请求处理</div>
+      </div>
+    </div>
+
+    <div class="flow-arrow-down"></div>
+
+    <!-- Row 2: Service layer -->
+    <div class="flow-row">
+      <div class="flow-spacer"></div>
+      <div class="flow-node" data-detail="service" onclick="toggleDetail('service', this)">
+        <div class="flow-node-icon">&#128200;</div>
+        <div class="flow-node-label">Service Layer</div>
+        <div class="flow-node-sublabel">业务逻辑</div>
+      </div>
+      <div class="flow-arrow-h"></div>
+      <div class="flow-node" data-detail="repository" onclick="toggleDetail('repository', this)">
+        <div class="flow-node-icon">&#128451;</div>
+        <div class="flow-node-label">Repository</div>
+        <div class="flow-node-sublabel">数据访问</div>
+      </div>
+      <div class="flow-spacer"></div>
+    </div>
+
+    <div class="flow-arrow-down"></div>
+
+    <!-- Row 3: Data layer -->
+    <div class="flow-row">
+      <div class="flow-spacer"></div>
+      <div class="flow-spacer"></div>
+      <div class="flow-node" data-detail="database" onclick="toggleDetail('database', this)">
+        <div class="flow-node-icon">&#128190;</div>
+        <div class="flow-node-label">Database</div>
+        <div class="flow-node-sublabel">PostgreSQL</div>
+      </div>
+      <div class="flow-spacer"></div>
+      <div class="flow-spacer"></div>
+    </div>
+
+  </div>
+
+  <!-- Detail sections -->
+  <div class="details-container">
+
+    <div class="detail-section" id="detail-client">
+      <div class="detail-header">
+        <span class="detail-icon">&#128187;</span>
+        <span class="detail-title">Client Layer</span>
+        <button class="detail-close" onclick="closeDetail('client')">&times;</button>
+      </div>
+      <div class="detail-body">
+        <p>前端客户端应用，负责用户交互和界面渲染。通过 REST API 与后端通信。</p>
+        <ul class="detail-list">
+          <li>React 单页应用，使用 TypeScript</li>
+          <li>状态管理采用 Zustand</li>
+          <li>API 调用封装在 <code>src/client/api/</code> 目录</li>
+        </ul>
+        <div class="detail-tags">
+          <span class="detail-tag">React</span>
+          <span class="detail-tag">TypeScript</span>
+          <span class="detail-tag">Zustand</span>
+        </div>
+        <div class="detail-file-path">src/client/</div>
+      </div>
+    </div>
+
+    <div class="detail-section" id="detail-api-gateway">
+      <div class="detail-header">
+        <span class="detail-icon">&#128268;</span>
+        <span class="detail-title">API Gateway</span>
+        <button class="detail-close" onclick="closeDetail('api-gateway')">&times;</button>
+      </div>
+      <div class="detail-body">
+        <p>API 网关层，负责请求路由、身份认证和速率限制。</p>
+        <ul class="detail-list">
+          <li>Express.js 中间件链处理认证和日志</li>
+          <li>JWT Token 验证</li>
+          <li>请求速率限制：每分钟 100 次/IP</li>
+        </ul>
+        <div class="detail-tags">
+          <span class="detail-tag">Express</span>
+          <span class="detail-tag">JWT</span>
+          <span class="detail-tag">Rate Limit</span>
+        </div>
+        <div class="detail-file-path">src/api/gateway.ts, src/api/middleware.ts</div>
+      </div>
+    </div>
+
+    <div class="detail-section" id="detail-controller">
+      <div class="detail-header">
+        <span class="detail-icon">&#9881;</span>
+        <span class="detail-title">Controller Layer</span>
+        <button class="detail-close" onclick="closeDetail('controller')">&times;</button>
+      </div>
+      <div class="detail-body">
+        <p>控制器层，负责 HTTP 请求解析、参数校验和响应格式化。不包含业务逻辑。</p>
+        <ul class="detail-list">
+          <li>输入参数校验使用 Zod Schema</li>
+          <li>统一错误响应格式</li>
+          <li>请求日志记录</li>
+        </ul>
+        <div class="detail-tags">
+          <span class="detail-tag">Zod</span>
+          <span class="detail-tag">Validation</span>
+        </div>
+        <div class="detail-file-path">src/api/routes.ts, src/api/validators.ts</div>
+      </div>
+    </div>
+
+    <div class="detail-section" id="detail-service">
+      <div class="detail-header">
+        <span class="detail-icon">&#128200;</span>
+        <span class="detail-title">Service Layer</span>
+        <button class="detail-close" onclick="closeDetail('service')">&times;</button>
+      </div>
+      <div class="detail-body">
+        <p>核心业务逻辑层。所有业务规则和数据转换都在此层实现。</p>
+        <ul class="detail-list">
+          <li>事务管理和服务编排</li>
+          <li>领域事件发布</li>
+          <li>缓存策略（Redis，TTL 5min）</li>
+        </ul>
+        <div class="detail-tags">
+          <span class="detail-tag">Business Logic</span>
+          <span class="detail-tag">Redis</span>
+          <span class="detail-tag">Events</span>
+        </div>
+        <div class="detail-file-path">src/core/engine.ts, src/core/processor.ts</div>
+      </div>
+    </div>
+
+    <div class="detail-section" id="detail-repository">
+      <div class="detail-header">
+        <span class="detail-icon">&#128451;</span>
+        <span class="detail-title">Repository Layer</span>
+        <button class="detail-close" onclick="closeDetail('repository')">&times;</button>
+      </div>
+      <div class="detail-body">
+        <p>数据访问层，封装数据库操作。使用 Data Mapper 模式隔离 ORM 细节。</p>
+        <ul class="detail-list">
+          <li>TypeORM 实体映射</li>
+          <li>查询构建器封装</li>
+          <li>数据库迁移管理</li>
+        </ul>
+        <div class="detail-tags">
+          <span class="detail-tag">TypeORM</span>
+          <span class="detail-tag">Data Mapper</span>
+        </div>
+        <div class="detail-file-path">src/data/repositories/, src/data/entities/</div>
+      </div>
+    </div>
+
+    <div class="detail-section" id="detail-database">
+      <div class="detail-header">
+        <span class="detail-icon">&#128190;</span>
+        <span class="detail-title">Database</span>
+        <button class="detail-close" onclick="closeDetail('database')">&times;</button>
+      </div>
+      <div class="detail-body">
+        <p>PostgreSQL 主数据库，存储所有持久化数据。</p>
+        <ul class="detail-list">
+          <li>PostgreSQL 15，主从复制</li>
+          <li>连接池：最大 20 个连接</li>
+          <li>索引优化覆盖高频查询路径</li>
+        </ul>
+        <div class="detail-tags">
+          <span class="detail-tag">PostgreSQL</span>
+          <span class="detail-tag">Replication</span>
+          <span class="detail-tag">Connection Pool</span>
+        </div>
+        <div class="detail-file-path">docker-compose.yml, src/data/migrations/</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Toggles a detail section for a clicked flow node.
+     * @param {string} id - The detail section identifier
+     * @param {HTMLElement} nodeEl - The clicked flow node element
+     */
+    function toggleDetail(id, nodeEl) {
+      var section = document.getElementById('detail-' + id);
+
+      // Deactivate all nodes
+      document.querySelectorAll('.flow-node').forEach(function(n) {
+        n.classList.remove('active');
+      });
+
+      if (section.classList.contains('visible')) {
+        section.classList.remove('visible');
+        return;
+      }
+
+      // Hide all detail sections
+      document.querySelectorAll('.detail-section').forEach(function(s) {
+        s.classList.remove('visible');
+      });
+
+      // Show selected section and activate node
+      section.classList.add('visible');
+      nodeEl.classList.add('active');
+
+      // Scroll to the detail section
+      setTimeout(function() {
+        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }
+
+    /**
+     * Closes a specific detail section.
+     * @param {string} id - The detail section identifier
+     */
+    function closeDetail(id) {
+      var section = document.getElementById('detail-' + id);
+      section.classList.remove('visible');
+      // Deactivate the corresponding flow node
+      var node = document.querySelector('.flow-node[data-detail="' + id + '"]');
+      if (node) {
+        node.classList.remove('active');
+      }
+    }
+
+    /**
+     * Collects all decisions from [data-decision] elements.
+     * Returns an object mapping decision names to their selected values.
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    /**
+     * Saves feedback data. Tries the File System Access API first,
+     * falls back to copying JSON to clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{
+              description: 'JSON File',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('Save cancelled.', 'warning');
+            return;
+          }
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Collects decisions and feedback, then saves.
+     * @param {string} verdict - 'approved' or 'rejected'
+     */
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+
+      var feedback = document.getElementById('feedbackInput').value.trim();
+
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        decisions: decisions,
+        feedback: feedback
+      };
+
+      await saveFeedback(data);
+    }
+
+    /**
+     * Shows a notification toast.
+     * @param {string} msg - Message to display
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

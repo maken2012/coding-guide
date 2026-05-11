@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="spec">
+  <meta name="created" content="">
+  <title>Exploration - Visual Design Directions</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .designs-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .design-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+    }
+
+    .design-card:hover {
+      border-color: var(--primary);
+    }
+
+    .design-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary), 0 4px 24px rgba(59, 130, 246, 0.15);
+    }
+
+    .design-card.recommended {
+      border-color: var(--success);
+    }
+
+    .design-card.recommended.selected {
+      border-color: var(--success);
+      box-shadow: 0 0 0 1px var(--success), 0 4px 24px rgba(22, 163, 74, 0.15);
+    }
+
+    .mockup-area {
+      width: 100%;
+      height: 180px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mockup-area.direction-a {
+      background: linear-gradient(135deg, #1e3a5f, #0f172a);
+    }
+
+    .mockup-area.direction-a::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      height: 40%;
+      border: 2px solid rgba(59, 130, 246, 0.4);
+      border-radius: 8px;
+    }
+
+    .mockup-area.direction-b {
+      background: linear-gradient(135deg, #2d1b4e, #0f172a);
+    }
+
+    .mockup-area.direction-b::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40%;
+      height: 60%;
+      border: 2px solid rgba(168, 85, 247, 0.4);
+      border-radius: 50%;
+    }
+
+    .mockup-area.direction-c {
+      background: linear-gradient(135deg, #1a2e1a, #0f172a);
+    }
+
+    .mockup-area.direction-c::after {
+      content: '';
+      position: absolute;
+      top: 30%;
+      left: 20%;
+      width: 60%;
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(22, 163, 74, 0.4);
+      box-shadow: 0 16px 0 rgba(22, 163, 74, 0.3), 0 32px 0 rgba(22, 163, 74, 0.2);
+    }
+
+    .mockup-area.direction-d {
+      background: linear-gradient(135deg, #3b1a1a, #0f172a);
+    }
+
+    .mockup-area.direction-d::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(45deg);
+      width: 50px;
+      height: 50px;
+      border: 2px solid rgba(245, 158, 11, 0.5);
+      border-radius: 4px;
+    }
+
+    .card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .badge-recommended {
+      background: var(--success);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-description {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+
+    .color-swatches {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+    }
+
+    .card-footer {
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Custom radio button */
+    .radio-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .radio-wrapper input[type="radio"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .radio-wrapper input[type="radio"]:hover {
+      border-color: var(--primary);
+    }
+
+    .radio-wrapper input[type="radio"]:checked {
+      border-color: var(--primary);
+    }
+
+    .radio-wrapper input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .recommended .radio-wrapper input[type="radio"]:checked {
+      border-color: var(--success);
+    }
+
+    .recommended .radio-wrapper input[type="radio"]:checked::after {
+      background: var(--success);
+    }
+
+    .radio-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .note-input {
+      width: 100%;
+      margin-top: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      resize: vertical;
+      min-height: 60px;
+      transition: border-color 0.2s;
+    }
+
+    .note-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .note-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .designs-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .designs-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Visual Design Directions</h1>
+    <p>Compare visual design concepts, select your preferred direction, and submit your verdict.</p>
+  </div>
+
+  <!-- SLOT:content -->
+  <div class="designs-grid">
+
+    <!-- Direction A -->
+    <div class="design-card" data-approach="A">
+      <div class="mockup-area direction-a"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-title">方向 A: 深蓝专业</span>
+        </div>
+        <p class="card-description">
+          以深蓝色为基调的商务专业风格，强调可靠性与信任感，适合企业级应用。
+        </p>
+        <div class="color-swatches">
+          <div class="swatch" style="background:#1e3a5f"></div>
+          <div class="swatch" style="background:#3b82f6"></div>
+          <div class="swatch" style="background:#93c5fd"></div>
+          <div class="swatch" style="background:#e2e8f0"></div>
+        </div>
+        <div class="card-footer">
+          <label class="radio-wrapper">
+            <input type="radio" name="approach" value="A" data-decision="approach" data-type="single-select">
+            <span class="radio-label">选择此方向</span>
+          </label>
+        </div>
+        <textarea class="note-input" placeholder="备注..."></textarea>
+      </div>
+    </div>
+
+    <!-- Direction B (Recommended) -->
+    <div class="design-card recommended" data-approach="B">
+      <div class="mockup-area direction-b"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-title">方向 B: 紫色创意</span>
+          <span class="badge-recommended">推荐</span>
+        </div>
+        <p class="card-description">
+          紫色渐变搭配圆角元素，体现创新与想象力，适合面向消费者的产品。
+        </p>
+        <div class="color-swatches">
+          <div class="swatch" style="background:#2d1b4e"></div>
+          <div class="swatch" style="background:#a855f7"></div>
+          <div class="swatch" style="background:#c084fc"></div>
+          <div class="swatch" style="background:#faf5ff"></div>
+        </div>
+        <div class="card-footer">
+          <label class="radio-wrapper">
+            <input type="radio" name="approach" value="B" data-decision="approach" data-type="single-select">
+            <span class="radio-label">选择此方向</span>
+          </label>
+        </div>
+        <textarea class="note-input" placeholder="备注..."></textarea>
+      </div>
+    </div>
+
+    <!-- Direction C -->
+    <div class="design-card" data-approach="C">
+      <div class="mockup-area direction-c"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-title">方向 C: 绿色自然</span>
+        </div>
+        <p class="card-description">
+          绿色系配色与水平布局线条，传达清新自然与可持续发展理念。
+        </p>
+        <div class="color-swatches">
+          <div class="swatch" style="background:#1a2e1a"></div>
+          <div class="swatch" style="background:#16a34a"></div>
+          <div class="swatch" style="background:#4ade80"></div>
+          <div class="swatch" style="background:#f0fdf4"></div>
+        </div>
+        <div class="card-footer">
+          <label class="radio-wrapper">
+            <input type="radio" name="approach" value="C" data-decision="approach" data-type="single-select">
+            <span class="radio-label">选择此方向</span>
+          </label>
+        </div>
+        <textarea class="note-input" placeholder="备注..."></textarea>
+      </div>
+    </div>
+
+    <!-- Direction D -->
+    <div class="design-card" data-approach="D">
+      <div class="mockup-area direction-d"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-title">方向 D: 暖色活力</span>
+        </div>
+        <p class="card-description">
+          以橙红暖色为点缀的大胆设计，充满活力与动感，适合年轻化品牌。
+        </p>
+        <div class="color-swatches">
+          <div class="swatch" style="background:#3b1a1a"></div>
+          <div class="swatch" style="background:#f59e0b"></div>
+          <div class="swatch" style="background:#fb923c"></div>
+          <div class="swatch" style="background:#fef3c7"></div>
+        </div>
+        <div class="card-footer">
+          <label class="radio-wrapper">
+            <input type="radio" name="approach" value="D" data-decision="approach" data-type="single-select">
+            <span class="radio-label">选择此方向</span>
+          </label>
+        </div>
+        <textarea class="note-input" placeholder="备注..."></textarea>
+      </div>
+    </div>
+
+  </div>
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 ✗</button>
+  </div>
+
+  <script>
+    // --- Radio selection visual feedback ---
+    document.querySelectorAll('input[name="approach"]').forEach(function(radio) {
+      radio.addEventListener('change', function() {
+        document.querySelectorAll('.design-card').forEach(function(card) {
+          card.classList.remove('selected');
+        });
+        if (this.checked) {
+          this.closest('.design-card').classList.add('selected');
+        }
+      });
+    });
+
+    /**
+     * Collects all decisions from [data-decision] elements.
+     * Returns an object mapping decision names to their selected values.
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    /**
+     * Saves feedback data. Tries the File System Access API first,
+     * falls back to copying JSON to clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{
+              description: 'JSON File',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('Save cancelled.', 'warning');
+            return;
+          }
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Collects decisions and feedback, then saves.
+     * @param {string} verdict - 'approved' or 'rejected'
+     */
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+
+      if (!decisions.approach) {
+        showToast('Please select a design direction before submitting.', 'warning');
+        return;
+      }
+
+      var feedback = document.getElementById('feedbackInput').value.trim();
+
+      var notes = {};
+      document.querySelectorAll('.design-card').forEach(function(card) {
+        var approach = card.getAttribute('data-approach');
+        var noteEl = card.querySelector('.note-input');
+        if (noteEl && noteEl.value.trim()) {
+          notes[approach] = noteEl.value.trim();
+        }
+      });
+
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        decisions: decisions,
+        feedback: feedback,
+        notes: notes
+      };
+
+      await saveFeedback(data);
+    }
+
+    /**
+     * Shows a notification toast.
+     * @param {string} msg - Message to display
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

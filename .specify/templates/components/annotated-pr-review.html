@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="review">
+  <meta name="created" content="">
+  <title>Annotated PR Review</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Summary bar */
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto 32px;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      align-items: center;
+    }
+
+    .summary-bar .label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-right: auto;
+    }
+
+    .severity-count {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .severity-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .severity-dot.critical { background: var(--danger); }
+    .severity-dot.high { background: #f97316; }
+    .severity-dot.medium { background: var(--warning); }
+    .severity-dot.low { background: var(--primary); }
+
+    .severity-count.critical { color: var(--danger); }
+    .severity-count.high { color: #f97316; }
+    .severity-count.medium { color: var(--warning); }
+    .severity-count.low { color: var(--primary); }
+
+    /* Diff sections */
+    .diff-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .diff-file {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .diff-file-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(59, 130, 246, 0.06);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-weight: 600;
+    }
+
+    .diff-file-header .file-icon {
+      margin-right: 8px;
+      color: var(--text-muted);
+    }
+
+    /* Diff + annotation layout */
+    .diff-body {
+      display: flex;
+    }
+
+    .diff-code {
+      flex: 1;
+      overflow-x: auto;
+      padding: 0;
+    }
+
+    .diff-line {
+      display: flex;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+    }
+
+    .diff-line-num {
+      width: 48px;
+      text-align: right;
+      padding: 0 12px 0 8px;
+      color: var(--text-muted);
+      opacity: 0.5;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .diff-line-content {
+      flex: 1;
+      padding: 0 16px;
+      white-space: pre;
+    }
+
+    .diff-line.added {
+      background: rgba(22, 163, 74, 0.1);
+    }
+
+    .diff-line.added .diff-line-content {
+      color: var(--success);
+    }
+
+    .diff-line.removed {
+      background: rgba(220, 38, 38, 0.1);
+    }
+
+    .diff-line.removed .diff-line-content {
+      color: var(--danger);
+    }
+
+    .diff-line.context .diff-line-content {
+      color: var(--text-muted);
+    }
+
+    .diff-line.annotated {
+      background: rgba(245, 158, 11, 0.06);
+      border-left: 3px solid var(--warning);
+    }
+
+    /* Margin annotations */
+    .annotations-column {
+      width: 280px;
+      border-left: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .annotation {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      position: relative;
+    }
+
+    .annotation::before {
+      content: '';
+      position: absolute;
+      left: -17px;
+      top: 12px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-right: 8px solid var(--border);
+    }
+
+    .annotation-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .severity-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .severity-badge.critical {
+      background: rgba(220, 38, 38, 0.15);
+      color: var(--danger);
+    }
+
+    .severity-badge.high {
+      background: rgba(249, 115, 22, 0.15);
+      color: #f97316;
+    }
+
+    .severity-badge.medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .severity-badge.low {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+    }
+
+    .annotation-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .annotation-body {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .annotation-verdict {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .annotation-verdict label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .annotation-verdict input[type="radio"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .annotation-verdict input[type="radio"]:checked {
+      border-color: var(--primary);
+    }
+
+    .annotation-verdict input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .annotation-verdict input[type="radio"][value="disagree"]:checked {
+      border-color: var(--danger);
+    }
+
+    .annotation-verdict input[type="radio"][value="disagree"]:checked::after {
+      background: var(--danger);
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 860px) {
+      .diff-body { flex-direction: column; }
+      .annotations-column { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+      .annotation::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Annotated Code Review</h1>
+    <p>Inline code annotations with severity ratings. Review each finding and submit your verdict.</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- Summary bar -->
+  <div class="summary-bar">
+    <span class="label">发现总计</span>
+    <div class="severity-count critical">
+      <span class="severity-dot critical"></span> Critical: 1
+    </div>
+    <div class="severity-count high">
+      <span class="severity-dot high"></span> High: 2
+    </div>
+    <div class="severity-count medium">
+      <span class="severity-dot medium"></span> Medium: 1
+    </div>
+    <div class="severity-count low">
+      <span class="severity-dot low"></span> Low: 3
+    </div>
+  </div>
+
+  <!-- Diff sections -->
+  <div class="diff-container">
+
+    <!-- File 1 -->
+    <div class="diff-file">
+      <div class="diff-file-header">
+        <span class="file-icon">📄</span>
+        src/core/engine.ts
+      </div>
+      <div class="diff-body">
+        <div class="diff-code">
+          <div class="diff-line context">
+            <span class="diff-line-num">42</span>
+            <span class="diff-line-content">  constructor(config: EngineConfig) {</span>
+          </div>
+          <div class="diff-line removed">
+            <span class="diff-line-num">43</span>
+            <span class="diff-line-content">-   this.timeout = config.timeout || 5000;</span>
+          </div>
+          <div class="diff-line added annotated">
+            <span class="diff-line-num">43</span>
+            <span class="diff-line-content">+   this.timeout = config.timeout;</span>
+          </div>
+          <div class="diff-line added">
+            <span class="diff-line-num">44</span>
+            <span class="diff-line-content">+   this.retryCount = config.retries || 3;</span>
+          </div>
+          <div class="diff-line context">
+            <span class="diff-line-num">45</span>
+            <span class="diff-line-content">  }</span>
+          </div>
+          <div class="diff-line context">
+            <span class="diff-line-num">46</span>
+            <span class="diff-line-content"></span>
+          </div>
+          <div class="diff-line context">
+            <span class="diff-line-num">47</span>
+            <span class="diff-line-content">  async process(data: Input): Promise&lt;Output&gt; {</span>
+          </div>
+          <div class="diff-line removed">
+            <span class="diff-line-num">48</span>
+            <span class="diff-line-content">-   return this.handle(data);</span>
+          </div>
+          <div class="diff-line added annotated">
+            <span class="diff-line-num">48</span>
+            <span class="diff-line-content">+   return this.handleWithRetry(data);</span>
+          </div>
+          <div class="diff-line context">
+            <span class="diff-line-num">49</span>
+            <span class="diff-line-content">  }</span>
+          </div>
+        </div>
+        <div class="annotations-column">
+          <div class="annotation">
+            <div class="annotation-header">
+              <span class="severity-badge critical">CRITICAL</span>
+              <span class="annotation-title">空值风险</span>
+            </div>
+            <p class="annotation-body">
+              <code>config.timeout</code> 可能为 <code>undefined</code>，没有默认值回退会导致后续超时逻辑异常。建议保留 <code>|| 5000</code> 或使用 nullish coalescing <code>?? 5000</code>。
+            </p>
+            <div class="annotation-verdict">
+              <label>
+                <input type="radio" name="anno-1" value="agree" data-decision="annotation-1" data-type="single-select">
+                同意
+              </label>
+              <label>
+                <input type="radio" name="anno-1" value="disagree" data-decision="annotation-1" data-type="single-select">
+                不同意
+              </label>
+            </div>
+          </div>
+          <div class="annotation">
+            <div class="annotation-header">
+              <span class="severity-badge high">HIGH</span>
+              <span class="annotation-title">重试逻辑未定义</span>
+            </div>
+            <p class="annotation-body">
+              调用了 <code>handleWithRetry</code> 方法但未看到其实现。需要确认该方法是否已在此 PR 中定义。
+            </p>
+            <div class="annotation-verdict">
+              <label>
+                <input type="radio" name="anno-2" value="agree" data-decision="annotation-2" data-type="single-select">
+                同意
+              </label>
+              <label>
+                <input type="radio" name="anno-2" value="disagree" data-decision="annotation-2" data-type="single-select">
+                不同意
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File 2 -->
+    <div class="diff-file">
+      <div class="diff-file-header">
+        <span class="file-icon">📄</span>
+        src/api/routes.ts
+      </div>
+      <div class="diff-body">
+        <div class="diff-code">
+          <div class="diff-line context">
+            <span class="diff-line-num">18</span>
+            <span class="diff-line-content">  router.post('/process', async (req, res) => {</span>
+          </div>
+          <div class="diff-line added annotated">
+            <span class="diff-line-num">19</span>
+            <span class="diff-line-content">+   const result = await engine.process(req.body);</span>
+          </div>
+          <div class="diff-line added">
+            <span class="diff-line-num">20</span>
+            <span class="diff-line-content">+   res.json({ success: true, data: result });</span>
+          </div>
+          <div class="diff-line context">
+            <span class="diff-line-num">21</span>
+            <span class="diff-line-content">  });</span>
+          </div>
+        </div>
+        <div class="annotations-column">
+          <div class="annotation">
+            <div class="annotation-header">
+              <span class="severity-badge high">HIGH</span>
+              <span class="annotation-title">缺少错误处理</span>
+            </div>
+            <p class="annotation-body">
+              异步处理缺少 try-catch。如果 <code>engine.process</code> 抛出异常，会导致未处理的 Promise rejection 和 500 错误。
+            </p>
+            <div class="annotation-verdict">
+              <label>
+                <input type="radio" name="anno-3" value="agree" data-decision="annotation-3" data-type="single-select">
+                同意
+              </label>
+              <label>
+                <input type="radio" name="anno-3" value="disagree" data-decision="annotation-3" data-type="single-select">
+                不同意
+              </label>
+            </div>
+          </div>
+          <div class="annotation">
+            <div class="annotation-header">
+              <span class="severity-badge medium">MEDIUM</span>
+              <span class="annotation-title">缺少输入校验</span>
+            </div>
+            <p class="annotation-body">
+              直接将 <code>req.body</code> 传入处理函数，建议增加 schema 校验中间件。
+            </p>
+            <div class="annotation-verdict">
+              <label>
+                <input type="radio" name="anno-4" value="agree" data-decision="annotation-4" data-type="single-select">
+                同意
+              </label>
+              <label>
+                <input type="radio" name="anno-4" value="disagree" data-decision="annotation-4" data-type="single-select">
+                不同意
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Collects all decisions from [data-decision] elements.
+     * Returns an object mapping decision names to their selected values.
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    /**
+     * Saves feedback data. Tries the File System Access API first,
+     * falls back to copying JSON to clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{
+              description: 'JSON File',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('Save cancelled.', 'warning');
+            return;
+          }
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).' , 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Collects decisions and feedback, then saves.
+     * @param {string} verdict - 'approved' or 'rejected'
+     */
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+
+      // Check all annotations have been reviewed
+      var totalAnnotations = 4;
+      var reviewed = Object.keys(decisions).filter(function(k) {
+        return decisions[k] !== null;
+      }).length;
+
+      if (reviewed < totalAnnotations) {
+        showToast('Please review all ' + totalAnnotations + ' annotations before submitting.', 'warning');
+        return;
+      }
+
+      var feedback = document.getElementById('feedbackInput').value.trim();
+
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        decisions: decisions,
+        feedback: feedback
+      };
+
+      await saveFeedback(data);
+    }
+
+    /**
+     * Shows a notification toast.
+     * @param {string} msg - Message to display
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>

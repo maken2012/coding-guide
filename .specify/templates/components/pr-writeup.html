@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="review">
+  <meta name="created" content="">
+  <title>PR Writeup</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .pr-content {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* Section wrapper */
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Motivation */
+    .motivation-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .motivation-box p + p {
+      margin-top: 12px;
+    }
+
+    .motivation-box strong {
+      color: var(--primary);
+    }
+
+    /* Before/After comparison */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .comparison-side {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .comparison-label {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .comparison-side.before .comparison-label {
+      background: rgba(220, 38, 38, 0.1);
+      color: var(--danger);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-side.after .comparison-label {
+      background: rgba(22, 163, 74, 0.1);
+      color: var(--success);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-body {
+      padding: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      color: var(--text-muted);
+    }
+
+    .comparison-side.after .comparison-body {
+      color: var(--success);
+    }
+
+    .comparison-side.before .comparison-body {
+      color: var(--danger);
+    }
+
+    /* File tour */
+    .file-tour {
+      list-style: none;
+    }
+
+    .file-tour-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .file-tour-item:hover {
+      border-color: var(--primary);
+    }
+
+    .file-tour-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .file-tour-path {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .file-tour-toggle {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .file-tour-item.expanded .file-tour-toggle {
+      transform: rotate(90deg);
+    }
+
+    .file-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .file-badge.added {
+      background: rgba(22, 163, 74, 0.15);
+      color: var(--success);
+    }
+
+    .file-badge.modified {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+    }
+
+    .file-tour-description {
+      display: none;
+      padding: 0 16px 14px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .file-tour-item.expanded .file-tour-description {
+      display: block;
+    }
+
+    /* Review focus callout */
+    .focus-callout {
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px solid var(--primary);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+    }
+
+    .focus-callout-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--primary);
+    }
+
+    .focus-callout ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .focus-callout ul li {
+      padding: 6px 0 6px 24px;
+      position: relative;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .focus-callout ul li::before {
+      content: '\25B6';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-size: 10px;
+      top: 10px;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-approve {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-reject {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 700px) {
+      .comparison { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>Pull Request Description</h1>
+    <p>Structured PR writeup with motivation, changes, and review focus areas.</p>
+  </div>
+
+  <!-- SLOT:content -->
+  <div class="pr-content">
+
+    <!-- Motivation -->
+    <div class="section">
+      <div class="section-title">Motivation</div>
+      <div class="motivation-box">
+        <p>
+          当前的数据处理引擎使用同步阻塞调用，在处理大量请求时导致 <strong>响应时间过长</strong> 和 <strong>资源利用率低</strong>。平均请求延迟为 2.3 秒，P99 达到 8.1 秒。
+        </p>
+        <p>
+          本 PR 将核心处理流程重构为异步模式，引入重试机制和超时控制，预计将平均延迟降低到 <strong>200ms 以内</strong>，同时提高系统吞吐量 5 倍。
+        </p>
+      </div>
+    </div>
+
+    <!-- Before / After -->
+    <div class="section">
+      <div class="section-title">Before / After</div>
+      <div class="comparison">
+        <div class="comparison-side before">
+          <div class="comparison-label">Before</div>
+          <div class="comparison-body">process(data) {
+  // Synchronous blocking call
+  const result = db.query(data);
+  // No timeout, no retry
+  return result;
+}
+
+// Avg latency: 2300ms
+// P99 latency:  8100ms
+// Throughput:   45 req/s</div>
+        </div>
+        <div class="comparison-side after">
+          <div class="comparison-label">After</div>
+          <div class="comparison-body">async process(data) {
+  // Async with retry &amp; timeout
+  const result = await retry(
+    () => db.query(data),
+    { retries: 3, timeout: 5000 }
+  );
+  return result;
+}
+
+// Avg latency:  180ms
+// P99 latency:   950ms
+// Throughput:   230 req/s</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File tour -->
+    <div class="section">
+      <div class="section-title">Changed Files</div>
+      <ul class="file-tour">
+        <li class="file-tour-item">
+          <div class="file-tour-header" onclick="this.parentElement.classList.toggle('expanded')">
+            <span class="file-badge added">ADDED</span>
+            <span class="file-tour-path">src/core/engine.ts</span>
+            <span class="file-tour-toggle">&#9654;</span>
+          </div>
+          <div class="file-tour-description">
+            核心引擎重构为异步模式。新增 <code>process()</code> 异步方法，替代原有的同步实现。包含重试逻辑和超时控制。
+          </div>
+        </li>
+        <li class="file-tour-item">
+          <div class="file-tour-header" onclick="this.parentElement.classList.toggle('expanded')">
+            <span class="file-badge modified">MODIFIED</span>
+            <span class="file-tour-path">src/api/routes.ts</span>
+            <span class="file-tour-toggle">&#9654;</span>
+          </div>
+          <div class="file-tour-description">
+            更新路由处理器以支持异步调用。新增错误处理中间件和请求校验逻辑。
+          </div>
+        </li>
+        <li class="file-tour-item">
+          <div class="file-tour-header" onclick="this.parentElement.classList.toggle('expanded')">
+            <span class="file-badge added">ADDED</span>
+            <span class="file-tour-path">src/utils/retry.ts</span>
+            <span class="file-tour-toggle">&#9654;</span>
+          </div>
+          <div class="file-tour-description">
+            通用重试工具函数。支持可配置的重试次数、延迟策略（指数退避）和超时设置。
+          </div>
+        </li>
+        <li class="file-tour-item">
+          <div class="file-tour-header" onclick="this.parentElement.classList.toggle('expanded')">
+            <span class="file-badge modified">MODIFIED</span>
+            <span class="file-tour-path">tests/unit/engine.test.ts</span>
+            <span class="file-tour-toggle">&#9654;</span>
+          </div>
+          <div class="file-tour-description">
+            更新测试用例以匹配异步 API。新增重试逻辑和超时场景的测试覆盖。
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Review focus -->
+    <div class="section">
+      <div class="section-title">Review Focus Areas</div>
+      <div class="focus-callout">
+        <div class="focus-callout-title">请重点关注以下方面</div>
+        <ul>
+          <li>异步错误处理是否完整覆盖所有边界情况</li>
+          <li>重试策略的指数退避参数是否合理</li>
+          <li>超时机制是否能正确中断长时间运行的操作</li>
+          <li>向后兼容性 -- 同步 API 是否有平滑迁移路径</li>
+          <li>性能测试结果是否验证了预期改进目标</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 ✗</button>
+  </div>
+
+  <script>
+    /**
+     * Collects all decisions from [data-decision] elements.
+     * Returns an object mapping decision names to their selected values.
+     */
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          if (checked) {
+            decisions[key] = checked.value;
+          } else {
+            decisions[key] = null;
+          }
+        }
+      });
+      return decisions;
+    }
+
+    /**
+     * Saves feedback data. Tries the File System Access API first,
+     * falls back to copying JSON to clipboard.
+     */
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{
+              description: 'JSON File',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            showToast('Save cancelled.', 'warning');
+            return;
+          }
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback. See console.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    /**
+     * Collects decisions and feedback, then saves.
+     * @param {string} verdict - 'approved' or 'rejected'
+     */
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+
+      var feedback = document.getElementById('feedbackInput').value.trim();
+
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        decisions: decisions,
+        feedback: feedback
+      };
+
+      await saveFeedback(data);
+    }
+
+    /**
+     * Shows a notification toast.
+     * @param {string} msg - Message to display
+     * @param {string} type - 'success' | 'error' | 'warning' | 'info'
+     */
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>
