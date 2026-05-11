@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="phase" content="">
+  <meta name="created" content="">
+  <title>Exploration - 探索与对比</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 32px 24px 120px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Callout box */
+    .callout {
+      max-width: 1200px;
+      margin: 0 auto 36px;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+    }
+
+    .callout-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .callout-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* Approaches grid */
+    .approaches-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .approach-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .approach-card:hover {
+      border-color: var(--primary);
+    }
+
+    .approach-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary), 0 4px 24px rgba(59, 130, 246, 0.15);
+    }
+
+    .approach-card.recommended {
+      border-color: var(--success);
+    }
+
+    .approach-card.recommended.selected {
+      border-color: var(--success);
+      box-shadow: 0 0 0 1px var(--success), 0 4px 24px rgba(22, 163, 74, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .badge-recommended {
+      background: var(--success);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-description {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+      flex-grow: 0;
+    }
+
+    .card-section {
+      margin-bottom: 16px;
+    }
+
+    .card-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .pros .card-section-title { color: var(--success); }
+    .cons .card-section-title { color: var(--danger); }
+
+    .card-section ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .card-section ul li {
+      font-size: 14px;
+      padding: 4px 0 4px 20px;
+      position: relative;
+      color: var(--text);
+    }
+
+    .pros ul li::before {
+      content: '+';
+      position: absolute;
+      left: 0;
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .cons ul li::before {
+      content: '-';
+      position: absolute;
+      left: 0;
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .pros {
+      background: rgba(22, 163, 74, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+
+    .cons {
+      background: rgba(220, 38, 38, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+
+    .card-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .radio-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .radio-wrapper input[type="radio"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .radio-wrapper input[type="radio"]:hover {
+      border-color: var(--primary);
+    }
+
+    .radio-wrapper input[type="radio"]:checked {
+      border-color: var(--primary);
+    }
+
+    .radio-wrapper input[type="radio"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .recommended .radio-wrapper input[type="radio"]:checked {
+      border-color: var(--success);
+    }
+
+    .recommended .radio-wrapper input[type="radio"]:checked::after {
+      background: var(--success);
+    }
+
+    .radio-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .note-input {
+      width: 100%;
+      margin-top: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      resize: vertical;
+      min-height: 60px;
+      transition: border-color 0.2s;
+    }
+
+    .note-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .note-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Recommendation box */
+    .recommendation {
+      max-width: 1200px;
+      margin: 40px auto 0;
+      background: rgba(22, 163, 74, 0.08);
+      border: 1px solid rgba(22, 163, 74, 0.25);
+      border-left: 4px solid var(--success);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+    }
+
+    .recommendation-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--success);
+      margin-bottom: 8px;
+    }
+
+    .recommendation-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .recommendation-text {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    /* Review bar */
+    .review-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .review-bar .feedback-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .review-bar .feedback-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .review-bar .feedback-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.97); }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      animation: toast-in 0.3s ease-out;
+      max-width: 360px;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); color: #000; }
+    .toast.info { background: var(--primary); }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-12px); }
+    }
+
+    @media (max-width: 900px) {
+      .approaches-grid {
+        grid-template-columns: 1fr;
+        max-width: 600px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>探索与对比</h1>
+    <p>对比不同方案，记录决策过程与结论。</p>
+  </div>
+
+  <!-- SLOT:content -->
+
+  <!-- 问题描述 -->
+  <div class="callout">
+    <div class="callout-label">问题描述</div>
+    <div class="callout-text" id="questionText">
+      <!-- Insert the question being explored here -->
+    </div>
+  </div>
+
+  <!-- 方案对比 -->
+  <div class="approaches-grid">
+
+    <!-- Approach A -->
+    <div class="approach-card" data-approach="A">
+      <div class="card-header">
+        <span class="card-title">方案 A</span>
+      </div>
+      <p class="card-description">方案 A 描述内容占位。</p>
+      <div class="card-section pros">
+        <div class="card-section-title">优点</div>
+        <ul>
+          <li>优点一</li>
+          <li>优点二</li>
+          <li>优点三</li>
+        </ul>
+      </div>
+      <div class="card-section cons">
+        <div class="card-section-title">缺点</div>
+        <ul>
+          <li>缺点一</li>
+          <li>缺点二</li>
+        </ul>
+      </div>
+      <div class="card-footer">
+        <label class="radio-wrapper">
+          <input type="radio" name="approach" value="A" data-decision="approach" data-type="single-select">
+          <span class="radio-label">选择此方案</span>
+        </label>
+      </div>
+      <textarea class="note-input" placeholder="备注..."></textarea>
+    </div>
+
+    <!-- Approach B (Recommended) -->
+    <div class="approach-card recommended" data-approach="B">
+      <div class="card-header">
+        <span class="card-title">方案 B</span>
+        <span class="badge-recommended">推荐</span>
+      </div>
+      <p class="card-description">方案 B 描述内容占位（推荐方案）。</p>
+      <div class="card-section pros">
+        <div class="card-section-title">优点</div>
+        <ul>
+          <li>优点一</li>
+          <li>优点二</li>
+          <li>优点三</li>
+          <li>优点四</li>
+        </ul>
+      </div>
+      <div class="card-section cons">
+        <div class="card-section-title">缺点</div>
+        <ul>
+          <li>缺点一</li>
+          <li>缺点二</li>
+        </ul>
+      </div>
+      <div class="card-footer">
+        <label class="radio-wrapper">
+          <input type="radio" name="approach" value="B" data-decision="approach" data-type="single-select">
+          <span class="radio-label">选择此方案</span>
+        </label>
+      </div>
+      <textarea class="note-input" placeholder="备注..."></textarea>
+    </div>
+
+    <!-- Approach C -->
+    <div class="approach-card" data-approach="C">
+      <div class="card-header">
+        <span class="card-title">方案 C</span>
+      </div>
+      <p class="card-description">方案 C 描述内容占位。</p>
+      <div class="card-section pros">
+        <div class="card-section-title">优点</div>
+        <ul>
+          <li>优点一</li>
+          <li>优点二</li>
+          <li>优点三</li>
+        </ul>
+      </div>
+      <div class="card-section cons">
+        <div class="card-section-title">缺点</div>
+        <ul>
+          <li>缺点一</li>
+          <li>缺点二</li>
+          <li>缺点三</li>
+        </ul>
+      </div>
+      <div class="card-footer">
+        <label class="radio-wrapper">
+          <input type="radio" name="approach" value="C" data-decision="approach" data-type="single-select">
+          <span class="radio-label">选择此方案</span>
+        </label>
+      </div>
+      <textarea class="note-input" placeholder="备注..."></textarea>
+    </div>
+
+  </div>
+
+  <!-- 推荐结论 -->
+  <div class="recommendation">
+    <div class="recommendation-label">推荐结论</div>
+    <div class="recommendation-title" id="recommendationTitle">方案 B</div>
+    <div class="recommendation-text" id="recommendationText">
+      <!-- Insert the recommendation rationale here -->
+    </div>
+  </div>
+
+  <!-- END SLOT -->
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Review bar -->
+  <div class="review-bar">
+    <input type="text" class="feedback-input" id="feedbackInput" placeholder="输入审核反馈...">
+    <button class="btn btn-approve" onclick="submitVerdict('approved')">通过 ✓</button>
+    <button class="btn btn-reject" onclick="submitVerdict('rejected')">驳回 ✗</button>
+  </div>
+
+  <script>
+    // --- Radio selection visual feedback ---
+    document.querySelectorAll('input[name="approach"]').forEach(function(radio) {
+      radio.addEventListener('change', function() {
+        document.querySelectorAll('.approach-card').forEach(function(card) {
+          card.classList.remove('selected');
+        });
+        if (this.checked) {
+          this.closest('.approach-card').classList.add('selected');
+        }
+      });
+    });
+
+    function collectDecisions() {
+      var decisions = {};
+      var elements = document.querySelectorAll('[data-decision]');
+      elements.forEach(function(el) {
+        var key = el.getAttribute('data-decision');
+        var type = el.getAttribute('data-type');
+        if (type === 'single-select') {
+          var name = el.getAttribute('name');
+          var checked = document.querySelector('input[name="' + name + '"]:checked');
+          decisions[key] = checked ? checked.value : null;
+        }
+      });
+      return decisions;
+    }
+
+    async function saveFeedback(data) {
+      var json = JSON.stringify(data, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: 'feedback-' + Date.now() + '.json',
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          showToast('Feedback saved to file.', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') { showToast('Save cancelled.', 'warning'); return; }
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Feedback copied to clipboard.', 'info');
+      } catch (err) {
+        showToast('Could not save or copy feedback.', 'error');
+        console.log('Feedback data:', json);
+      }
+    }
+
+    async function submitVerdict(verdict) {
+      var decisions = collectDecisions();
+      if (!decisions.approach) {
+        showToast('请先选择一个方案。', 'warning');
+        return;
+      }
+      var feedback = document.getElementById('feedbackInput').value.trim();
+      var notes = {};
+      document.querySelectorAll('.approach-card').forEach(function(card) {
+        var approach = card.getAttribute('data-approach');
+        var noteEl = card.querySelector('.note-input');
+        if (noteEl && noteEl.value.trim()) {
+          notes[approach] = noteEl.value.trim();
+        }
+      });
+      var data = {
+        verdict: verdict,
+        timestamp: new Date().toISOString(),
+        decisions: decisions,
+        feedback: feedback,
+        notes: notes
+      };
+      await saveFeedback(data);
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + (type || 'info');
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'toast-out 0.3s ease-in forwards';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      }, 3500);
+    }
+  </script>
+
+</body>
+</html>
