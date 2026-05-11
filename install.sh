@@ -6,7 +6,7 @@ set -e
 # ============================================================
 # 用法:
 #   1. 本地安装:  ./install.sh [/path/to/target/project]
-#   2. 远程安装:  bash <(curl -sL https://raw.githubusercontent.com/<repo>/main/install.sh)
+#   2. 远程安装:  bash <(curl -sL https://raw.githubusercontent.com/maken2012/vibe-coding-guide/main/install.sh)
 # ============================================================
 
 # 颜色定义
@@ -18,6 +18,25 @@ NC='\033[0m' # No Color
 
 # 确定脚本所在目录（源文件位置）
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ---- 检测安装模式 ----
+
+REMOTE_REPO="https://github.com/maken2012/vibe-coding-guide.git"
+CLEANUP_TEMP=0
+
+if [ ! -d "${SCRIPT_DIR}/.specify" ]; then
+  # 脚本目录没有 .specify/ → 远程安装模式
+  echo ""
+  echo -e "${BLUE}检测到远程安装模式，正在下载框架文件...${NC}"
+  TEMP_DIR="$(mktemp -d)"
+  git clone --depth 1 "${REMOTE_REPO}" "${TEMP_DIR}/vibe-coding-guide" 2>/dev/null
+  SOURCE_DIR="${TEMP_DIR}/vibe-coding-guide"
+  CLEANUP_TEMP=1
+  echo -e "${GREEN}✓ 框架文件已下载${NC}"
+else
+  # 脚本目录有 .specify/ → 本地安装模式
+  SOURCE_DIR="${SCRIPT_DIR}"
+fi
 
 # 确定目标项目目录
 if [ -n "$1" ]; then
@@ -54,6 +73,9 @@ if [ -d "${TARGET_DIR}/.specify" ]; then
   echo ""
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${RED}安装取消${NC}"
+    if [ "${CLEANUP_TEMP}" -eq 1 ]; then
+      rm -rf "${TEMP_DIR}"
+    fi
     exit 0
   fi
   rm -rf "${TARGET_DIR}/.specify"
@@ -75,17 +97,17 @@ echo -e "${GREEN}✓ 目录结构已创建${NC}"
 echo -e "${BLUE}[2/5] 复制模板和组件...${NC}"
 
 # 宪章
-cp "${SCRIPT_DIR}/.specify/constitution.md" "${TARGET_DIR}/.specify/constitution.md"
+cp "${SOURCE_DIR}/.specify/constitution.md" "${TARGET_DIR}/.specify/constitution.md"
 
 # 文档模板
-for f in "${SCRIPT_DIR}/.specify/templates/"*-template.html "${SCRIPT_DIR}/.specify/templates/dashboard.html"; do
+for f in "${SOURCE_DIR}/.specify/templates/"*-template.html "${SOURCE_DIR}/.specify/templates/dashboard.html"; do
   if [ -f "$f" ]; then
     cp "$f" "${TARGET_DIR}/.specify/templates/"
   fi
 done
 
-# 20 个 HTML 组件
-for f in "${SCRIPT_DIR}/.specify/templates/components/"*.html; do
+# HTML 组件
+for f in "${SOURCE_DIR}/.specify/templates/components/"*.html; do
   if [ -f "$f" ]; then
     cp "$f" "${TARGET_DIR}/.specify/templates/components/"
   fi
@@ -105,7 +127,7 @@ rm -f "${TARGET_DIR}/.claude/commands/spec-clarify.md" 2>/dev/null
 rm -f "${TARGET_DIR}/.claude/commands/spec-tasks.md" 2>/dev/null
 
 # 复制新命令
-for f in "${SCRIPT_DIR}/.claude/commands/"*.md; do
+for f in "${SOURCE_DIR}/.claude/commands/"*.md; do
   if [ -f "$f" ]; then
     cp "$f" "${TARGET_DIR}/.claude/commands/"
   fi
@@ -118,7 +140,7 @@ echo -e "${GREEN}✓ ${COMMAND_COUNT} 个斜杠命令已安装${NC}"
 
 echo -e "${BLUE}[4/5] 安装 Hook 脚本...${NC}"
 
-for f in "${SCRIPT_DIR}/.claude/hooks/"*.sh; do
+for f in "${SOURCE_DIR}/.claude/hooks/"*.sh; do
   if [ -f "$f" ]; then
     cp "$f" "${TARGET_DIR}/.claude/hooks/"
     chmod +x "${TARGET_DIR}/.claude/hooks/$(basename "$f")"
@@ -145,13 +167,13 @@ if [ -f "${CLAUDE_MD}" ]; then
   {
     echo ""
     echo "<!-- SDD START -->"
-    cat "${SCRIPT_DIR}/CLAUDE.md"
+    cat "${SOURCE_DIR}/CLAUDE.md"
     echo "<!-- SDD END -->"
   } >> "${CLAUDE_MD}"
 
   echo -e "${GREEN}✓ CLAUDE.md 已更新（追加 SDD 规则）${NC}"
 else
-  cp "${SCRIPT_DIR}/CLAUDE.md" "${CLAUDE_MD}"
+  cp "${SOURCE_DIR}/CLAUDE.md" "${CLAUDE_MD}"
   echo -e "${GREEN}✓ CLAUDE.md 已创建${NC}"
 fi
 
@@ -164,6 +186,13 @@ if [ -f "${GITIGNORE}" ]; then
   fi
 else
   echo ".DS_Store" > "${GITIGNORE}"
+fi
+
+# ---- 清理临时文件 ----
+
+if [ "${CLEANUP_TEMP}" -eq 1 ]; then
+  rm -rf "${TEMP_DIR}"
+  echo -e "${GREEN}✓ 临时文件已清理${NC}"
 fi
 
 # ---- 完成 ----
