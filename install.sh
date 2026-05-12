@@ -329,11 +329,8 @@ if [ -f "${GITIGNORE}" ]; then
   if ! grep -q ".DS_Store" "${GITIGNORE}"; then
     echo ".DS_Store" >> "${GITIGNORE}"
   fi
-  if ! grep -q "sdd.db" "${GITIGNORE}"; then
-    echo "sdd.db" >> "${GITIGNORE}"
-  fi
 else
-  printf ".DS_Store\nsdd.db\n" > "${GITIGNORE}"
+  echo ".DS_Store" > "${GITIGNORE}"
 fi
 
 # ---- Configure Claude Code SessionStart hook ----
