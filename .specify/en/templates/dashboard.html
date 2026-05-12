@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="phase" content="">
-  <meta name="created" content="">
-  <title>Dashboard</title>
+  <title>SDD Dashboard</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -80,7 +78,7 @@
     /* Stats */
     .stats-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
       margin-bottom: 16px;
     }
@@ -101,8 +99,7 @@
 
     .stat-number.total { color: var(--text); }
     .stat-number.pending { color: var(--primary); }
-    .stat-number.implementing { color: var(--warning); }
-    .stat-number.done { color: var(--success); }
+    .stat-number.approved { color: var(--success); }
 
     .stat-label {
       font-size: 11px;
@@ -127,6 +124,20 @@
       letter-spacing: 0.8px;
       color: var(--text-muted);
       margin-bottom: 12px;
+    }
+
+    .section-title a {
+      float: right;
+      font-size: 11px;
+      color: var(--primary);
+      text-decoration: none;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 500;
+    }
+
+    .section-title a:hover {
+      text-decoration: underline;
     }
 
     .timeline {
@@ -306,6 +317,89 @@
       line-height: 1.6;
     }
 
+    /* ===== Decision panel ===== */
+    .decision-panel {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .decision-toggle {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      border-top: 1px solid var(--border);
+      padding: 10px 24px;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .decision-toggle:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .decision-list {
+      padding: 0 24px 12px;
+      display: none;
+    }
+
+    .decision-list.open {
+      display: block;
+    }
+
+    .decision-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+    }
+
+    .decision-row:last-child {
+      border-bottom: none;
+    }
+
+    .decision-key {
+      color: var(--text-muted);
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+
+    .decision-value {
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .decision-phase-label {
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 0 4px;
+    }
+
+    /* ===== Approved card ===== */
+    .approved-card {
+      background: rgba(22, 163, 74, 0.08);
+      border: 1px solid rgba(22, 163, 74, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 16px 24px;
+      text-align: center;
+      color: var(--success);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
     /* ===== Review bar ===== */
     .review-bar {
       background: var(--surface);
@@ -391,6 +485,22 @@
       from { opacity: 1; transform: translateY(0); }
       to { opacity: 0; transform: translateY(-12px); }
     }
+
+    /* ===== Loading ===== */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -399,36 +509,35 @@
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-header">
-      <h1>Feature Dashboard</h1>
-      <p>Feature Development Kanban Board</p>
+      <h1>SDD Dashboard</h1>
+      <p>Specification-Driven Development</p>
     </div>
     <div class="sidebar-content">
       <!-- Stats -->
       <div class="stats-grid" id="statsGrid">
         <div class="stat-card">
-          <div class="stat-number total" id="statTotal">0</div>
+          <div class="stat-number total" id="statTotal">-</div>
           <div class="stat-label">Total</div>
         </div>
         <div class="stat-card">
-          <div class="stat-number pending" id="statPending">0</div>
-          <div class="stat-label">Pending Review</div>
+          <div class="stat-number pending" id="statPending">-</div>
+          <div class="stat-label">Pending</div>
         </div>
         <div class="stat-card">
-          <div class="stat-number implementing" id="statImplementing">0</div>
-          <div class="stat-label">In Progress</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number done" id="statDone">0</div>
-          <div class="stat-label">Completed</div>
+          <div class="stat-number approved" id="statApproved">-</div>
+          <div class="stat-label">Approved</div>
         </div>
       </div>
 
       <div class="divider"></div>
 
       <!-- Timeline -->
-      <div class="section-title">Timeline</div>
+      <div class="section-title">
+        Timeline
+        <a href="/timeline">View full timeline &rarr;</a>
+      </div>
       <div class="timeline" id="timeline">
-        <!-- Rendered by JS -->
+        <div class="loading" style="height:auto;padding:8px 0;">Loading...</div>
       </div>
 
       <div class="divider"></div>
@@ -436,7 +545,7 @@
       <!-- Feature list -->
       <div class="section-title">Features</div>
       <div class="feature-list" id="featureList">
-        <!-- Rendered by JS -->
+        <div class="loading" style="height:auto;padding:8px 0;">Loading...</div>
       </div>
     </div>
   </div>
@@ -444,21 +553,25 @@
   <!-- Main content -->
   <div class="main">
     <div class="content-header" id="contentHeader">
-      <h2 id="contentTitle">Dashboard</h2>
+      <h2 id="contentTitle">SDD Dashboard</h2>
       <span class="phase-badge" id="contentPhase" style="display:none;"></span>
     </div>
     <div class="content-body" id="contentBody">
       <div class="welcome" id="welcomePlaceholder">
         <div class="welcome-icon">&#9776;</div>
-        <h3>Welcome to Feature Dashboard</h3>
-        <p>Select a feature from the sidebar to view its details and current phase document.</p>
+        <h3>SDD Dashboard</h3>
+        <p>Select a feature to view details</p>
       </div>
       <iframe id="contentFrame" style="display:none;"></iframe>
     </div>
-    <div class="review-bar">
+    <div class="decision-panel" id="decisionPanel" style="display:none;">
+      <button class="decision-toggle" id="decisionToggle" onclick="toggleDecisions()">&#9654; Decisions (0)</button>
+      <div class="decision-list" id="decisionList"></div>
+    </div>
+    <div class="review-bar" id="reviewBar">
       <input type="text" class="feedback-input" id="feedbackInput" placeholder="Enter review feedback...">
-      <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve ✓</button>
-      <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject ✗</button>
+      <button class="btn btn-approve" onclick="submitVerdict('approved')">Approve &#10003;</button>
+      <button class="btn btn-reject" onclick="submitVerdict('rejected')">Reject &#10007;</button>
     </div>
   </div>
 </div>
@@ -466,236 +579,398 @@
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- Embedded state -->
-<script type="application/json" id="dashboardState">
-{
-  "current_feature": "",
-  "features": [
-    {
-      "id": "F001",
-      "name": "User Authentication Module",
-      "status": "implementing",
-      "phase": "tasks",
-      "html_path": "tasks-template.html"
-    },
-    {
-      "id": "F002",
-      "name": "Data Export Feature",
-      "status": "pending_review",
-      "phase": "spec",
-      "html_path": "spec-template.html"
-    },
-    {
-      "id": "F003",
-      "name": "Permission Management System",
-      "status": "approved",
-      "phase": "plan",
-      "html_path": "plan-template.html"
-    },
-    {
-      "id": "F004",
-      "name": "Audit Log",
-      "status": "draft",
-      "phase": "",
-      "html_path": ""
-    }
-  ],
-  "timeline": [
-    { "date": "2025-01-15", "event": "F001 spec approved" },
-    { "date": "2025-01-18", "event": "F001 technical design submitted" },
-    { "date": "2025-01-22", "event": "F002 spec created" },
-    { "date": "2025-01-25", "event": "F001 entered implementation phase" },
-    { "date": "2025-01-28", "event": "F003 spec created" }
-  ]
-}
-</script>
-
 <script>
-  var state = null;
+  var API_BASE = window.location.origin;
+  var features = [];
   var selectedFeatureId = null;
+  var currentPhases = [];
+  var currentDecisions = {};
+  var decisionsOpen = false;
 
-  /**
-   * Initialize dashboard: read embedded state and render sidebar.
-   */
-  function init() {
-    state = JSON.parse(document.getElementById('dashboardState').textContent);
-    renderStats(state.features);
-    renderTimeline(state.timeline);
-    renderFeatureList(state.features);
-
-    if (state.current_feature) {
-      selectFeature(state.current_feature);
-    }
+  /* ===== Status label mapping ===== */
+  function statusLabel(status) {
+    var map = {
+      'draft': 'Draft',
+      'pending_review': 'Review',
+      'approved': 'Approved',
+      'rejected': 'Rejected',
+      'implementing': 'In Progress'
+    };
+    return map[status] || status;
   }
 
-  /**
-   * Update stat card numbers.
-   */
-  function renderStats(features) {
-    document.getElementById('statTotal').textContent = features.length;
-    document.getElementById('statPending').textContent = features.filter(function(f) { return f.status === 'pending_review'; }).length;
-    document.getElementById('statImplementing').textContent = features.filter(function(f) { return f.status === 'implementing'; }).length;
-    document.getElementById('statDone').textContent = features.filter(function(f) { return f.status === 'approved' || f.status === 'done'; }).length;
+  /* ===== Escape HTML ===== */
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
   }
 
-  /**
-   * Render timeline entries.
-   */
-  function renderTimeline(timeline) {
+  /* ===== Fetch helper (XHR) ===== */
+  function fetchJSON(url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status === 200) {
+        try {
+          callback(null, JSON.parse(xhr.responseText));
+        } catch (e) {
+          callback(e);
+        }
+      } else {
+        callback(new Error('HTTP ' + xhr.status));
+      }
+    };
+    xhr.onerror = function() {
+      callback(new Error('Network error'));
+    };
+    xhr.send();
+  }
+
+  /* ===== POST helper ===== */
+  function postJSON(url, data, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status === 200) {
+        try {
+          callback(null, JSON.parse(xhr.responseText));
+        } catch (e) {
+          callback(null, { ok: true });
+        }
+      } else {
+        try {
+          var errBody = JSON.parse(xhr.responseText);
+          callback(new Error(errBody.error || 'HTTP ' + xhr.status));
+        } catch (e) {
+          callback(new Error('HTTP ' + xhr.status));
+        }
+      }
+    };
+    xhr.onerror = function() {
+      callback(new Error('Cannot connect to server'));
+    };
+    xhr.send(JSON.stringify(data));
+  }
+
+  /* ===== Render stat cards ===== */
+  function renderStats(featList) {
+    document.getElementById('statTotal').textContent = featList.length;
+    document.getElementById('statPending').textContent = featList.filter(function(f) {
+      return f.status === 'pending_review';
+    }).length;
+    document.getElementById('statApproved').textContent = featList.filter(function(f) {
+      return f.status === 'approved';
+    }).length;
+  }
+
+  /* ===== Render timeline ===== */
+  function renderTimeline(items) {
     var container = document.getElementById('timeline');
     container.innerHTML = '';
-    timeline.forEach(function(entry) {
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:4px 0;">No events yet</div>';
+      return;
+    }
+    var shown = items.slice(0, 5);
+    for (var i = 0; i < shown.length; i++) {
+      var entry = shown[i];
       var div = document.createElement('div');
       div.className = 'timeline-entry';
-      div.innerHTML = '<div class="timeline-date">' + escapeHtml(entry.date) + '</div>' +
-                      '<div class="timeline-text">' + escapeHtml(entry.event) + '</div>';
+      var dateStr = entry.created_at || entry.date || '';
+      var desc = entry.description || entry.event || '';
+      div.innerHTML = '<div class="timeline-date">' + escapeHtml(dateStr) + '</div>' +
+                      '<div class="timeline-text">' + escapeHtml(desc) + '</div>';
       container.appendChild(div);
-    });
+    }
   }
 
-  /**
-   * Render clickable feature list.
-   */
-  function renderFeatureList(features) {
+  /* ===== Derive feature status from phases ===== */
+  function deriveStatus(phases) {
+    var phaseOrder = ['spec', 'detail', 'design', 'plan', 'implement', 'review'];
+    var lastStarted = '';
+    var lastStatus = 'draft';
+    for (var i = 0; i < phaseOrder.length; i++) {
+      var p = phaseOrder[i];
+      var found = null;
+      for (var j = 0; j < phases.length; j++) {
+        if (phases[j].phase === p) { found = phases[j]; break; }
+      }
+      if (found && found.status && found.status !== 'not_started') {
+        lastStarted = p;
+        lastStatus = found.status;
+      }
+    }
+    /* Map phase status to dashboard status */
+    if (lastStatus === 'in_progress' || lastStatus === 'implementing') return 'implementing';
+    if (lastStatus === 'pending_review' || lastStatus === 'review') return 'pending_review';
+    if (lastStatus === 'approved' || lastStatus === 'reviewed') return 'approved';
+    if (lastStatus === 'rejected') return 'rejected';
+    return 'draft';
+  }
+
+  /* ===== Derive current active phase and artifact ===== */
+  function deriveActivePhase(phases) {
+    var phaseOrder = ['spec', 'detail', 'design', 'plan', 'implement', 'review'];
+    var result = { phase: '', artifact: '' };
+    for (var i = 0; i < phaseOrder.length; i++) {
+      var p = phaseOrder[i];
+      var found = null;
+      for (var j = 0; j < phases.length; j++) {
+        if (phases[j].phase === p) { found = phases[j]; break; }
+      }
+      if (found && found.status && found.status !== 'not_started') {
+        result.phase = p;
+        result.artifact = found.artifact_path || (p + '.html');
+      }
+    }
+    return result;
+  }
+
+  /* ===== Render feature list ===== */
+  function renderFeatureList(featList) {
     var container = document.getElementById('featureList');
     container.innerHTML = '';
-    features.forEach(function(feature) {
+    if (featList.length === 0) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:4px 0;">No features yet</div>';
+      return;
+    }
+    for (var i = 0; i < featList.length; i++) {
+      var feature = featList[i];
       var item = document.createElement('div');
       item.className = 'feature-item';
       item.setAttribute('data-feature-id', feature.id);
-      item.onclick = function() { selectFeature(feature.id); };
-      item.innerHTML = '<span class="feature-name">' + escapeHtml(feature.name) + '</span>' +
+      item.onclick = (function(fid) {
+        return function() { selectFeature(fid); };
+      })(feature.id);
+      item.innerHTML = '<span class="feature-name">' + escapeHtml(feature.name || feature.id) + '</span>' +
                        '<span class="status-badge ' + feature.status + '">' + statusLabel(feature.status) + '</span>';
       container.appendChild(item);
-    });
+    }
   }
 
-  /**
-   * Select a feature and load its content.
-   */
+  /* ===== Select a feature ===== */
   function selectFeature(featureId) {
     selectedFeatureId = featureId;
-    var feature = state.features.find(function(f) { return f.id === featureId; });
+
+    /* Find feature */
+    var feature = null;
+    for (var i = 0; i < features.length; i++) {
+      if (features[i].id === featureId) { feature = features[i]; break; }
+    }
     if (!feature) return;
 
-    // Update sidebar active state
-    document.querySelectorAll('.feature-item').forEach(function(el) {
-      el.classList.toggle('active', el.getAttribute('data-feature-id') === featureId);
+    /* Update sidebar active state */
+    var items = document.querySelectorAll('.feature-item');
+    for (var i = 0; i < items.length; i++) {
+      var id = items[i].getAttribute('data-feature-id');
+      if (id === featureId) {
+        items[i].classList.add('active');
+      } else {
+        items[i].classList.remove('active');
+      }
+    }
+
+    /* Update header */
+    document.getElementById('contentTitle').textContent = feature.name || feature.id;
+
+    /* Fetch phases for this feature */
+    fetchJSON(API_BASE + '/api/phases/' + featureId, function(err, phases) {
+      if (err || !phases) phases = [];
+      currentPhases = phases;
+      var status = deriveStatus(phases);
+      var active = deriveActivePhase(phases);
+
+      /* Update header badge */
+      var phaseEl = document.getElementById('contentPhase');
+      if (active.phase) {
+        phaseEl.textContent = active.phase;
+        phaseEl.style.display = '';
+      } else {
+        phaseEl.style.display = 'none';
+      }
+
+      /* Load content */
+      if (active.artifact) {
+        var artifactPath = featureId + '/' + active.artifact;
+        loadContent(artifactPath);
+      } else {
+        showWelcome(feature.name + ' — No phase started yet');
+      }
+
+      /* Fetch decisions */
+      fetchJSON(API_BASE + '/api/decisions/' + featureId, function(err2, decisions) {
+        if (err2 || !decisions) decisions = {};
+        currentDecisions = decisions;
+        renderDecisions(decisions);
+      });
     });
-
-    // Update header
-    document.getElementById('contentTitle').textContent = feature.name;
-
-    var phaseEl = document.getElementById('contentPhase');
-    if (feature.phase) {
-      phaseEl.textContent = feature.phase;
-      phaseEl.style.display = '';
-    } else {
-      phaseEl.style.display = 'none';
-    }
-
-    // Load content
-    if (feature.html_path) {
-      loadContent(feature.html_path);
-    } else {
-      showWelcome(feature.name + ' — No phase has been started yet');
-    }
   }
 
-  /**
-   * Load content into the iframe.
-   */
-  function loadContent(htmlPath) {
+  /* ===== Load content into iframe ===== */
+  function loadContent(artifactPath) {
     var welcome = document.getElementById('welcomePlaceholder');
     var frame = document.getElementById('contentFrame');
-    var reviewBar = document.querySelector('.review-bar');
+    var reviewBar = document.getElementById('reviewBar');
+    var decisionPanel = document.getElementById('decisionPanel');
     welcome.style.display = 'none';
     frame.style.display = 'block';
-    frame.src = htmlPath;
-    if (reviewBar) reviewBar.style.display = 'none';
+    frame.src = '/specs/' + artifactPath;
+    reviewBar.style.display = 'flex';
+    decisionPanel.style.display = 'block';
+
+    /* Hide review bar when iframe loads (if it has own review bar) */
+    frame.onload = function() {
+      try {
+        var doc = frame.contentDocument || frame.contentWindow.document;
+        var bar = doc.querySelector('.review-bar');
+        if (bar) {
+          reviewBar.style.display = 'none';
+        }
+        /* Also check if the iframe page shows an approved state */
+        var approvedEl = doc.querySelector('.approved-card');
+        if (approvedEl) {
+          showApprovedCard();
+          reviewBar.style.display = 'none';
+        }
+      } catch (e) {
+        /* cross-origin, ignore */
+      }
+    };
   }
 
-  /**
-   * Show the welcome placeholder with optional message.
-   */
+  /* ===== Show welcome placeholder ===== */
   function showWelcome(message) {
     var welcome = document.getElementById('welcomePlaceholder');
     var frame = document.getElementById('contentFrame');
-    var reviewBar = document.querySelector('.review-bar');
+    var reviewBar = document.getElementById('reviewBar');
+    var decisionPanel = document.getElementById('decisionPanel');
     frame.style.display = 'none';
     welcome.style.display = 'flex';
-    if (reviewBar) reviewBar.style.display = 'flex';
+    reviewBar.style.display = 'flex';
+    decisionPanel.style.display = 'none';
     if (message) {
       welcome.querySelector('p').textContent = message;
     }
   }
 
-  /**
-   * Send verdict to the iframe via postMessage.
-   */
-  function submitVerdict(verdict) {
-    var feedback = document.getElementById('feedbackInput').value.trim();
+  /* ===== Show approved card in content area ===== */
+  function showApprovedCard() {
     var frame = document.getElementById('contentFrame');
-
-    var data = {
-      type: 'verdict',
-      verdict: verdict,
-      feedback: feedback,
-      featureId: selectedFeatureId,
-      timestamp: new Date().toISOString()
-    };
-
-    // Send to iframe
-    if (frame.contentWindow) {
-      frame.contentWindow.postMessage(data, '*');
-    }
-
-    showToast('Verdict "' + verdict + '" sent for ' + (selectedFeatureId || 'unknown'), verdict === 'approved' ? 'success' : 'error');
-
-    // Also save locally
-    saveFeedback(data);
+    frame.style.display = 'none';
+    var welcome = document.getElementById('welcomePlaceholder');
+    welcome.style.display = 'flex';
+    welcome.innerHTML = '<div class="approved-card">&#10003; Approved</div>';
   }
 
-  /**
-   * Save feedback data (file or clipboard).
-   */
-  async function saveFeedback(data) {
-    var json = JSON.stringify(data, null, 2);
-
-    if (window.showSaveFilePicker) {
-      try {
-        var handle = await window.showSaveFilePicker({
-          suggestedName: 'feedback-' + data.featureId + '-' + Date.now() + '.json',
-          types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
-        });
-        var writable = await handle.createWritable();
-        await writable.write(json);
-        await writable.close();
-        showToast('Feedback saved to file.', 'success');
-        return;
-      } catch (err) {
-        if (err.name === 'AbortError') { return; }
+  /* ===== Render decisions panel ===== */
+  function renderDecisions(decisions) {
+    var count = 0;
+    var html = '';
+    var phases = Object.keys(decisions).sort();
+    for (var pi = 0; pi < phases.length; pi++) {
+      var phase = phases[pi];
+      var items = decisions[phase];
+      if (!items || items.length === 0) continue;
+      html += '<div class="decision-phase-label">' + escapeHtml(phase) + '</div>';
+      for (var i = 0; i < items.length; i++) {
+        var d = items[i];
+        var val = d.value || '';
+        /* Try to parse multi-select values */
+        try {
+          var parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) val = parsed.join(', ');
+        } catch (e) { /* not JSON, use as-is */ }
+        html += '<div class="decision-row">' +
+          '<span class="decision-key">' + escapeHtml(d.key || '') + '</span>' +
+          '<span class="decision-value">' + escapeHtml(val) + '</span>' +
+        '</div>';
+        count++;
       }
     }
 
-    try {
-      await navigator.clipboard.writeText(json);
-      showToast('Feedback copied to clipboard.', 'info');
-    } catch (err) {
-      console.log('Feedback data:', json);
+    var toggle = document.getElementById('decisionToggle');
+    toggle.innerHTML = '&#9654; Decisions (' + count + ')';
+
+    var list = document.getElementById('decisionList');
+    if (count === 0) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">No decisions recorded</div>';
+    } else {
+      list.innerHTML = html;
+    }
+
+    /* Preserve open state */
+    if (decisionsOpen) {
+      list.classList.add('open');
+      toggle.innerHTML = '&#9660; Decisions (' + count + ')';
     }
   }
 
-  /**
-   * Show a toast notification.
-   */
+  /* ===== Toggle decisions panel ===== */
+  function toggleDecisions() {
+    var list = document.getElementById('decisionList');
+    var toggle = document.getElementById('decisionToggle');
+    decisionsOpen = !decisionsOpen;
+    if (decisionsOpen) {
+      list.classList.add('open');
+      var count = list.querySelectorAll('.decision-row').length;
+      toggle.innerHTML = '&#9660; Decisions (' + count + ')';
+    } else {
+      list.classList.remove('open');
+      var count = list.querySelectorAll('.decision-row').length;
+      toggle.innerHTML = '&#9654; Decisions (' + count + ')';
+    }
+  }
+
+  /* ===== Submit verdict ===== */
+  function submitVerdict(verdict) {
+    if (!selectedFeatureId) {
+      showToast('Select a feature first', 'warning');
+      return;
+    }
+    var feedback = document.getElementById('feedbackInput').value.trim();
+    var active = deriveActivePhase(currentPhases);
+    var phase = active.phase || 'spec';
+
+    var data = {
+      feature_id: selectedFeatureId,
+      phase: phase,
+      verdict: verdict,
+      feedback: feedback,
+      decisions: {},
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    };
+
+    postJSON(API_BASE + '/api/feedback', data, function(err, resp) {
+      if (err) {
+        var msg = err.message || 'Submission failed';
+        if (msg.indexOf('Network') !== -1 || msg.indexOf('connect') !== -1) {
+          showToast('Cannot connect to server', 'error');
+        } else {
+          showToast(msg, 'error');
+        }
+        return;
+      }
+      if (verdict === 'approved') {
+        showToast('Approved', 'success');
+      } else {
+        showToast('Rejected', 'error');
+      }
+      /* Refresh data */
+      loadFeatures();
+    });
+  }
+
+  /* ===== Show toast notification ===== */
   function showToast(msg, type) {
     var container = document.getElementById('toastContainer');
     var toast = document.createElement('div');
     toast.className = 'toast ' + (type || 'info');
     toast.textContent = msg;
     container.appendChild(toast);
-
     setTimeout(function() {
       toast.style.animation = 'toast-out 0.3s ease-in forwards';
       setTimeout(function() {
@@ -704,37 +979,124 @@
     }, 3500);
   }
 
-  /**
-   * Get human-readable status label.
-   */
-  function statusLabel(status) {
-    var map = {
-      'draft': 'Draft',
-      'pending_review': 'Review',
-      'approved': 'Approved',
-      'rejected': 'Rejected',
-      'implementing': 'WIP'
-    };
-    return map[status] || status;
+  /* ===== Load features from API ===== */
+  function loadFeatures() {
+    fetchJSON(API_BASE + '/api/features', function(err, data) {
+      if (err) {
+        document.getElementById('featureList').innerHTML =
+          '<div style="font-size:12px;color:var(--text-muted);">Cannot connect to server</div>';
+        return;
+      }
+      if (!data) data = [];
+
+      /* Derive status for each feature from phases */
+      var pending = data.length;
+      var loaded = 0;
+
+      if (data.length === 0) {
+        features = [];
+        renderStats(features);
+        renderFeatureList(features);
+        return;
+      }
+
+      for (var i = 0; i < data.length; i++) {
+        (function(idx) {
+          fetchJSON(API_BASE + '/api/phases/' + data[idx].id, function(err2, phases) {
+            loaded++;
+            if (err2 || !phases) phases = [];
+            data[idx].status = deriveStatus(phases);
+            data[idx]._phases = phases;
+
+            if (loaded === pending) {
+              features = data;
+              renderStats(features);
+              renderFeatureList(features);
+
+              /* Re-select current feature if any */
+              if (selectedFeatureId) {
+                selectFeature(selectedFeatureId);
+              }
+            }
+          });
+        })(i);
+      }
+    });
   }
 
-  /**
-   * Escape HTML entities.
-   */
-  function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+  /* ===== Initialize ===== */
+  function init() {
+    /* Load features first */
+    fetchJSON(API_BASE + '/api/features', function(err, data) {
+      if (err) {
+        document.getElementById('featureList').innerHTML =
+          '<div style="font-size:12px;color:var(--text-muted);">Cannot connect to server</div>';
+        document.getElementById('timeline').innerHTML =
+          '<div style="font-size:12px;color:var(--text-muted);">Cannot connect to server</div>';
+        return;
+      }
+      if (!data) data = [];
+
+      /* Derive status for each feature */
+      var pending = data.length;
+      var loaded = 0;
+
+      if (data.length === 0) {
+        features = [];
+        renderStats(features);
+        renderFeatureList(features);
+        /* Still load timeline */
+        loadTimeline();
+        return;
+      }
+
+      for (var i = 0; i < data.length; i++) {
+        (function(idx) {
+          fetchJSON(API_BASE + '/api/phases/' + data[idx].id, function(err2, phases) {
+            loaded++;
+            if (err2 || !phases) phases = [];
+            data[idx].status = deriveStatus(phases);
+            data[idx]._phases = phases;
+
+            if (loaded === pending) {
+              features = data;
+              renderStats(features);
+              renderFeatureList(features);
+
+              /* Auto-select first feature */
+              if (features.length > 0) {
+                selectFeature(features[0].id);
+              }
+            }
+          });
+        })(i);
+      }
+
+      /* Load timeline in parallel */
+      loadTimeline();
+    });
   }
 
-  // Listen for messages from iframe
+  /* ===== Load timeline ===== */
+  function loadTimeline() {
+    fetchJSON(API_BASE + '/api/timeline?limit=5', function(err, data) {
+      if (err || !data) {
+        document.getElementById('timeline').innerHTML =
+          '<div style="font-size:12px;color:var(--text-muted);">No events yet</div>';
+        return;
+      }
+      renderTimeline(data.items || []);
+    });
+  }
+
+  /* ===== Listen for messages from iframe ===== */
   window.addEventListener('message', function(event) {
     if (event.data && event.data.type === 'status') {
       showToast('Frame status: ' + event.data.message, 'info');
     }
   });
 
-  // Initialize on load
+  /* Start */
   init();
 </script>
 
