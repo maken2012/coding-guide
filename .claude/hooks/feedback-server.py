@@ -229,14 +229,11 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         if lang_dir is None:
             self._send_error_json('No language templates found', 404)
             return
-        for lang in ('zh', 'en'):
-            candidate = os.path.join(
-                os.path.dirname(lang_dir), '.specify', lang, 'templates', filename
-            )
-            candidate = os.path.realpath(candidate)
-            if os.path.isfile(candidate):
-                self._serve_absolute(candidate)
-                return
+        candidate = os.path.join(lang_dir, 'templates', filename)
+        candidate = os.path.realpath(candidate)
+        if os.path.isfile(candidate):
+            self._serve_absolute(candidate)
+            return
         self._send_error_json(filename + ' not found', 404)
 
     def _serve_absolute(self, filepath):
