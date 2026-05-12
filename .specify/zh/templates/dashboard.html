@@ -608,9 +608,11 @@
   function loadContent(htmlPath) {
     var welcome = document.getElementById('welcomePlaceholder');
     var frame = document.getElementById('contentFrame');
+    var reviewBar = document.querySelector('.review-bar');
     welcome.style.display = 'none';
     frame.style.display = 'block';
     frame.src = htmlPath;
+    if (reviewBar) reviewBar.style.display = 'none';
   }
 
   /**
@@ -619,8 +621,10 @@
   function showWelcome(message) {
     var welcome = document.getElementById('welcomePlaceholder');
     var frame = document.getElementById('contentFrame');
+    var reviewBar = document.querySelector('.review-bar');
     frame.style.display = 'none';
     welcome.style.display = 'flex';
+    if (reviewBar) reviewBar.style.display = 'flex';
     if (message) {
       welcome.querySelector('p').textContent = message;
     }
