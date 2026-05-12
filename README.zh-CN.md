@@ -59,6 +59,10 @@ bash install.sh --lang zh
 | 开发与测试 | `/spec-implement` | 按任务顺序编码，自动生成测试 | 代码文件 + `test-report.html` |
 | 审查与部署 | `/spec-review` | 代码审查与部署计划 | `review.html` + `deploy-plan.html` |
 
+每个命令读取上一阶段的反馈文件，只有 `verdict: "approved"` 才能进入下一阶段。
+
+**LTS 1.1 快捷方式：** 使用 `/spec-run <功能名>` 自动推进全部 6 个阶段，或使用 `/spec-dispatch` 分析功能状态并获取并行 Agent 命令。详见[多 Agent 并行（LTS 1.1）](#多-agent-并行lts-11)。
+
 ## 辅助命令（独立于主线）
 
 ```
@@ -113,6 +117,7 @@ bash install.sh --lang zh
 - **Git 追踪审计链** — 规格、反馈全部纳入 git 版本管理，完整可追溯
 - **20 个 HTML 组件** — 流程图、ER 图、代码审查、幻灯片等开箱即用
 - **中英双语支持** — 安装时可选择语言，模板和命令均支持中英文
+- **多 Agent 并行（LTS 1.1）** — 使用 `/spec-run` 自动推进全部阶段，或使用 `/spec-dispatch` 启动并行 Agent 同时开发多个功能
 
 ---
 
@@ -177,6 +182,49 @@ bash install.sh --lang zh
   "updated_at": "2026-05-12T10:00:00Z"
 }
 ```
+
+---
+
+## 多 Agent 并行（LTS 1.1）
+
+同时运行多个 Claude Code 会话，每个管理一个功能的完整生命周期。
+
+### /spec-run — 自动化生命周期
+
+一条命令管理整个 6 阶段管线，每次审批后自动推进：
+
+```bash
+/spec-run "用户认证模块"
+```
+
+Agent 生成 spec.html → 等待你审批 → 自动执行 spec-detail → 等待 → ... 直到 spec-review。你只需在浏览器中点击审批按钮。
+
+### /spec-dispatch — 并行 Agent 分析器
+
+扫描所有功能状态，获取并行执行建议：
+
+```bash
+/spec-dispatch
+```
+
+输出显示每个功能处于哪个阶段、哪些被活跃 Agent 占用、以及启动新 Agent 的终端命令。
+
+### 多 Agent 工作流
+
+```
+终端 1: /spec-run "用户认证"        # Agent-A 管理 001
+终端 2: /spec-run "数据导出"        # Agent-B 管理 002
+终端 3: /spec-run "支付集成"        # Agent-C 管理 003
+```
+
+每个 Agent 独立操作自己的功能目录，功能锁防止冲突。
+
+### 新架构
+
+- `.feature-state.json` — 每个功能独立的管线状态（替代集中式 dashboard-state.json）
+- `.agent-lock` — 原子功能锁，60 分钟过期
+- `registry.jsonl` — 追加式事件日志，跨 Agent 可观测
+- 反应式轮询 — Agent 检测 .feedback.json 审批结果，自动推进
 
 ---
 

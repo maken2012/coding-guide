@@ -71,6 +71,8 @@ Architecture    Requirements     Design        Plan+Tasks    Dev+Testing        
 
 Each command reads the feedback from the previous phase. Only when `verdict: "approved"` is present does the next command proceed.
 
+**LTS 1.1 shortcuts:** Use `/spec-run <feature>` to auto-advance through all 6 phases, or `/spec-dispatch` to analyze features and get parallel agent commands. See [Multi-Agent Parallel (LTS 1.1)](#multi-agent-parallel-lts-11) for details.
+
 ---
 
 ## Auxiliary Commands (Standalone)
@@ -162,6 +164,7 @@ These commands work independently of the main workflow:
 - **Git-tracked audit trail** -- all specs, decisions, and feedback are plain files in version control
 - **20 HTML components** -- flowcharts, ER diagrams, code review annotations, slide decks, triage boards, and more
 - **Bilingual** -- Chinese and English supported out of the box
+- **Multi-agent parallel (LTS 1.1)** -- run `/spec-run` to auto-advance through all phases, or `/spec-dispatch` to launch parallel agents for multiple features
 
 ---
 
@@ -231,6 +234,49 @@ Before each phase, Claude reads the relevant `.feedback.json` and only proceeds 
   "updated_at": "2026-05-12T10:00:00Z"
 }
 ```
+
+---
+
+## Multi-Agent Parallel (LTS 1.1)
+
+Run multiple Claude Code sessions simultaneously, each managing one feature's full lifecycle.
+
+### /spec-run — Automated Lifecycle
+
+One command manages the entire 6-phase pipeline, auto-advancing after each approval:
+
+```bash
+/spec-run "User Authentication Module"
+```
+
+The agent generates spec.html → waits for your approval → auto-runs spec-detail → waits → ... through spec-review. You only interact via the browser review buttons.
+
+### /spec-dispatch — Parallel Agent Analyzer
+
+Scan all features and get parallel execution recommendations:
+
+```bash
+/spec-dispatch
+```
+
+Output shows which features are at which phase, which are locked by active agents, and exact terminal commands to start new agents.
+
+### Multi-Agent Workflow
+
+```
+Terminal 1: /spec-run "User Authentication"    # Agent A manages feature 001
+Terminal 2: /spec-run "Data Export"            # Agent B manages feature 002
+Terminal 3: /spec-run "Payment Integration"    # Agent C manages feature 003
+```
+
+Each agent works independently on its own feature directory. Feature locks prevent conflicts.
+
+### New Architecture
+
+- `.feature-state.json` — Per-feature pipeline state (replaces centralized dashboard-state.json)
+- `.agent-lock` — Atomic feature lock with 60-minute expiry
+- `registry.jsonl` — Append-only event log for cross-agent observability
+- Reactive polling — Agents detect approval via .feedback.json and auto-advance
 
 ---
 
