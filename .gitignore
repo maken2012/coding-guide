@@ -1,1 +1,6 @@
 .DS_Store
+sdd.db
+sdd.db-journal
+sdd.db-wal
+sdd.db-shm
+__pycache__/
