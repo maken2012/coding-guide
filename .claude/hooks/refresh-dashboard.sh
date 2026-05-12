@@ -54,8 +54,7 @@ fi
 
 # Generate dashboard.html if template exists
 if [ -f "${TEMPLATE}" ]; then
-  PY_SCRIPT=$(mktemp /tmp/dashboard-gen.XXXXXX.py)
-  cat > "${PY_SCRIPT}" << 'PYEOF'
+  python3 -c "
 import sys, json
 
 template_path = sys.argv[1]
@@ -70,8 +69,7 @@ with open(timeline_path, 'r') as f:
 with open(template_path, 'r') as f:
     html = f.read()
 
-# Auto-detect language from template
-is_zh = 'lang="zh' in html[:200]
+is_zh = html[:200].find('lang=\"zh') != -1
 
 raw_features = json.loads(states_raw)
 raw_timeline = json.loads(timeline_raw)
@@ -155,7 +153,9 @@ combined = json.dumps({
     'timeline': timeline
 }, ensure_ascii=False)
 
-marker_start = '<script type="application/json" id="dashboardState">'
+# NOTE: must use \\\" inside bash double-quoted python -c \"...\"
+# so bash passes literal \" to python
+marker_start = '<script type=\\\"application/json\\\" id=\\\"dashboardState\\\">'
 marker_end = '</script>'
 start_idx = html.find(marker_start)
 if start_idx != -1:
@@ -166,10 +166,7 @@ if start_idx != -1:
 with open(dashboard_path, 'w') as f:
     f.write(html)
 print('Dashboard refreshed')
-PYEOF
-
-  python3 "${PY_SCRIPT}" "${TEMPLATE}" "${DASHBOARD}" "${STATES_FILE}" "${TIMELINE_FILE}" || { echo "Dashboard refresh failed"; exit 1; }
-  rm -f "${PY_SCRIPT}"
+" "${TEMPLATE}" "${DASHBOARD}" "${STATES_FILE}" "${TIMELINE_FILE}" || { echo "Dashboard refresh failed"; cat "${STATES_FILE}"; exit 1; }
 else
   echo "No dashboard template found" >&2
 fi
