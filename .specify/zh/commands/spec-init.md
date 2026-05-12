@@ -1,5 +1,16 @@
 ---
 description: "架构选型 + 高层需求（Spec-Driven Development 第一步）"
+agent:
+  id: spec-init
+  type: core
+  order: 1
+  gate: null
+  produces_gate: "spec.feedback.verdict = approved"
+  requires_feature: false
+  writes_state: true
+  output_files: [spec.html, spec.feedback.json, arch-diagram.html]
+  templates: [spec-template.html]
+  components: [exploration-approaches, exploration-visual-designs, flowchart-diagram]
 ---
 
 # /spec-init — 架构选型 + 高层需求
@@ -19,6 +30,31 @@ description: "架构选型 + 高层需求（Spec-Driven Development 第一步）
 ### 2. 生成功能目录
 - 扫描 `.specify/specs/` 中当日目录（格式 `YYYYMMDD-NNN`），当日最大序号 +1，每日从 001 开始
 - 创建 `.specify/specs/YYYYMMDD-NNN-<name>/`
+
+### 2.1 初始化功能状态
+在功能目录内创建 `.feature-state.json`：
+```json
+{
+  "id": "YYYYMMDD-NNN-<name>",
+  "name": "<功能名称>",
+  "created_at": "<ISO时间>",
+  "pipeline": {
+    "spec": { "status": "in_progress", "artifact": "spec.html" },
+    "detail": { "status": "not_started" },
+    "design": { "status": "not_started" },
+    "plan": { "status": "not_started" },
+    "implement": { "status": "not_started" },
+    "review": { "status": "not_started" }
+  },
+  "agent_session": null,
+  "agent_since": null
+}
+```
+
+向 `.specify/specs/registry.jsonl` 追加事件（如不存在则创建）：
+```
+{"ts":"<ISO时间>","event":"feature_created","feature":"YYYYMMDD-NNN-<name>","agent":"spec-init"}
+```
 
 ### 3. 动态生成 spec.html
 读取 `spec-template.html` 作为骨架。根据功能描述**智能判断**是否需要以下子内容：
@@ -44,8 +80,10 @@ description: "架构选型 + 高层需求（Spec-Driven Development 第一步）
 ### 4. 生成反馈骨架
 为每个生成的 HTML 文件生成对应的 `.feedback.json`。
 
-### 5. 更新看板
-更新 `dashboard-state.json` 和 `dashboard.html`。
+### 5. 更新状态
+- 更新 `.feature-state.json`：`pipeline.spec.status` 改为 `"pending_review"`
+- 向 `registry.jsonl` 追加 `phase_completed` 事件
+- 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
 
 ### 6. 输出
 ```

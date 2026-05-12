@@ -1,5 +1,16 @@
 ---
 description: "需求详述（Spec-Driven Development 第二步）"
+agent:
+  id: spec-detail
+  type: core
+  order: 2
+  gate: "spec.feedback.verdict = approved"
+  produces_gate: "detail.feedback.verdict = approved"
+  requires_feature: true
+  writes_state: true
+  output_files: [detail.html, detail.feedback.json]
+  templates: [detail-template.html]
+  components: [flowchart-diagram, exploration-approaches, feature-explainer]
 ---
 
 # /spec-detail — 需求详述
@@ -7,10 +18,15 @@ description: "需求详述（Spec-Driven Development 第二步）"
 ## 前置条件（门禁）
 `spec.feedback.verdict === "approved"`
 
+## 功能定向
+- 如果 `$ARGUMENTS` 包含功能编号（`YYYYMMDD-NNN` 格式），定位到该功能目录
+- 否则，扫描 `.specify/specs/*/` 中 `.feature-state.json`，找到当前命令门禁条件满足的功能
+- 如果未找到匹配功能，输出错误提示
+
 ## 执行步骤
 
 ### 1. 定位当前功能
-读取 `dashboard-state.json` 获取 `current_feature`。
+扫描 `.specify/specs/*/` 中 `.feature-state.json`，找到门禁条件满足的功能。
 
 ### 2. 读取上游文档
 - `spec.html`、`spec.feedback.json`
@@ -31,13 +47,16 @@ AI 根据项目类型智能决定：
 - 有复杂业务逻辑？→ 生成时序图/状态机
 - 有多方案需求？→ 内嵌方案对比
 
-### 4. 生成反馈骨架 + 更新看板
+### 4. 生成反馈骨架 + 更新状态
+- 更新 `.feature-state.json`：`pipeline.detail.status` 改为 `"pending_review"`
+- 向 `.specify/specs/registry.jsonl` 追加 `phase_completed` 事件
+- 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
 
 ### 5. 输出
 ```
 ✅ 需求详述已生成！
 
-📄 需求详述: file:///<绝对路径>/.specify/specs/<current_feature>/detail.html
+📄 需求详述: file:///<绝对路径>/.specify/specs/<feature_id>/detail.html
 📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
 
 下一步：执行 /spec-design 进行设计

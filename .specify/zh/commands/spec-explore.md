@@ -1,5 +1,15 @@
 ---
 description: "独立探索对比（辅助命令）"
+agent:
+  id: spec-explore
+  type: auxiliary
+  order: null
+  gate: null
+  requires_feature: true
+  writes_state: false
+  output_files: [exploration.html]
+  templates: [exploration-template.html]
+  components: [exploration-approaches, exploration-visual-designs]
 ---
 
 # /spec-explore — 探索对比
@@ -8,6 +18,11 @@ description: "独立探索对比（辅助命令）"
 
 ## 输入
 探索问题：$ARGUMENTS
+
+## 功能定向
+- 如果 `$ARGUMENTS` 包含功能编号（`YYYYMMDD-NNN` 格式），定位到该功能目录
+- 否则，扫描 `.specify/specs/*/` 中 `.feature-state.json`，找到当前活跃功能
+- 辅助命令不更新 .feature-state.json 和 registry.jsonl
 
 ## 执行步骤
 

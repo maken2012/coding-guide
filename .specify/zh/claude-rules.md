@@ -210,7 +210,7 @@ specs/YYYYMMDD-NNN-<name>/
 ### 文档生成规则
 - 所有面向人的文档必须以自包含 HTML 输出（内联 CSS/JS，零外部依赖）
 - HTML 必须参照 .specify/templates/ 中对应模板的结构和样式
-- 每个阶段完成后自动更新 dashboard.html 和 dashboard-state.json
+- 每个阶段完成后自动更新 .feature-state.json，追加 registry.jsonl，运行 refresh-dashboard.sh
 - 终端输出格式：📄 待审核: file:///absolute/path/to/xxx.html
 - 阶段门禁：读取 .feedback.json 中 review.verdict，只有 "approved" 才进入下一阶段
 
@@ -220,10 +220,12 @@ specs/YYYYMMDD-NNN-<name>/
 - 下一轮执行前先读取 .feedback.json，按用户决策调整
 - 驳回时读取 review.feedback，修改后重新提交
 
-### 并行 Agent 规则
-- 每个 Agent 只操作自己负责的功能目录
-- 不读取、不修改其他功能目录下的文件
-- dashboard.html 由最后完成的 Agent 统一刷新
+### 反应式 Agent 协议
+- 每个功能目录包含独立的 `.feature-state.json`，Agent 只读写自己功能的状态文件
+- 功能锁定：Agent 开始工作时创建 `.agent-lock`，完成后删除。过期时间 60 分钟
+- 事件日志：所有状态变更追加到 `.specify/specs/registry.jsonl`（JSON Lines 格式）
+- 功能定向：命令接受 `YYYYMMDD-NNN` 格式的功能编号作为参数，或自动扫描满足门禁条件的功能
+- 反应式推进：Agent 轮询 `.feedback.json` 检测审批结果，自动推进下一阶段
 
 ### HTML 组件使用规则
 - 读取 .specify/templates/components/ 下的组件文件作为结构和样式参考
@@ -246,9 +248,8 @@ specs/YYYYMMDD-NNN-<name>/
   "updated_at": "ISO时间"
 }
 
-### 看板 dashboard.html 维护规则
-- 读取 .specify/specs/dashboard-state.json 获取全局状态
-- 左侧 25%：总览统计 + 时间线 + 功能列表
-- 右侧 75%：当前选中功能的当前阶段文档（通过 iframe 加载）
-- 底部：通过/驳回审核按钮
-- 每次生成或更新任何规范文档后，必须重建 dashboard.html
+### Dashboard 维护规则
+- Dashboard 由 `.claude/hooks/refresh-dashboard.sh` 脚本生成
+- 脚本扫描所有 `.specify/specs/YYYYMMDD-NNN-*/.feature-state.json` 聚合状态
+- Dashboard 展示：功能列表、管线状态、Agent 占用、时间线
+- 任何 Agent 完成阶段后调用 refresh-dashboard.sh 重建

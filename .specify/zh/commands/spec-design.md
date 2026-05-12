@@ -1,11 +1,27 @@
 ---
 description: "一站式设计（Spec-Driven Development 第三步）"
+agent:
+  id: spec-design
+  type: core
+  order: 3
+  gate: "detail.feedback.verdict = approved"
+  produces_gate: "design/*.feedback.verdict = approved"
+  requires_feature: true
+  writes_state: true
+  output_files: [design/flow-design.html, design/db-design.html, design/api-design.html, design/ui-design.html]
+  templates: [flow-design-template.html, db-design-template.html, api-design-template.html, ui-design-template.html]
+  components: [flowchart-diagram, svg-illustrations, code-understanding, feature-explainer, design-system, component-variants, prototype-animation, prototype-interaction]
 ---
 
 # /spec-design — 一站式设计
 
 ## 前置条件（门禁）
 `detail.feedback.verdict === "approved"`
+
+## 功能定向
+- 如果 `$ARGUMENTS` 包含功能编号（`YYYYMMDD-NNN` 格式），定位到该功能目录
+- 否则，扫描 `.specify/specs/*/` 中 `.feature-state.json`，找到当前命令门禁条件满足的功能
+- 如果未找到匹配功能，输出错误提示
 
 ## 执行步骤
 
@@ -24,7 +40,7 @@ description: "一站式设计（Spec-Driven Development 第三步）"
 | CLI 工具 | flow | db, api, ui |
 
 ### 3. 创建 design/ 目录
-创建 `.specify/specs/<current_feature>/design/`
+创建 `.specify/specs/<feature_id>/design/`
 
 ### 4. 逐个生成设计文档
 
@@ -48,16 +64,19 @@ description: "一站式设计（Spec-Driven Development 第三步）"
 
 每个文档生成对应 `.feedback.json`。
 
-### 5. 更新看板
+### 5. 更新状态
+- 更新 `.feature-state.json`：`pipeline.design.status` 改为 `"pending_review"`
+- 向 `.specify/specs/registry.jsonl` 追加 `phase_completed` 事件
+- 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
 
 ### 6. 输出
 ```
 ✅ 设计文档已生成！
 
-📄 流程设计: file:///<绝对路径>/.specify/specs/<current_feature>/design/flow-design.html
-📄 数据设计: file:///<绝对路径>/.specify/specs/<current_feature>/design/db-design.html
-📄 接口设计: file:///<绝对路径>/.specify/specs/<current_feature>/design/api-design.html
-📄 UI设计:   file:///<绝对路径>/.specify/specs/<current_feature>/design/ui-design.html
+📄 流程设计: file:///<绝对路径>/.specify/specs/<feature_id>/design/flow-design.html
+📄 数据设计: file:///<绝对路径>/.specify/specs/<feature_id>/design/db-design.html
+📄 接口设计: file:///<绝对路径>/.specify/specs/<feature_id>/design/api-design.html
+📄 UI设计:   file:///<绝对路径>/.specify/specs/<feature_id>/design/ui-design.html
 📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
 
 请逐个审核设计文档后，执行 /spec-plan

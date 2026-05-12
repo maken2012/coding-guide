@@ -1,5 +1,16 @@
 ---
 description: "Detailed Requirements (Spec-Driven Development Step 2)"
+agent:
+  id: spec-detail
+  type: core
+  order: 2
+  gate: "spec.feedback.verdict = approved"
+  produces_gate: "detail.feedback.verdict = approved"
+  requires_feature: true
+  writes_state: true
+  output_files: [detail.html, detail.feedback.json]
+  templates: [detail-template.html]
+  components: [flowchart-diagram, exploration-approaches, feature-explainer]
 ---
 
 # /spec-detail — Detailed Requirements
@@ -7,10 +18,17 @@ description: "Detailed Requirements (Spec-Driven Development Step 2)"
 ## Prerequisites (Gate)
 `spec.feedback.verdict === "approved"`
 
+## Feature Targeting
+- If `$ARGUMENTS` contains a feature ID matching `YYYYMMDD-NNN`, target that feature directory
+- Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` where this command's gate condition is met
+- If no matching feature found, output an error message
+
 ## Execution Steps
 
 ### 1. Locate Current Feature
-Read `dashboard-state.json` to get `current_feature`.
+- If $ARGUMENTS contains a feature ID (YYYYMMDD-NNN pattern), use that feature directory
+- Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` where the gate condition for THIS command is met
+- Read `.feature-state.json` to get feature context
 
 ### 2. Read Upstream Documents
 - `spec.html`, `spec.feedback.json`
@@ -31,7 +49,11 @@ AI intelligently decides based on project type:
 - Has complex business logic? → Generate sequence diagram / state machine
 - Has multiple approach requirements? → Embed approach comparison
 
-### 4. Generate Feedback Skeleton + Update Dashboard
+### 4. Generate Feedback Skeleton + Update State
+
+- Update `.feature-state.json` pipeline status
+- Append event to `registry.jsonl`
+- Run `.claude/hooks/refresh-dashboard.sh`
 
 ### 5. Output
 ```
