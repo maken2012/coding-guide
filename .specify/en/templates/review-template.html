@@ -669,6 +669,16 @@
       };
       window.parent.postMessage(data, '*');
       await saveFeedback(data);
+      disableReviewBar(verdict);
+    }
+
+    function disableReviewBar(verdict) {
+      var bar = document.querySelector('.review-bar');
+      if (!bar) return;
+      bar.innerHTML = '<span style="padding:8px 16px;font-size:14px;color:' +
+        (verdict === 'approved' ? 'var(--success)' : 'var(--danger)') + ';font-weight:600;">' +
+        (verdict === 'approved' ? '✓ Approved' : '✗ Rejected') + '</span>';
+      bar.style.pointerEvents = 'none';
     }
 
     /**
