@@ -345,8 +345,7 @@ import json, sys
 with open('${SETTINGS}', 'r') as f:
     s = json.load(f)
 hooks = s.setdefault('hooks', {})
-hooks['SessionStart'] = [{'type': 'command', 'command': \"${HOOK_CMD}\"}]
-# Also add python3 permission for the server
+hooks['SessionStart'] = [{'matcher': '', 'hooks': [{'type': 'command', 'command': \"${HOOK_CMD}\"}]}]
 perms = s.setdefault('permissions', {})
 allow = perms.setdefault('allow', [])
 if 'Bash(python3 *)' not in allow:
@@ -365,8 +364,13 @@ else
   "hooks": {
     "SessionStart": [
       {
-        "type": "command",
-        "command": "${HOOK_CMD}"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${HOOK_CMD}"
+          }
+        ]
       }
     ]
   }
