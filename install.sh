@@ -30,22 +30,23 @@ LANG_OPT=""
 
 TARGET_ARG=""
 AUTO_YES=0
-for arg in "$@"; do
-  case "$arg" in
+while [ $# -gt 0 ]; do
+  case "$1" in
     --lang)
       shift
       LANG_OPT="$1"
       ;;
     --lang=*)
-      LANG_OPT="${arg#*=}"
+      LANG_OPT="${1#*=}"
       ;;
     -y|--yes)
       AUTO_YES=1
       ;;
     *)
-      TARGET_ARG="$arg"
+      TARGET_ARG="$1"
       ;;
   esac
+  shift
 done
 
 # ---- Detect language ----
