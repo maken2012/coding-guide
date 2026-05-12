@@ -499,7 +499,12 @@ def main():
 
     # Resolve specs_root
     if args.root:
-        specs_root = os.path.join(os.path.abspath(args.root), '.specify', 'specs')
+        abs_root = os.path.abspath(args.root)
+        # If user passed the specs dir directly, use it; otherwise append .specify/specs
+        if os.path.isdir(abs_root) and abs_root.endswith(os.sep + 'specs'):
+            specs_root = abs_root
+        else:
+            specs_root = os.path.join(abs_root, '.specify', 'specs')
     else:
         specs_root = detect_specs_root()
 
