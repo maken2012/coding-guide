@@ -262,7 +262,133 @@ class FeedbackHandler(BaseHTTPRequestHandler):
 
     # ---- API handlers -----------------------------------------------------
 
+    def _sync_from_files(self):
+        """Scan specs directory for .feature-state.json files and sync to SQLite.
+
+        This bridges the gap between agent-written JSON files and the
+        SQLite-backed dashboard. Called before serving feature data so the
+        dashboard always shows the latest state.
+        """
+        import glob
+        state_files = glob.glob(os.path.join(self.specs_root, '*', '.feature-state.json'))
+        if not state_files:
+            return
+
+        conn = get_db(self.specs_root)
+        try:
+            for sf in state_files:
+                try:
+                    with open(sf, 'r', encoding='utf-8') as f:
+                        state = json.load(f)
+                except (json.JSONDecodeError, OSError):
+                    continue
+
+                fid = state.get('id', '')
+                if not VALID_FEATURE_ID.match(fid):
+                    continue
+
+                name = state.get('name', fid)
+                pipeline = state.get('pipeline', {})
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+                # Determine current phase and overall status
+                current_phase = ''
+                overall_status = 'draft'
+                for phase_name in ('spec', 'detail', 'design', 'plan', 'implement', 'review'):
+                    phase_info = pipeline.get(phase_name, {})
+                    if not phase_info:
+                        continue
+                    status = phase_info.get('status', 'not_started')
+                    if status in ('in_progress', 'pending_review'):
+                        current_phase = phase_name
+                        overall_status = status if status != 'in_progress' else 'implementing'
+                    elif status == 'approved':
+                        current_phase = phase_name
+                        overall_status = 'approved'
+                    elif status == 'rejected':
+                        current_phase = phase_name
+                        overall_status = 'rejected'
+
+                # Upsert feature
+                conn.execute(
+                    'INSERT INTO features (id, name, current_phase, status, created_at, updated_at) '
+                    'VALUES (?, ?, ?, ?, ?, ?) '
+                    'ON CONFLICT(id) DO UPDATE SET name=excluded.name, current_phase=excluded.current_phase, '
+                    'status=excluded.status, updated_at=excluded.updated_at',
+                    (fid, name, current_phase, overall_status, state.get('created_at', now), now)
+                )
+
+                # Upsert phases
+                for phase_name in ('spec', 'detail', 'design', 'plan', 'implement', 'review'):
+                    phase_info = pipeline.get(phase_name, {})
+                    if not phase_info:
+                        continue
+                    ps = phase_info.get('status', 'not_started')
+                    if ps == 'not_started':
+                        continue
+                    artifact = phase_info.get('artifact', '')
+                    conn.execute(
+                        'INSERT INTO phases (feature_id, phase, status, artifact_path, updated_at) '
+                        'VALUES (?, ?, ?, ?, ?) '
+                        'ON CONFLICT(feature_id, phase) DO UPDATE SET status=excluded.status, '
+                        'artifact_path=excluded.artifact_path, updated_at=excluded.updated_at',
+                        (fid, phase_name, ps, artifact, now)
+                    )
+
+            # Sync decisions from .feedback.json files
+            feedback_files = glob.glob(os.path.join(self.specs_root, '*', '*.feedback.json'))
+            for ff in feedback_files:
+                try:
+                    with open(ff, 'r', encoding='utf-8') as f:
+                        fb = json.load(f)
+                except (json.JSONDecodeError, OSError):
+                    continue
+
+                fid = fb.get('feature', '')
+                phase = fb.get('phase', '')
+                if not fid or not phase:
+                    continue
+
+                decisions = fb.get('decisions', {})
+                if decisions:
+                    conn.execute('DELETE FROM decisions WHERE feature_id = ? AND phase = ?', (fid, phase))
+                    if isinstance(decisions, dict):
+                        for k, v in decisions.items():
+                            conn.execute(
+                                'INSERT INTO decisions (feature_id, phase, decision_key, decision_value, created_at) '
+                                'VALUES (?, ?, ?, ?, ?)',
+                                (fid, phase, str(k), json.dumps(v, ensure_ascii=False) if not isinstance(v, str) else v, now)
+                            )
+                    elif isinstance(decisions, list):
+                        for d in decisions:
+                            if isinstance(d, dict):
+                                sel = d.get('selected')
+                                if sel:
+                                    conn.execute(
+                                        'INSERT INTO decisions (feature_id, phase, decision_key, decision_value, created_at) '
+                                        'VALUES (?, ?, ?, ?, ?)',
+                                        (fid, phase, d.get('id', '?'), str(sel), now)
+                                    )
+
+                # Sync timeline from verdict
+                review = fb.get('review', {})
+                if review.get('verdict'):
+                    existing = conn.execute(
+                        'SELECT id FROM timeline WHERE feature_id = ? AND phase = ? AND event_type LIKE ?',
+                        (fid, phase, '%' + review['verdict'])
+                    ).fetchone()
+                    if not existing:
+                        conn.execute(
+                            'INSERT INTO timeline (feature_id, event_type, description, created_at) VALUES (?, ?, ?, ?)',
+                            (fid, 'phase_' + review['verdict'], f'{fid} {phase} {review["verdict"]}', review.get('timestamp', now))
+                        )
+
+            conn.commit()
+        finally:
+            conn.close()
+
     def _api_features(self):
+        self._sync_from_files()
         conn = get_db(self.specs_root)
         try:
             rows = conn.execute('SELECT * FROM features ORDER BY created_at DESC').fetchall()
