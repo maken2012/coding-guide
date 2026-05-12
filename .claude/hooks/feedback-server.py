@@ -145,12 +145,22 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         return target
 
     def _detect_lang_dir(self):
-        """Return the language-specific templates dir (zh or en)."""
+        """Return the templates directory path.
+
+        Supports two layouts:
+        - Installed: .specify/templates/ (no locale subdirectory)
+        - Source dev: .specify/zh/templates/ or .specify/en/templates/
+        """
         project_root = os.path.dirname(os.path.dirname(self.specs_root))
+        # Installed layout: .specify/templates/
+        direct = os.path.join(project_root, '.specify', 'templates')
+        if os.path.isdir(direct):
+            return direct
+        # Source dev layout: .specify/{lang}/templates/
         for lang in ('zh', 'en'):
             d = os.path.join(project_root, '.specify', lang, 'templates')
             if os.path.isdir(d):
-                return os.path.dirname(d)  # .specify/{lang}
+                return d
         return None
 
     # ---- routing ----------------------------------------------------------
@@ -224,13 +234,12 @@ class FeedbackHandler(BaseHTTPRequestHandler):
             self._send_error_json(str(exc), 500)
 
     def _serve_template(self, filename):
-        """Serve a template file (dashboard.html, timeline.html, etc.) from language-specific templates directory."""
-        lang_dir = self._detect_lang_dir()
-        if lang_dir is None:
+        """Serve a template file (dashboard.html, timeline.html, etc.) from templates directory."""
+        templates_dir = self._detect_lang_dir()
+        if templates_dir is None:
             self._send_error_json('No language templates found', 404)
             return
-        candidate = os.path.join(lang_dir, 'templates', filename)
-        candidate = os.path.realpath(candidate)
+        candidate = os.path.realpath(os.path.join(templates_dir, filename))
         if os.path.isfile(candidate):
             self._serve_absolute(candidate)
             return
