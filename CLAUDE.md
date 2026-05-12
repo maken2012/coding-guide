@@ -210,9 +210,9 @@ specs/<NNN>-<name>/
 ### 文档生成规则
 - 所有面向人的文档必须以自包含 HTML 输出（内联 CSS/JS，零外部依赖）
 - HTML 必须参照 .specify/templates/ 中对应模板的结构和样式
-- 每个阶段完成后更新 .feature-state.json 并运行 .claude/hooks/refresh-dashboard.sh 重建 dashboard.html
-- 终端输出格式：📄 待审核: file:///absolute/path/to/xxx.html
-- 生成待审核 HTML 后自动执行 `open <绝对路径>` 在浏览器中打开，用户无需手动复制路径
+- 每个阶段完成后更新 .feature-state.json 并确保反馈服务正在运行（bash .claude/hooks/start-feedback-server.sh），dashboard 通过 http://localhost:8421 实时查询 SQLite 数据库
+- 终端输出格式：📄 待审核: http://localhost:8421/specs/<feature_id>/xxx.html
+- 生成待审核 HTML 后自动执行 `open http://localhost:8421` 在浏览器中打开 dashboard，用户可在 dashboard 中审核所有文档
 - 阶段门禁：读取 .feedback.json 中 review.verdict，只有 "approved" 才进入下一阶段
 
 ### 反馈处理规则
@@ -224,7 +224,7 @@ specs/<NNN>-<name>/
 ### 并行 Agent 规则
 - 每个 Agent 只操作自己负责的功能目录
 - 不读取、不修改其他功能目录下的文件
-- dashboard.html 由最后完成的 Agent 统一刷新
+- dashboard.html 由最后完成的 Agent 确保反馈服务正在运行，dashboard 自动刷新
 
 ### HTML 组件使用规则
 - 读取 .specify/templates/components/ 下的组件文件作为结构和样式参考
@@ -248,8 +248,8 @@ specs/<NNN>-<name>/
 }
 
 ### 看板 dashboard.html 维护规则
-- Dashboard 通过 .claude/hooks/refresh-dashboard.sh 聚合所有 .feature-state.json 文件
-- 左侧 25%：总览统计 + 时间线 + 功能列表
-- 右侧 75%：当前选中功能的当前阶段文档（通过 iframe 加载）
-- 底部：通过/驳回审核按钮
-- 每次生成或更新任何规范文档后，必须运行 refresh-dashboard.sh 重建 dashboard.html
+- Dashboard 由 feedback-server.py 提供（http://localhost:8421），动态查询 SQLite 数据库
+- 左侧 25%：总览统计 + 时间线 + 功能列表（含决策折叠摘要）
+- 右侧 75%：当前选中功能的当前阶段文档（通过 iframe 加载）或已通过状态卡片
+- 底部：通过/驳回审核按钮（已通过的功能隐藏审核栏）
+- 每次生成或更新任何规范文档后，确保反馈服务正在运行，dashboard 自动展示最新数据
