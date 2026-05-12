@@ -4,3 +4,4 @@ sdd.db-journal
 sdd.db-wal
 sdd.db-shm
 __pycache__/
+.specify/specs/
