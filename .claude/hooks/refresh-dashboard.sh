@@ -124,7 +124,7 @@ if not current_feature and features:
 timeline = []
 for ev in raw_timeline:
     ts = ev.get('ts', '')
-    date_part = ts[:10] if ts else ''
+    date_part = ts[:19].replace('T', ' ') if ts else ''
     event_text = ev.get('event', '')
     feat_id = ev.get('feature', '')
     phase = ev.get('phase', '')
