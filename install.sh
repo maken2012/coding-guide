@@ -6,10 +6,12 @@ set -e
 # ============================================================
 # Usage:
 #   1. Local:    ./install.sh [/path/to/project]
-#   2. Remote:   bash <(curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh)
+#   2. Remote:   curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh | bash -s -- --lang zh -y
+#      (or download first: curl -sL URL -o install.sh && bash install.sh)
 #   Options:
 #     --lang zh   Force Chinese (default)
 #     --lang en   Force English
+#     -y, --yes   Skip all interactive prompts
 # ============================================================
 
 # Colors
@@ -27,6 +29,7 @@ LANG_OPT=""
 # ---- Parse arguments ----
 
 TARGET_ARG=""
+AUTO_YES=0
 for arg in "$@"; do
   case "$arg" in
     --lang)
@@ -35,6 +38,9 @@ for arg in "$@"; do
       ;;
     --lang=*)
       LANG_OPT="${arg#*=}"
+      ;;
+    -y|--yes)
+      AUTO_YES=1
       ;;
     *)
       TARGET_ARG="$arg"
@@ -171,8 +177,13 @@ echo ""
 
 if [ ! -d "${TARGET_DIR}/.git" ]; then
   echo -e "${YELLOW}${MSG_NO_GIT}${NC}"
-  read -p "${MSG_INIT_GIT}" -n 1 -r
-  echo ""
+  if [ "${AUTO_YES}" -eq 1 ]; then
+    REPLY="y"
+    echo "  y (auto)"
+  else
+    read -p "${MSG_INIT_GIT}" -n 1 -r
+    echo ""
+  fi
   if [[ ! $REPLY =~ ^[Nn]$ ]]; then
     (cd "${TARGET_DIR}" && git init)
     echo -e "${GREEN}${MSG_GIT_DONE}${NC}"
@@ -181,8 +192,13 @@ fi
 
 if [ -d "${TARGET_DIR}/.specify" ]; then
   echo -e "${YELLOW}${MSG_EXISTS}${NC}"
-  read -p "${MSG_OVERWRITE}" -n 1 -r
-  echo ""
+  if [ "${AUTO_YES}" -eq 1 ]; then
+    REPLY="y"
+    echo "  y (auto)"
+  else
+    read -p "${MSG_OVERWRITE}" -n 1 -r
+    echo ""
+  fi
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${RED}${MSG_CANCEL}${NC}"
     if [ "${CLEANUP_TEMP}" -eq 1 ]; then
