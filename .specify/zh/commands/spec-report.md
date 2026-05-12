@@ -40,5 +40,5 @@ agent:
 
 ### 4. 输出
 ```
-📄 报告: file:///<绝对路径>/.specify/specs/<current_feature>/report.html
+📄 报告: http://localhost:8421/specs/<current_feature>/report.html
 ```

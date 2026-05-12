@@ -42,5 +42,5 @@ agent:
 
 ### 3. 输出
 ```
-📄 调研文档: file:///<绝对路径>/.specify/specs/<current_feature>/research.html
+📄 调研文档: http://localhost:8421/specs/<current_feature>/research.html
 ```

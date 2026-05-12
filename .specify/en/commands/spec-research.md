@@ -42,5 +42,5 @@ Generate `research.html` in the current feature directory:
 
 ### 3. Output
 ```
-📄 Research Document: file:///<absolute-path>/.specify/specs/<current_feature>/research.html
+📄 Research Document: http://localhost:8421/specs/<current_feature>/research.html
 ```

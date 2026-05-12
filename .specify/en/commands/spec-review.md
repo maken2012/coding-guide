@@ -49,12 +49,12 @@ AI determines whether deployment is involved (new configuration, database migrat
 ### 5. Update State
 - Update `.feature-state.json` pipeline status
 - Append event to `registry.jsonl`
-- Run `.claude/hooks/refresh-dashboard.sh`
+- Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
 
 ### 5.1 Reactive Wait for Approval
 After generating review report, enter polling mode:
-- Use ScheduleWakeup to check `review.feedback.json` every 60-120 seconds for `review.verdict`
-- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../review.html
+- Use ScheduleWakeup to check `review.feedback.json` every 60-120 seconds for `review.verdict` (also check via `curl -s http://localhost:8421/api/phases/<feature_id>` for phase status)
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: http://localhost:8421/specs/<current_feature>/review.html
 - If `verdict` is `"approved"`:
   - Update `.feature-state.json`: set `pipeline.review.status` to `"approved"`
   - Append `lifecycle_complete` event to `registry.jsonl`
@@ -70,9 +70,9 @@ After generating review report, enter polling mode:
 ```
 ✅ Review report generated!
 
-📄 Review Report: file:///<absolute-path>/.specify/specs/<current_feature>/review.html
-📄 Deployment Plan: file:///<absolute-path>/.specify/specs/<current_feature>/deploy-plan.html
-📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
+📄 Review Report: http://localhost:8421/specs/<current_feature>/review.html
+📄 Deployment Plan: http://localhost:8421/specs/<current_feature>/deploy-plan.html
+📋 Dashboard: http://localhost:8421
 
 ⏳ Waiting for approval... (polling review.feedback.json)
 ```

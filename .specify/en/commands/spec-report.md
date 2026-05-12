@@ -40,5 +40,5 @@ Generate `report.html` in the current feature directory.
 
 ### 4. Output
 ```
-📄 Report: file:///<absolute-path>/.specify/specs/<current_feature>/report.html
+📄 Report: http://localhost:8421/specs/<current_feature>/report.html
 ```

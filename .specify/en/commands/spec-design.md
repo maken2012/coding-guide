@@ -72,11 +72,11 @@ Each document generates a corresponding `.feedback.json`.
 ### 6. Update State
 - Update `.feature-state.json` pipeline status
 - Append event to `registry.jsonl`
-- Run `.claude/hooks/refresh-dashboard.sh`
+- Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
 
 ### 6.1 Reactive Wait for Approval
 After generating documents, enter polling mode for ALL design feedback files:
-- Use ScheduleWakeup to check each feedback file under `design/` (flow-design.feedback.json, db-design.feedback.json, api-design.feedback.json, ui-design.feedback.json — only those that were generated) every 60-120 seconds for `review.verdict`
+- Use ScheduleWakeup to check each feedback file under `design/` (flow-design.feedback.json, db-design.feedback.json, api-design.feedback.json, ui-design.feedback.json — only those that were generated) every 60-120 seconds for `review.verdict` (also check via `curl -s http://localhost:8421/api/phases/<feature_id>` for phase status)
 - If any `verdict` is `null`, continue waiting. Output: ⏳ Pending review on: <list of unapproved design docs>
 - If all `verdict`s are `"approved"`:
   - Update `.feature-state.json`: set `pipeline.design.status` to `"approved"`
@@ -93,11 +93,11 @@ After generating documents, enter polling mode for ALL design feedback files:
 ```
 ✅ Design documents generated!
 
-📄 Flow Design: file:///<absolute-path>/.specify/specs/<current_feature>/design/flow-design.html
-📄 Data Design: file:///<absolute-path>/.specify/specs/<current_feature>/design/db-design.html
-📄 API Design: file:///<absolute-path>/.specify/specs/<current_feature>/design/api-design.html
-📄 UI Design: file:///<absolute-path>/.specify/specs/<current_feature>/design/ui-design.html
-📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
+📄 Flow Design: http://localhost:8421/specs/<current_feature>/design/flow-design.html
+📄 Data Design: http://localhost:8421/specs/<current_feature>/design/db-design.html
+📄 API Design: http://localhost:8421/specs/<current_feature>/design/api-design.html
+📄 UI Design: http://localhost:8421/specs/<current_feature>/design/ui-design.html
+📋 Dashboard: http://localhost:8421
 
 ⏳ Waiting for approval on all design documents... (polling design/*.feedback.json)
 

@@ -45,8 +45,8 @@ agent:
 
 ### 2. 反应式等待（每个阶段通用）
 生成文档后进入轮询模式：
-- 使用 ScheduleWakeup 每 60-120 秒检查对应 `.feedback.json` 的 `review.verdict`
-- `null` → 继续等待，输出：⏳ 阶段 N/6 等待审批: file:///.../xxx.html
+- 使用 ScheduleWakeup 每 60-120 秒检查对应 `.feedback.json` 的 `review.verdict`（同时可通过 `curl -s http://localhost:8421/api/phases/<feature_id>` 获取阶段状态）
+- `null` → 继续等待，输出：⏳ 阶段 N/6 等待审批: http://localhost:8421/specs/<feature_id>/xxx.html
 - `"approved"` → 更新 `.feature-state.json`，追加 `phase_approved` 事件，进入下一阶段
 - `"rejected"` → 读取反馈，修改文档，重新提交等待
 
@@ -54,13 +54,13 @@ agent:
 - 每个阶段开始时更新 `.feature-state.json`：对应 phase status = `"in_progress"`
 - 每个阶段审批后更新：对应 phase status = `"approved"`
 - 向 `registry.jsonl` 追加 `phase_started` 和 `phase_completed` 事件
-- 运行 `.claude/hooks/refresh-dashboard.sh`
+- 确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
 
 ### 4. 生命周期完成
 当阶段 6 (review) 审批通过后：
 - 更新 `.feature-state.json`：`pipeline.review.status` = `"approved"`
 - 向 `registry.jsonl` 追加 `lifecycle_complete` 事件
-- 运行 `.claude/hooks/refresh-dashboard.sh`
+- 确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
 - 输出完成总结
 
 ### 5. 输出
@@ -77,7 +77,7 @@ agent:
   ✅ implement → test-report.html
   ✅ review    → review.html, deploy-plan.html
 
-📋 Dashboard: file:///<path>/.specify/specs/dashboard.html
+📋 Dashboard: http://localhost:8421
 ```
 
 ## 参考文件

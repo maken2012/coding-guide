@@ -40,5 +40,5 @@ agent:
 
 ### 3. 输出
 ```
-📄 探索文档: file:///<绝对路径>/.specify/specs/<current_feature>/exploration.html
+📄 探索文档: http://localhost:8421/specs/<current_feature>/exploration.html
 ```

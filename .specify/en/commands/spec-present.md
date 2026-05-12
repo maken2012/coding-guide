@@ -38,5 +38,5 @@ Generate `presentation.html` in the current feature directory:
 
 ### 3. Output
 ```
-📄 Presentation: file:///<absolute-path>/.specify/specs/<current_feature>/presentation.html
+📄 Presentation: http://localhost:8421/specs/<current_feature>/presentation.html
 ```

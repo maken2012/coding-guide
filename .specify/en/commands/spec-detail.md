@@ -53,12 +53,12 @@ AI intelligently decides based on project type:
 
 - Update `.feature-state.json` pipeline status
 - Append event to `registry.jsonl`
-- Run `.claude/hooks/refresh-dashboard.sh`
+- Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
 
 ### 4.1 Reactive Wait for Approval
 After generating documents, enter polling mode:
-- Use ScheduleWakeup to check `detail.feedback.json` every 60-120 seconds for `review.verdict`
-- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../detail.html
+- Use ScheduleWakeup to check `detail.feedback.json` every 60-120 seconds for `review.verdict` (also check via `curl -s http://localhost:8421/api/phases/<feature_id>` for phase status)
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: http://localhost:8421/specs/<current_feature>/detail.html
 - If `verdict` is `"approved"`:
   - Update `.feature-state.json`: set `pipeline.detail.status` to `"approved"`
   - Append `phase_approved` event to `registry.jsonl`
@@ -74,8 +74,8 @@ After generating documents, enter polling mode:
 ```
 ✅ Detailed requirements generated!
 
-📄 Detailed Requirements: file:///<absolute-path>/.specify/specs/<current_feature>/detail.html
-📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
+📄 Detailed Requirements: http://localhost:8421/specs/<current_feature>/detail.html
+📋 Dashboard: http://localhost:8421
 
 ⏳ Waiting for approval... (polling detail.feedback.json)
 

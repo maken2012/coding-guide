@@ -40,7 +40,7 @@ Read spec, detail, design/*, plan, tasks.
 - Update checkbox in tasks.html to [X]
 - Update `.feature-state.json` pipeline status every 3-5 tasks
 - Append event to `registry.jsonl` every 3-5 tasks
-- Run `.claude/hooks/refresh-dashboard.sh` every 3-5 tasks
+- Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not) every 3-5 tasks
 
 ### 4. Generate Integration Tests
 After all tasks are completed, generate integration tests based on API contracts and interaction flows.
@@ -55,8 +55,8 @@ Read `.specify/templates/test-report-template.html`, generate `test-report.html`
 
 ### 5.1 Reactive Wait for Approval
 After generating test report, enter polling mode:
-- Use ScheduleWakeup to check `test-report.feedback.json` every 60-120 seconds for `review.verdict`
-- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../test-report.html
+- Use ScheduleWakeup to check `test-report.feedback.json` every 60-120 seconds for `review.verdict` (also check via `curl -s http://localhost:8421/api/phases/<feature_id>` for phase status)
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: http://localhost:8421/specs/<current_feature>/test-report.html
 - If `verdict` is `"approved"`:
   - Update `.feature-state.json`: set `pipeline.implement.status` to `"approved"`
   - Append `phase_approved` event to `registry.jsonl`
@@ -72,8 +72,8 @@ After generating test report, enter polling mode:
 ```
 ✅ Development and testing completed!
 
-📄 Test Report: file:///<absolute-path>/.specify/specs/<current_feature>/test-report.html
-📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
+📄 Test Report: http://localhost:8421/specs/<current_feature>/test-report.html
+📋 Dashboard: http://localhost:8421
 
 ⏳ Waiting for approval... (polling test-report.feedback.json)
 

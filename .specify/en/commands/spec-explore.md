@@ -40,5 +40,5 @@ Generate `exploration.html` in the current feature directory:
 
 ### 3. Output
 ```
-📄 Exploration Document: file:///<absolute-path>/.specify/specs/<current_feature>/exploration.html
+📄 Exploration Document: http://localhost:8421/specs/<current_feature>/exploration.html
 ```

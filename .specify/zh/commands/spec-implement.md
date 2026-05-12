@@ -33,7 +33,7 @@ agent:
 - 按编号顺序执行
 - 每完成一个任务：编写代码 + 编写对应单元测试
 - 更新 tasks.html 中 checkbox 为 [X]
-- 每 3-5 个任务更新状态：更新 `.feature-state.json`，追加 registry.jsonl 事件，运行 `.claude/hooks/refresh-dashboard.sh`
+- 每 3-5 个任务更新状态：更新 `.feature-state.json`，追加 registry.jsonl 事件，确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
 
 ### 3. 生成集成测试
 所有任务完成后，根据 API 契约和交互流程生成集成测试。
@@ -49,12 +49,12 @@ agent:
 ### 5. 更新状态
 - 更新 `.feature-state.json`：`pipeline.implement.status` 改为 `"pending_review"`
 - 向 `.specify/specs/registry.jsonl` 追加 `phase_completed` 事件
-- 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
+- 确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
 
 ### 5.1 反应式等待审批
 生成文档后，进入轮询等待模式：
-- 使用 ScheduleWakeup 每 60-120 秒检查 `test-report.feedback.json` 中 `review.verdict` 的值
-- 如果 `verdict` 为 `null`，继续等待，输出：⏳ 等待审批: file:///.../test-report.html
+- 使用 ScheduleWakeup 每 60-120 秒检查 `test-report.feedback.json` 中 `review.verdict` 的值（同时可通过 `curl -s http://localhost:8421/api/phases/<feature_id>` 获取阶段状态）
+- 如果 `verdict` 为 `null`，继续等待，输出：⏳ 等待审批: http://localhost:8421/specs/<feature_id>/test-report.html
 - 如果 `verdict` 为 `"approved"`：
   - 更新 `.feature-state.json`：`pipeline.implement.status` 改为 `"approved"`
   - 向 `registry.jsonl` 追加 `phase_approved` 事件
@@ -71,8 +71,8 @@ agent:
 ```
 ✅ 开发和测试已完成！
 
-📄 测试报告: file:///<绝对路径>/.specify/specs/<feature_id>/test-report.html
-📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
+📄 测试报告: http://localhost:8421/specs/<feature_id>/test-report.html
+📋 看板主页: http://localhost:8421
 
 请在浏览器中审核测试报告，批准后将自动进入下一步
 ```

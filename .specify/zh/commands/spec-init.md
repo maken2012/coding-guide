@@ -83,12 +83,12 @@ agent:
 ### 5. 更新状态
 - 更新 `.feature-state.json`：`pipeline.spec.status` 改为 `"pending_review"`
 - 向 `registry.jsonl` 追加 `phase_completed` 事件
-- 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
+- 确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
 
 ### 5.1 反应式等待审批
 生成文档后，进入轮询等待模式：
-- 使用 ScheduleWakeup 每 60-120 秒检查 `spec.feedback.json` 中 `review.verdict` 的值
-- 如果 `verdict` 为 `null`，继续等待，输出：⏳ 等待审批: file:///.../spec.html
+- 使用 ScheduleWakeup 每 60-120 秒检查 `spec.feedback.json` 中 `review.verdict` 的值（同时可通过 `curl -s http://localhost:8421/api/phases/<feature_id>` 获取阶段状态）
+- 如果 `verdict` 为 `null`，继续等待，输出：⏳ 等待审批: http://localhost:8421/specs/<feature_id>/spec.html
 - 如果 `verdict` 为 `"approved"`：
   - 更新 `.feature-state.json`：`pipeline.spec.status` 改为 `"approved"`
   - 向 `registry.jsonl` 追加 `phase_approved` 事件
@@ -104,8 +104,8 @@ agent:
 ```
 ✅ 功能规范已创建！
 
-📄 需求规格: file:///<绝对路径>/.specify/specs/YYYYMMDD-NNN-<name>/spec.html
-📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
+📄 需求规格: http://localhost:8421/specs/YYYYMMDD-NNN-<name>/spec.html
+📋 看板主页: http://localhost:8421
 
 请在浏览器中审核 spec.html，批准后将自动进入下一步
 ```

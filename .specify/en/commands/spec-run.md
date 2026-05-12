@@ -45,8 +45,8 @@ Phase 6: /spec-review logic → Review + deployment plan → Wait for approval
 
 ### 2. Reactive Wait (Common to All Phases)
 After generating documents, enter polling mode:
-- Use ScheduleWakeup to check the corresponding `.feedback.json` every 60-120 seconds for `review.verdict`
-- `null` → Continue waiting. Output: ⏳ Phase N/6 pending approval: file:///.../xxx.html
+- Use ScheduleWakeup to check the corresponding `.feedback.json` every 60-120 seconds for `review.verdict` (also check via `curl -s http://localhost:8421/api/phases/<feature_id>` for phase status)
+- `null` → Continue waiting. Output: ⏳ Phase N/6 pending approval: http://localhost:8421/specs/<feature_id>/xxx.html
 - `"approved"` → Update `.feature-state.json`, append `phase_approved` event, advance to next phase
 - `"rejected"` → Read feedback, revise documents, resubmit and wait
 
@@ -54,13 +54,13 @@ After generating documents, enter polling mode:
 - At the start of each phase, update `.feature-state.json`: set the corresponding phase status to `"in_progress"`
 - After each phase is approved, update: set the corresponding phase status to `"approved"`
 - Append `phase_started` and `phase_completed` events to `registry.jsonl`
-- Run `.claude/hooks/refresh-dashboard.sh`
+- Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
 
 ### 4. Lifecycle Complete
 When phase 6 (review) is approved:
 - Update `.feature-state.json`: set `pipeline.review.status` to `"approved"`
 - Append `lifecycle_complete` event to `registry.jsonl`
-- Run `.claude/hooks/refresh-dashboard.sh`
+- Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
 - Output completion summary
 
 ### 5. Output
@@ -77,7 +77,7 @@ Phases completed:
   ✅ implement → test-report.html
   ✅ review    → review.html, deploy-plan.html
 
-📋 Dashboard: file:///<path>/.specify/specs/dashboard.html
+📋 Dashboard: http://localhost:8421
 ```
 
 ## Reference Files

@@ -38,5 +38,5 @@ agent:
 
 ### 3. 输出
 ```
-📄 演示文稿: file:///<绝对路径>/.specify/specs/<current_feature>/presentation.html
+📄 演示文稿: http://localhost:8421/specs/<current_feature>/presentation.html
 ```

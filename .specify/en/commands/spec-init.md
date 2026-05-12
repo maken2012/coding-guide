@@ -88,12 +88,12 @@ For each generated HTML file, generate a corresponding `.feedback.json`.
 ### 5. Update State
 - Update `.feature-state.json` pipeline status
 - Append event to `registry.jsonl`
-- Run `.claude/hooks/refresh-dashboard.sh`
+- Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
 
 ### 5.1 Reactive Wait for Approval
 After generating documents, enter polling mode:
-- Use ScheduleWakeup to check `spec.feedback.json` every 60-120 seconds for `review.verdict`
-- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../spec.html
+- Use ScheduleWakeup to check `spec.feedback.json` every 60-120 seconds for `review.verdict` (also check via `curl -s http://localhost:8421/api/phases/<feature_id>` for phase status)
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: http://localhost:8421/specs/YYYYMMDD-NNN-<name>/spec.html
 - If `verdict` is `"approved"`:
   - Update `.feature-state.json`: set `pipeline.spec.status` to `"approved"`
   - Append `phase_approved` event to `registry.jsonl`
@@ -109,8 +109,8 @@ After generating documents, enter polling mode:
 ```
 ✅ Feature specification created!
 
-📄 Requirements Spec: file:///<absolute-path>/.specify/specs/YYYYMMDD-NNN-<name>/spec.html
-📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
+📄 Requirements Spec: http://localhost:8421/specs/YYYYMMDD-NNN-<name>/spec.html
+📋 Dashboard: http://localhost:8421
 
 ⏳ Waiting for approval... (polling spec.feedback.json)
 
