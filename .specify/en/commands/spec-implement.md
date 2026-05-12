@@ -53,6 +53,21 @@ Read `.specify/templates/test-report-template.html`, generate `test-report.html`
 - Integration test results table
 - Failure details (if any)
 
+### 5.1 Reactive Wait for Approval
+After generating test report, enter polling mode:
+- Use ScheduleWakeup to check `test-report.feedback.json` every 60-120 seconds for `review.verdict`
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../test-report.html
+- If `verdict` is `"approved"`:
+  - Update `.feature-state.json`: set `pipeline.implement.status` to `"approved"`
+  - Append `phase_approved` event to `registry.jsonl`
+  - Output: ✅ Implementation approved. Ready for /spec-review
+  - End polling
+- If `verdict` is `"rejected"`:
+  - Read `review.feedback` for rejection reason
+  - Fix code/tests based on feedback, regenerate test-report.html
+  - Resubmit for approval
+  - Output: 🔄 Revised based on feedback, resubmitting for approval
+
 ### 6. Output
 ```
 ✅ Development and testing completed!
@@ -60,5 +75,7 @@ Read `.specify/templates/test-report-template.html`, generate `test-report.html`
 📄 Test Report: file:///<absolute-path>/.specify/specs/<current_feature>/test-report.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
 
-Next step: Run /spec-review for code review and deployment plan
+⏳ Waiting for approval... (polling test-report.feedback.json)
+
+Next step after approval: /spec-review
 ```

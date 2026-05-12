@@ -56,6 +56,21 @@ agent:
 - 向 `.specify/specs/registry.jsonl` 追加 `phase_completed` 事件
 - 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
 
+### 5.1 反应式等待审批
+生成文档后，进入轮询等待模式：
+- 使用 ScheduleWakeup 每 60-120 秒检查 `tasks.feedback.json` 中 `review.verdict` 的值
+- 如果 `verdict` 为 `null`，继续等待，输出：⏳ 等待审批: file:///.../tasks.html
+- 如果 `verdict` 为 `"approved"`：
+  - 更新 `.feature-state.json`：`pipeline.plan.status` 改为 `"approved"`
+  - 向 `registry.jsonl` 追加 `phase_approved` 事件
+  - 输出：✅ 任务清单已通过，可执行 /spec-implement 开始开发
+  - 结束轮询
+- 如果 `verdict` 为 `"rejected"`：
+  - 读取 `review.feedback` 获取驳回原因
+  - 根据反馈修改 tasks.html（及 plan.html 如需要）
+  - 重新提交等待审批
+  - 输出：🔄 已根据反馈修改，重新提交审批
+
 ### 6. 输出
 ```
 ✅ 实施计划和任务清单已生成！
@@ -64,5 +79,5 @@ agent:
 📄 任务清单: file:///<绝对路径>/.specify/specs/<feature_id>/tasks.html
 📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
 
-请审核后执行 /spec-implement 开始实现
+请在浏览器中审核任务清单，批准后将自动进入下一步
 ```

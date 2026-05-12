@@ -69,6 +69,22 @@ agent:
 - 向 `.specify/specs/registry.jsonl` 追加 `phase_completed` 事件
 - 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
 
+### 5.1 反应式等待审批
+生成文档后，进入轮询等待模式：
+- 使用 ScheduleWakeup 每 60-120 秒检查 **所有已生成**的设计反馈文件中 `review.verdict` 的值
+- 需检查的文件：`design/flow-design.feedback.json`、`design/db-design.feedback.json`（如生成）、`design/api-design.feedback.json`（如生成）、`design/ui-design.feedback.json`（如生成）
+- 如果任何文件的 `verdict` 为 `null`，继续等待，输出：⏳ 等待审批: file:///.../design/（列出未审批文件）
+- 如果所有文件的 `verdict` 均为 `"approved"`：
+  - 更新 `.feature-state.json`：`pipeline.design.status` 改为 `"approved"`
+  - 向 `registry.jsonl` 追加 `phase_approved` 事件
+  - 输出：✅ 所有设计文档已通过，可执行 /spec-plan 进行计划拆解
+  - 结束轮询
+- 如果任何文件的 `verdict` 为 `"rejected"`：
+  - 读取对应 `review.feedback` 获取驳回原因
+  - 根据反馈修改被驳回的设计文档
+  - 重新提交等待审批
+  - 输出：🔄 已根据反馈修改，重新提交审批
+
 ### 6. 输出
 ```
 ✅ 设计文档已生成！
@@ -79,5 +95,5 @@ agent:
 📄 UI设计:   file:///<绝对路径>/.specify/specs/<feature_id>/design/ui-design.html
 📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
 
-请逐个审核设计文档后，执行 /spec-plan
+请在浏览器中逐个审核设计文档，全部批准后将自动进入下一步
 ```

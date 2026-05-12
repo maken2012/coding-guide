@@ -61,6 +61,21 @@ Based on tasks-template.html, generate task list:
 - Append event to `registry.jsonl`
 - Run `.claude/hooks/refresh-dashboard.sh`
 
+### 6.1 Reactive Wait for Approval
+After generating documents, enter polling mode:
+- Use ScheduleWakeup to check `tasks.feedback.json` every 60-120 seconds for `review.verdict`
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../tasks.html
+- If `verdict` is `"approved"`:
+  - Update `.feature-state.json`: set `pipeline.plan.status` to `"approved"`
+  - Append `phase_approved` event to `registry.jsonl`
+  - Output: ✅ Implementation plan approved. Ready for /spec-implement
+  - End polling
+- If `verdict` is `"rejected"`:
+  - Read `review.feedback` for rejection reason
+  - Modify plan.html and/or tasks.html based on feedback
+  - Resubmit for approval
+  - Output: 🔄 Revised based on feedback, resubmitting for approval
+
 ### 7. Output
 ```
 ✅ Implementation plan and task list generated!
@@ -69,5 +84,7 @@ Based on tasks-template.html, generate task list:
 📄 Task List: file:///<absolute-path>/.specify/specs/<current_feature>/tasks.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
 
-Please review, then run /spec-implement to start implementation
+⏳ Waiting for approval... (polling tasks.feedback.json)
+
+Next step after approval: /spec-implement
 ```

@@ -55,6 +55,21 @@ AI intelligently decides based on project type:
 - Append event to `registry.jsonl`
 - Run `.claude/hooks/refresh-dashboard.sh`
 
+### 4.1 Reactive Wait for Approval
+After generating documents, enter polling mode:
+- Use ScheduleWakeup to check `detail.feedback.json` every 60-120 seconds for `review.verdict`
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../detail.html
+- If `verdict` is `"approved"`:
+  - Update `.feature-state.json`: set `pipeline.detail.status` to `"approved"`
+  - Append `phase_approved` event to `registry.jsonl`
+  - Output: ✅ Detailed requirements approved. Ready for /spec-design
+  - End polling
+- If `verdict` is `"rejected"`:
+  - Read `review.feedback` for rejection reason
+  - Modify detail.html based on feedback
+  - Resubmit for approval
+  - Output: 🔄 Revised based on feedback, resubmitting for approval
+
 ### 5. Output
 ```
 ✅ Detailed requirements generated!
@@ -62,5 +77,7 @@ AI intelligently decides based on project type:
 📄 Detailed Requirements: file:///<absolute-path>/.specify/specs/<current_feature>/detail.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
 
-Next step: Run /spec-design for design
+⏳ Waiting for approval... (polling detail.feedback.json)
+
+Next step after approval: /spec-design
 ```

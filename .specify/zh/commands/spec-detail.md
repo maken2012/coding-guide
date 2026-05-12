@@ -52,6 +52,21 @@ AI 根据项目类型智能决定：
 - 向 `.specify/specs/registry.jsonl` 追加 `phase_completed` 事件
 - 运行 `.claude/hooks/refresh-dashboard.sh` 重建 dashboard.html
 
+### 4.1 反应式等待审批
+生成文档后，进入轮询等待模式：
+- 使用 ScheduleWakeup 每 60-120 秒检查 `detail.feedback.json` 中 `review.verdict` 的值
+- 如果 `verdict` 为 `null`，继续等待，输出：⏳ 等待审批: file:///.../detail.html
+- 如果 `verdict` 为 `"approved"`：
+  - 更新 `.feature-state.json`：`pipeline.detail.status` 改为 `"approved"`
+  - 向 `registry.jsonl` 追加 `phase_approved` 事件
+  - 输出：✅ 需求详述已通过，可执行 /spec-design 进行设计
+  - 结束轮询
+- 如果 `verdict` 为 `"rejected"`：
+  - 读取 `review.feedback` 获取驳回原因
+  - 根据反馈修改 detail.html
+  - 重新提交等待审批
+  - 输出：🔄 已根据反馈修改，重新提交审批
+
 ### 5. 输出
 ```
 ✅ 需求详述已生成！
@@ -59,5 +74,5 @@ AI 根据项目类型智能决定：
 📄 需求详述: file:///<绝对路径>/.specify/specs/<feature_id>/detail.html
 📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
 
-下一步：执行 /spec-design 进行设计
+请在浏览器中审核 detail.html，批准后将自动进入下一步
 ```

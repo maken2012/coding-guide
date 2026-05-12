@@ -74,6 +74,21 @@ Each document generates a corresponding `.feedback.json`.
 - Append event to `registry.jsonl`
 - Run `.claude/hooks/refresh-dashboard.sh`
 
+### 6.1 Reactive Wait for Approval
+After generating documents, enter polling mode for ALL design feedback files:
+- Use ScheduleWakeup to check each feedback file under `design/` (flow-design.feedback.json, db-design.feedback.json, api-design.feedback.json, ui-design.feedback.json — only those that were generated) every 60-120 seconds for `review.verdict`
+- If any `verdict` is `null`, continue waiting. Output: ⏳ Pending review on: <list of unapproved design docs>
+- If all `verdict`s are `"approved"`:
+  - Update `.feature-state.json`: set `pipeline.design.status` to `"approved"`
+  - Append `phase_approved` event to `registry.jsonl`
+  - Output: ✅ All design documents approved. Ready for /spec-plan
+  - End polling
+- If any `verdict` is `"rejected"`:
+  - Read `review.feedback` for rejection reasons on rejected docs
+  - Modify corresponding HTML files based on feedback
+  - Resubmit for approval
+  - Output: 🔄 Revised <rejected doc names> based on feedback, resubmitting for approval
+
 ### 7. Output
 ```
 ✅ Design documents generated!
@@ -84,5 +99,7 @@ Each document generates a corresponding `.feedback.json`.
 📄 UI Design: file:///<absolute-path>/.specify/specs/<current_feature>/design/ui-design.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
 
-Please review each design document, then run /spec-plan
+⏳ Waiting for approval on all design documents... (polling design/*.feedback.json)
+
+Next step after all approved: /spec-plan
 ```

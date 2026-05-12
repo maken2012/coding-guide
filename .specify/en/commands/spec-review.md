@@ -51,6 +51,21 @@ AI determines whether deployment is involved (new configuration, database migrat
 - Append event to `registry.jsonl`
 - Run `.claude/hooks/refresh-dashboard.sh`
 
+### 5.1 Reactive Wait for Approval
+After generating review report, enter polling mode:
+- Use ScheduleWakeup to check `review.feedback.json` every 60-120 seconds for `review.verdict`
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../review.html
+- If `verdict` is `"approved"`:
+  - Update `.feature-state.json`: set `pipeline.review.status` to `"approved"`
+  - Append `lifecycle_complete` event to `registry.jsonl`
+  - Output: 🎉 Feature development lifecycle complete!
+  - End polling
+- If `verdict` is `"rejected"`:
+  - Read `review.feedback` for rejection reason
+  - Modify review.html and/or code based on feedback
+  - Resubmit for approval
+  - Output: 🔄 Revised based on feedback, resubmitting for approval
+
 ### 6. Output
 ```
 ✅ Review report generated!
@@ -58,4 +73,6 @@ AI determines whether deployment is involved (new configuration, database migrat
 📄 Review Report: file:///<absolute-path>/.specify/specs/<current_feature>/review.html
 📄 Deployment Plan: file:///<absolute-path>/.specify/specs/<current_feature>/deploy-plan.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
+
+⏳ Waiting for approval... (polling review.feedback.json)
 ```
