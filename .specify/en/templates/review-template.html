@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="phase" content="review">
   <meta name="created" content="">
+  <meta name="feature-id" content="">
   <title>Review Template</title>
   <style>
     :root {
@@ -616,11 +617,22 @@
      * Save feedback data.
      */
     async function saveFeedback(data) {
+      try {
+        var resp = await fetch('http://localhost:8421/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (resp.ok) {
+          showToast('Feedback submitted successfully.', 'success');
+          return;
+        }
+      } catch (e) { /* server not running, fallback */ }
       var json = JSON.stringify(data, null, 2);
       if (window.showSaveFilePicker) {
         try {
           var handle = await window.showSaveFilePicker({
-            suggestedName: 'feedback-review-' + Date.now() + '.json',
+            suggestedName: 'feedback-' + Date.now() + '.json',
             types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
           });
           var writable = await handle.createWritable();
@@ -646,13 +658,14 @@
     async function submitVerdict(verdict) {
       var feedback = document.getElementById('feedbackInput').value.trim();
       var data = {
-        type: 'verdict',
+        feature_id: document.querySelector('meta[name="feature-id"]')
+          ? document.querySelector('meta[name="feature-id"]').content
+          : new URLSearchParams(window.location.search).get('feature_id') || '',
         phase: 'review',
         verdict: verdict,
         feedback: feedback,
-        issueVerdicts: collectIssueVerdicts(),
-        actionItems: collectActionItems(),
-        timestamp: new Date().toISOString()
+        decisions: Object.assign({}, collectIssueVerdicts() || {}, collectActionItems() || {}),
+        timestamp: new Date().toLocaleString('sv-SE')
       };
       window.parent.postMessage(data, '*');
       await saveFeedback(data);

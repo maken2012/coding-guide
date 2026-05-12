@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="phase" content="detail">
   <meta name="created" content="">
+  <meta name="feature-id" content="">
   <title>Requirement Details</title>
   <style>
     :root {
@@ -554,16 +555,23 @@
      * falls back to copying JSON to clipboard.
      */
     async function saveFeedback(data) {
+      try {
+        var resp = await fetch('http://localhost:8421/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (resp.ok) {
+          showToast('Feedback submitted successfully.', 'success');
+          return;
+        }
+      } catch (e) { /* server not running, fallback */ }
       var json = JSON.stringify(data, null, 2);
-
       if (window.showSaveFilePicker) {
         try {
           var handle = await window.showSaveFilePicker({
             suggestedName: 'feedback-' + Date.now() + '.json',
-            types: [{
-              description: 'JSON File',
-              accept: { 'application/json': ['.json'] }
-            }]
+            types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }]
           });
           var writable = await handle.createWritable();
           await writable.write(json);
@@ -571,18 +579,13 @@
           showToast('Feedback saved to file.', 'success');
           return;
         } catch (err) {
-          if (err.name === 'AbortError') {
-            showToast('Save cancelled.', 'warning');
-            return;
-          }
+          if (err.name === 'AbortError') return;
         }
       }
-
       try {
         await navigator.clipboard.writeText(json);
-        showToast('Feedback copied to clipboard (save not supported in this browser).', 'info');
+        showToast('Feedback copied to clipboard.', 'info');
       } catch (err) {
-        showToast('Could not save or copy feedback. See console.', 'error');
         console.log('Feedback data:', json);
       }
     }
@@ -594,15 +597,16 @@
     async function submitVerdict(verdict) {
       var decisions = collectDecisions();
       var feedback = document.getElementById('feedbackInput').value.trim();
-
       var data = {
-        verdict: verdict,
-        timestamp: new Date().toISOString(),
+        feature_id: document.querySelector('meta[name="feature-id"]')
+          ? document.querySelector('meta[name="feature-id"]').content
+          : new URLSearchParams(window.location.search).get('feature_id') || '',
         phase: 'detail',
+        verdict: verdict,
+        feedback: feedback,
         decisions: decisions,
-        feedback: feedback
+        timestamp: new Date().toLocaleString('sv-SE')
       };
-
       await saveFeedback(data);
     }
 
