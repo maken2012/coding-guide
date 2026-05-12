@@ -46,7 +46,7 @@
 
 **产出文件**：
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── spec.html                    # 必生成
 ├── spec.feedback.json           # 必生成
 └── arch-diagram.html            # 按需（架构图）
@@ -70,7 +70,7 @@ specs/<NNN>-<name>/
 
 **产出文件**：
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── detail.html                  # 必生成
 ├── detail.feedback.json         # 必生成
 └── (按需内嵌在 detail.html 中)
@@ -98,7 +98,7 @@ specs/<NNN>-<name>/
 
 **产出文件**：
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── design/
 │   ├── flow-design.html         # 业务流程/时序图
 │   ├── flow-design.feedback.json
@@ -126,7 +126,7 @@ specs/<NNN>-<name>/
 
 **产出文件**：
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── plan.html                    # 必生成
 ├── plan.feedback.json
 ├── tasks.html                   # 必生成
@@ -149,7 +149,7 @@ specs/<NNN>-<name>/
 
 **产出文件**：
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── (代码文件)
 ├── test-report.html             # 测试报告
 └── test-report.feedback.json
@@ -172,7 +172,7 @@ specs/<NNN>-<name>/
 
 **产出文件**：
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── review.html                  # 必生成
 ├── review.feedback.json
 ├── deploy-plan.html             # 按需

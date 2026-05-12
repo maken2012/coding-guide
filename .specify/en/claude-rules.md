@@ -45,7 +45,7 @@ Selection        Requirements    Design          Tasks          + Testing       
 
 **Output Files**:
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── spec.html                    # Always generated
 ├── spec.feedback.json           # Always generated
 └── arch-diagram.html            # On-demand (architecture diagram)
@@ -69,7 +69,7 @@ specs/<NNN>-<name>/
 
 **Output Files**:
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── detail.html                  # Always generated
 ├── detail.feedback.json         # Always generated
 └── (embedded on-demand within detail.html)
@@ -97,7 +97,7 @@ specs/<NNN>-<name>/
 
 **Output Files**:
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── design/
 │   ├── flow-design.html         # Business flow / sequence diagrams
 │   ├── flow-design.feedback.json
@@ -125,7 +125,7 @@ specs/<NNN>-<name>/
 
 **Output Files**:
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── plan.html                    # Always generated
 ├── plan.feedback.json
 ├── tasks.html                   # Always generated
@@ -148,7 +148,7 @@ specs/<NNN>-<name>/
 
 **Output Files**:
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── (code files)
 ├── test-report.html             # Test report
 └── test-report.feedback.json
@@ -171,7 +171,7 @@ specs/<NNN>-<name>/
 
 **Output Files**:
 ```
-specs/<NNN>-<name>/
+specs/YYYYMMDD-NNN-<name>/
 ├── review.html                  # Always generated
 ├── review.feedback.json
 ├── deploy-plan.html             # On-demand

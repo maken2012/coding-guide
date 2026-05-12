@@ -17,8 +17,8 @@ User provides a feature description text: $ARGUMENTS
 - Read `.specify/templates/spec-template.html`
 
 ### 2. Generate Feature Directory
-- Scan `.specify/specs/` for the highest number, new number +1
-- Create `.specify/specs/<NNN>-<name>/`
+- Scan `.specify/specs/` for today's directories (format `YYYYMMDD-NNN`), today's max sequence +1, reset to 001 each day
+- Create `.specify/specs/YYYYMMDD-NNN-<name>/`
 
 ### 3. Dynamically Generate spec.html
 Read `spec-template.html` as the skeleton. Based on the feature description, **intelligently determine** whether the following sub-content is needed:
@@ -51,7 +51,7 @@ Update `dashboard-state.json` and `dashboard.html`.
 ```
 ✅ Feature specification created!
 
-📄 Requirements Spec: file:///<absolute-path>/.specify/specs/<NNN>-<name>/spec.html
+📄 Requirements Spec: file:///<absolute-path>/.specify/specs/YYYYMMDD-NNN-<name>/spec.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
 
 Next step: Run /spec-detail for detailed requirements

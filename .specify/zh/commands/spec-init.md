@@ -17,8 +17,8 @@ description: "架构选型 + 高层需求（Spec-Driven Development 第一步）
 - 读取 `.specify/templates/spec-template.html`
 
 ### 2. 生成功能目录
-- 扫描 `.specify/specs/` 最大编号，新编号 +1
-- 创建 `.specify/specs/<NNN>-<name>/`
+- 扫描 `.specify/specs/` 中当日目录（格式 `YYYYMMDD-NNN`），当日最大序号 +1，每日从 001 开始
+- 创建 `.specify/specs/YYYYMMDD-NNN-<name>/`
 
 ### 3. 动态生成 spec.html
 读取 `spec-template.html` 作为骨架。根据功能描述**智能判断**是否需要以下子内容：
@@ -51,7 +51,7 @@ description: "架构选型 + 高层需求（Spec-Driven Development 第一步）
 ```
 ✅ 功能规范已创建！
 
-📄 需求规格: file:///<绝对路径>/.specify/specs/<NNN>-<name>/spec.html
+📄 需求规格: file:///<绝对路径>/.specify/specs/YYYYMMDD-NNN-<name>/spec.html
 📋 看板主页: file:///<绝对路径>/.specify/specs/dashboard.html
 
 下一步：执行 /spec-detail 进行需求详述
