@@ -211,6 +211,7 @@ specs/YYYYMMDD-NNN-<name>/
 - HTML must follow the structure and styles of the corresponding template in .specify/templates/
 - After each phase is completed, automatically update .feature-state.json, append to registry.jsonl, run refresh-dashboard.sh
 - Terminal output format: 📄 Pending review: file:///absolute/path/to/xxx.html
+- After generating HTML for review, automatically run `open <absolute-path>` to open it in the browser
 - Phase gate: read review.verdict from .feedback.json; only "approved" allows proceeding to the next phase
 
 ### Feedback Handling Rules

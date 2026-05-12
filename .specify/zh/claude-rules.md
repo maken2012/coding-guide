@@ -212,6 +212,7 @@ specs/YYYYMMDD-NNN-<name>/
 - HTML 必须参照 .specify/templates/ 中对应模板的结构和样式
 - 每个阶段完成后自动更新 .feature-state.json，追加 registry.jsonl，运行 refresh-dashboard.sh
 - 终端输出格式：📄 待审核: file:///absolute/path/to/xxx.html
+- 生成待审核 HTML 后自动执行 `open <绝对路径>` 在浏览器中打开，用户无需手动复制路径
 - 阶段门禁：读取 .feedback.json 中 review.verdict，只有 "approved" 才进入下一阶段
 
 ### 反馈处理规则
