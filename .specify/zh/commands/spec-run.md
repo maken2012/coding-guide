@@ -82,9 +82,9 @@ agent:
 
 ## 参考文件
 每个阶段的详细执行逻辑，参照对应命令文件：
-- 阶段 1: `.specify/commands/spec-init.md` 中的执行步骤
-- 阶段 2: `.specify/commands/spec-detail.md` 中的执行步骤
-- 阶段 3: `.specify/commands/spec-design.md` 中的执行步骤
-- 阶段 4: `.specify/commands/spec-plan.md` 中的执行步骤
-- 阶段 5: `.specify/commands/spec-implement.md` 中的执行步骤
-- 阶段 6: `.specify/commands/spec-review.md` 中的执行步骤
+- 阶段 1: `.claude/commands/spec-init.md` 中的执行步骤
+- 阶段 2: `.claude/commands/spec-detail.md` 中的执行步骤
+- 阶段 3: `.claude/commands/spec-design.md` 中的执行步骤
+- 阶段 4: `.claude/commands/spec-plan.md` 中的执行步骤
+- 阶段 5: `.claude/commands/spec-implement.md` 中的执行步骤
+- 阶段 6: `.claude/commands/spec-review.md` 中的执行步骤

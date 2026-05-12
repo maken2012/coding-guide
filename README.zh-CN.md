@@ -10,6 +10,7 @@
 - 所有人类阅读的文档都是自包含 HTML（内联 CSS/JS，零外部依赖）
 - 阶段门禁：每个阶段必须审核通过才能进入下一阶段
 - 支持多 Agent 并行开发，独立反馈文件互不干扰
+- 反应式 Agent：审批后自动推进下一阶段，无需手动触发
 - 所有文档和反馈文件通过 git 追踪，完整审计链
 - 灵感来源：GitHub 的 spec-kit、Fission-AI 的 OpenSpec、Thariq 的 20 个 HTML 有效性演示
 
@@ -19,8 +20,15 @@
 
 ### 远程安装（一行命令）
 
+在项目目录中执行：
+
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh)
+# 自动检测语言，跳过交互提示
+curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh | bash -s -- -y
+
+# 或先下载再执行（所有环境更稳定）
+curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh -o install.sh
+bash install.sh --lang zh -y
 ```
 
 ### 本地安装
@@ -31,7 +39,7 @@ cd your-project
 ./coding-guide/install.sh
 ```
 
-### 语言选项
+### 选项
 
 ```bash
 # 强制英文
@@ -39,6 +47,12 @@ bash install.sh --lang en
 
 # 强制中文（默认）
 bash install.sh --lang zh
+
+# 跳过所有交互提示（CI / 自动化）
+bash install.sh -y
+
+# 组合使用
+bash install.sh --lang en -y /path/to/project
 ```
 
 ---
@@ -80,7 +94,8 @@ bash install.sh --lang zh
 2. 用户在浏览器中审阅 HTML，通过交互式反馈批准/驳回
 3. 反馈保存到 `.feedback.json`（每个 HTML 文档一个）
 4. 只有批准的文档才能进入下一阶段
-5. Dashboard 提供所有功能及其当前阶段的概览
+5. Agent 轮询 `.feedback.json`，检测到审批后自动推进下一阶段（LTS 1.1）
+6. Dashboard 从 `.feature-state.json` 聚合展示所有功能状态
 
 ---
 
@@ -90,20 +105,42 @@ bash install.sh --lang zh
 .specify/
 ├── constitution.md          # 项目宪章
 ├── specs/                   # 运行时规范文件
-│   └── <功能>/
-│       ├── spec.html + .feedback.json
-│       ├── detail.html + .feedback.json
-│       ├── design/
-│       ├── plan.html, tasks.html
-│       └── review.html
+│   ├── YYYYMMDD-NNN-<名>/
+│   │   ├── .feature-state.json    # 功能管线状态（LTS 1.1）
+│   │   ├── .agent-lock            # 原子功能锁（LTS 1.1）
+│   │   ├── spec.html + .feedback.json
+│   │   ├── detail.html + .feedback.json
+│   │   ├── design/                # 按需生成
+│   │   ├── plan.html, tasks.html
+│   │   └── review.html
+│   ├── registry.jsonl        # 追加式事件日志（LTS 1.1）
+│   └── dashboard.html        # 全局看板（从 .feature-state.json 聚合）
 └── templates/               # 文档模板
     ├── dashboard.html
     ├── *-template.html      # 15 个模板
     └── components/          # 20 个可复用组件
 
 .claude/
-├── commands/                # 10 个斜杠命令
+├── commands/                # 12 个斜杠命令
+│   ├── spec-init.md         # 阶段 1: 架构选型
+│   ├── spec-detail.md       # 阶段 2: 需求详述
+│   ├── spec-design.md       # 阶段 3: 一站式设计
+│   ├── spec-plan.md         # 阶段 4: 计划+任务
+│   ├── spec-implement.md    # 阶段 5: 开发+测试
+│   ├── spec-review.md       # 阶段 6: 审查+部署
+│   ├── spec-explore.md      # 辅助: 探索对比
+│   ├── spec-research.md     # 辅助: 技术调研
+│   ├── spec-report.md       # 辅助: 状态报告
+│   ├── spec-present.md      # 辅助: 演示文稿
+│   ├── spec-run.md          # LTS 1.1: 自动化生命周期
+│   └── spec-dispatch.md     # LTS 1.1: 多 Agent 派发
 └── hooks/                   # 验证钩子
+    ├── pre-spec-check.sh    # 阶段前置验证
+    ├── post-task-verify.sh  # 任务后 JSON 校验
+    ├── refresh-dashboard.sh # 从 .feature-state.json 重建看板
+    ├── acquire-lock.sh      # 原子锁获取（LTS 1.1）
+    ├── release-lock.sh      # 锁释放（LTS 1.1）
+    └── check-stale-locks.sh # 过期锁清理（LTS 1.1）
 ```
 
 ---

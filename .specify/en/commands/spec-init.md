@@ -36,6 +36,31 @@ User provides a feature description text: $ARGUMENTS
 - Scan `.specify/specs/` for today's directories (format `YYYYMMDD-NNN`), today's max sequence +1, reset to 001 each day
 - Create `.specify/specs/YYYYMMDD-NNN-<name>/`
 
+### 2.1 Initialize Feature State
+Create `.feature-state.json` in the feature directory:
+```json
+{
+  "id": "YYYYMMDD-NNN-<name>",
+  "name": "<feature name>",
+  "created_at": "<ISO timestamp>",
+  "pipeline": {
+    "spec": { "status": "in_progress", "artifact": "spec.html" },
+    "detail": { "status": "not_started" },
+    "design": { "status": "not_started" },
+    "plan": { "status": "not_started" },
+    "implement": { "status": "not_started" },
+    "review": { "status": "not_started" }
+  },
+  "agent_session": null,
+  "agent_since": null
+}
+```
+
+Append an event to `.specify/specs/registry.jsonl` (create if not exists):
+```
+{"ts":"<ISO timestamp>","event":"feature_created","feature":"YYYYMMDD-NNN-<name>","agent":"spec-init"}
+```
+
 ### 3. Dynamically Generate spec.html
 Read `spec-template.html` as the skeleton. Based on the feature description, **intelligently determine** whether the following sub-content is needed:
 

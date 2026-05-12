@@ -28,7 +28,12 @@ Inspired by GitHub's spec-kit, Fission-AI's OpenSpec, and Thariq's 20 HTML effec
 From inside your project directory:
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh)
+# Auto-detect language, skip prompts
+curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh | bash -s -- -y
+
+# Or download first (more reliable in all environments)
+curl -sL https://raw.githubusercontent.com/maken2012/coding-guide/main/install.sh -o install.sh
+bash install.sh --lang en -y
 ```
 
 ### Local Install
@@ -39,9 +44,7 @@ cd your-project
 ./coding-guide/install.sh
 ```
 
-### Language Option
-
-The installer auto-detects your system language. You can override it:
+### Options
 
 ```bash
 # Force English
@@ -49,6 +52,12 @@ bash install.sh --lang en
 
 # Force Chinese (default)
 bash install.sh --lang zh
+
+# Skip all interactive prompts (CI / automation)
+bash install.sh -y
+
+# Combine options
+bash install.sh --lang en -y /path/to/project
 ```
 
 ---
@@ -91,11 +100,11 @@ These commands work independently of the main workflow:
 ## How It Works
 
 1. You invoke a slash command (e.g., `/spec-init`).
-2. Claude generates one or more self-contained HTML documents in `.specify/specs/<feature>/`.
+2. Claude generates one or more self-contained HTML documents in `.specify/specs/YYYYMMDD-NNN-<name>/`.
 3. You open the HTML file in your browser, review the content, and use the interactive feedback bar to approve or reject with notes.
 4. Feedback is saved to a `.feedback.json` file alongside the HTML document.
-5. The next slash command reads the feedback file. Only an `"approved"` verdict allows progression to the next phase.
-6. A dashboard (`dashboard.html`) provides an overview of all features and their current phase.
+5. The agent polls `.feedback.json` and detects your approval. Only an `"approved"` verdict allows progression to the next phase (LTS 1.1: auto-advances).
+6. A dashboard (`dashboard.html`) aggregates all `.feature-state.json` files to provide an overview of all features and their current phase.
 
 ---
 
@@ -105,7 +114,9 @@ These commands work independently of the main workflow:
 .specify/
   constitution.md              # Project charter and invariants
   specs/                       # Runtime spec files
-    <feature>/
+    YYYYMMDD-NNN-<name>/       # Per-feature directory
+      .feature-state.json      # Per-feature pipeline state (LTS 1.1)
+      .agent-lock              # Atomic feature lock (LTS 1.1)
       spec.html                # + spec.feedback.json
       detail.html              # + detail.feedback.json
       design/
@@ -117,16 +128,21 @@ These commands work independently of the main workflow:
       tasks.html               # + tasks.feedback.json
       review.html              # + review.feedback.json
       deploy-plan.html         # + deploy-plan.feedback.json
-    dashboard.html             # Global overview
-    dashboard-state.json       # Dashboard state
+    registry.jsonl             # Append-only event log (LTS 1.1)
+    dashboard.html             # Global overview (aggregated from .feature-state.json)
   templates/                   # Document templates
     dashboard.html
     spec-template.html
     detail-template.html
-    design-template.html
+    flow-design-template.html
+    db-design-template.html
+    api-design-template.html
+    ui-design-template.html
     plan-template.html
     tasks-template.html
     review-template.html
+    deploy-plan-template.html
+    test-report-template.html
     exploration-template.html
     research-template.html
     report-template.html
@@ -139,18 +155,26 @@ These commands work independently of the main workflow:
       ...                      # 20 components total
 
 .claude/
-  commands/                    # 10 slash commands
-    spec-init.md
-    spec-detail.md
-    spec-design.md
-    spec-plan.md
-    spec-implement.md
-    spec-review.md
-    spec-explore.md
-    spec-research.md
-    spec-report.md
-    spec-present.md
+  commands/                    # 12 slash commands
+    spec-init.md               # Phase 1: Architecture + Requirements
+    spec-detail.md             # Phase 2: Requirement Details
+    spec-design.md             # Phase 3: Design
+    spec-plan.md               # Phase 4: Plan + Tasks
+    spec-implement.md          # Phase 5: Development + Testing
+    spec-review.md             # Phase 6: Review + Deploy
+    spec-explore.md            # Auxiliary: Exploration
+    spec-research.md           # Auxiliary: Research
+    spec-report.md             # Auxiliary: Report
+    spec-present.md            # Auxiliary: Presentation
+    spec-run.md                # LTS 1.1: Full lifecycle auto-advance
+    spec-dispatch.md           # LTS 1.1: Multi-agent dispatcher
   hooks/                       # Validation hooks
+    pre-spec-check.sh          # Pre-phase validation
+    post-task-verify.sh        # Post-task JSON verification
+    refresh-dashboard.sh       # Rebuild dashboard from .feature-state.json
+    acquire-lock.sh            # Atomic feature lock (LTS 1.1)
+    release-lock.sh            # Feature lock release (LTS 1.1)
+    check-stale-locks.sh       # Expired lock cleanup (LTS 1.1)
 ```
 
 ---

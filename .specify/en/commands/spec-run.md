@@ -82,9 +82,9 @@ Phases completed:
 
 ## Reference Files
 For detailed execution logic of each phase, refer to the corresponding command files:
-- Phase 1: Execution steps in `.specify/commands/spec-init.md`
-- Phase 2: Execution steps in `.specify/commands/spec-detail.md`
-- Phase 3: Execution steps in `.specify/commands/spec-design.md`
-- Phase 4: Execution steps in `.specify/commands/spec-plan.md`
-- Phase 5: Execution steps in `.specify/commands/spec-implement.md`
-- Phase 6: Execution steps in `.specify/commands/spec-review.md`
+- Phase 1: Execution steps in `.claude/commands/spec-init.md`
+- Phase 2: Execution steps in `.claude/commands/spec-detail.md`
+- Phase 3: Execution steps in `.claude/commands/spec-design.md`
+- Phase 4: Execution steps in `.claude/commands/spec-plan.md`
+- Phase 5: Execution steps in `.claude/commands/spec-implement.md`
+- Phase 6: Execution steps in `.claude/commands/spec-review.md`

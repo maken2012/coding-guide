@@ -210,7 +210,7 @@ specs/<NNN>-<name>/
 ### 文档生成规则
 - 所有面向人的文档必须以自包含 HTML 输出（内联 CSS/JS，零外部依赖）
 - HTML 必须参照 .specify/templates/ 中对应模板的结构和样式
-- 每个阶段完成后自动更新 dashboard.html 和 dashboard-state.json
+- 每个阶段完成后更新 .feature-state.json 并运行 .claude/hooks/refresh-dashboard.sh 重建 dashboard.html
 - 终端输出格式：📄 待审核: file:///absolute/path/to/xxx.html
 - 阶段门禁：读取 .feedback.json 中 review.verdict，只有 "approved" 才进入下一阶段
 
@@ -247,8 +247,8 @@ specs/<NNN>-<name>/
 }
 
 ### 看板 dashboard.html 维护规则
-- 读取 .specify/specs/dashboard-state.json 获取全局状态
+- Dashboard 通过 .claude/hooks/refresh-dashboard.sh 聚合所有 .feature-state.json 文件
 - 左侧 25%：总览统计 + 时间线 + 功能列表
 - 右侧 75%：当前选中功能的当前阶段文档（通过 iframe 加载）
 - 底部：通过/驳回审核按钮
-- 每次生成或更新任何规范文档后，必须重建 dashboard.html
+- 每次生成或更新任何规范文档后，必须运行 refresh-dashboard.sh 重建 dashboard.html

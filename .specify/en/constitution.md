@@ -1,7 +1,7 @@
 # Project Constitution
 
-> Version: 1.0.0
-> Last Updated: 2026-05-11
+> Version: 1.1.0
+> Last Updated: 2026-05-12
 
 ## Core Principles
 
