@@ -278,6 +278,12 @@ for f in "${SOURCE_DIR}/.claude/hooks/"*.sh; do
   fi
 done
 
+# Copy feedback server
+if [ -f "${SOURCE_DIR}/.claude/hooks/feedback-server.py" ]; then
+  cp "${SOURCE_DIR}/.claude/hooks/feedback-server.py" "${TARGET_DIR}/.claude/hooks/"
+  chmod +x "${TARGET_DIR}/.claude/hooks/feedback-server.py"
+fi
+
 echo -e "${GREEN}${MSG_HOOK_DONE}${NC}"
 
 # ---- Configure CLAUDE.md (append-only) ----
@@ -362,6 +368,10 @@ echo ""
 echo -e "Multi-Agent (LTS 1.1):"
 echo -e "  ${YELLOW}/spec-run${NC}       → Auto-advance through all 6 phases"
 echo -e "  ${YELLOW}/spec-dispatch${NC}  → Analyze and dispatch parallel agents"
+echo ""
+echo -e "${BLUE}Feedback Server:${NC}"
+echo -e "  ${YELLOW}python3 .claude/hooks/feedback-server.py${NC}"
+echo -e "  → http://localhost:8421"
 echo ""
 echo -e "${MSG_START} ${YELLOW}/spec-init \"feature description\"${NC}"
 echo ""
