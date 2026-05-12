@@ -159,16 +159,14 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path.rstrip('/') or '/'
 
-        # Redirect root to dashboard
+        # Dashboard page
         if path == '/':
-            self.send_response(302)
-            self.send_header('Location', '/specs/dashboard.html')
-            self.end_headers()
+            self._serve_template('dashboard.html')
             return
 
         # Timeline page
         if path == '/timeline':
-            self._serve_timeline()
+            self._serve_template('timeline.html')
             return
 
         # Static files under /specs/
@@ -225,21 +223,21 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         except OSError as exc:
             self._send_error_json(str(exc), 500)
 
-    def _serve_timeline(self):
-        """Serve timeline.html from language-specific templates directory."""
+    def _serve_template(self, filename):
+        """Serve a template file (dashboard.html, timeline.html, etc.) from language-specific templates directory."""
         lang_dir = self._detect_lang_dir()
         if lang_dir is None:
             self._send_error_json('No language templates found', 404)
             return
         for lang in ('zh', 'en'):
             candidate = os.path.join(
-                os.path.dirname(lang_dir), '.specify', lang, 'templates', 'timeline.html'
+                os.path.dirname(lang_dir), '.specify', lang, 'templates', filename
             )
             candidate = os.path.realpath(candidate)
             if os.path.isfile(candidate):
                 self._serve_absolute(candidate)
                 return
-        self._send_error_json('timeline.html not found', 404)
+        self._send_error_json(filename + ' not found', 404)
 
     def _serve_absolute(self, filepath):
         mime, _ = mimetypes.guess_type(filepath)
