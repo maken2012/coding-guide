@@ -54,8 +54,9 @@ fi
 
 # Generate dashboard.html if template exists
 if [ -f "${TEMPLATE}" ]; then
-  python3 -c "
-import sys, json, re
+  PY_SCRIPT=$(mktemp /tmp/dashboard-gen.XXXXXX.py)
+  cat > "${PY_SCRIPT}" << 'PYEOF'
+import sys, json
 
 template_path = sys.argv[1]
 dashboard_path = sys.argv[2]
@@ -69,12 +70,91 @@ with open(timeline_path, 'r') as f:
 with open(template_path, 'r') as f:
     html = f.read()
 
-combined = json.dumps({
-    'features': json.loads(states_raw),
-    'timeline': json.loads(timeline_raw)
-})
+# Auto-detect language from template
+is_zh = 'lang="zh' in html[:200]
 
-# Use string replacement instead of regex to avoid escape conflicts
+raw_features = json.loads(states_raw)
+raw_timeline = json.loads(timeline_raw)
+
+# Transform features into dashboard-expected flat format
+features = []
+current_feature = ''
+phase_order = ['spec', 'detail', 'design', 'plan', 'implement', 'review']
+
+for feat in raw_features:
+    pipeline = feat.get('pipeline', {})
+    active_phase = ''
+    active_status = 'draft'
+    html_path = ''
+
+    for phase in phase_order:
+        p = pipeline.get(phase, {})
+        s = p.get('status', 'not_started')
+        if s != 'not_started':
+            active_phase = phase
+            active_status = s
+            artifact = p.get('artifact', '')
+            if artifact:
+                html_path = feat.get('id', '') + '/' + artifact
+
+    if active_status in ('in_progress',):
+        status = 'implementing'
+    elif active_status == 'pending_review':
+        status = 'pending_review'
+    elif active_status == 'approved':
+        status = 'approved'
+    elif active_status == 'rejected':
+        status = 'rejected'
+    else:
+        status = 'draft'
+
+    flat = {
+        'id': feat.get('id', ''),
+        'name': feat.get('name', ''),
+        'status': status,
+        'phase': active_phase,
+        'html_path': html_path
+    }
+    features.append(flat)
+
+    if not current_feature and status in ('pending_review', 'implementing'):
+        current_feature = feat.get('id', '')
+if not current_feature and features:
+    current_feature = features[0].get('id', '')
+
+# Transform timeline events into dashboard-expected format
+timeline = []
+for ev in raw_timeline:
+    ts = ev.get('ts', '')
+    date_part = ts[:10] if ts else ''
+    event_text = ev.get('event', '')
+    feat_id = ev.get('feature', '')
+    phase = ev.get('phase', '')
+
+    if is_zh:
+        labels = {
+            'feature_created': '创建',
+            'phase_completed': (phase or '') + ' 阶段完成',
+            'phase_approved': (phase or '') + ' 阶段通过',
+        }
+    else:
+        labels = {
+            'feature_created': 'created',
+            'phase_completed': (phase or '') + ' completed',
+            'phase_approved': (phase or '') + ' approved',
+        }
+    desc = labels.get(event_text, event_text)
+    if feat_id:
+        desc = feat_id + ' ' + desc
+
+    timeline.append({'date': date_part, 'event': desc})
+
+combined = json.dumps({
+    'current_feature': current_feature,
+    'features': features,
+    'timeline': timeline
+}, ensure_ascii=False)
+
 marker_start = '<script type="application/json" id="dashboardState">'
 marker_end = '</script>'
 start_idx = html.find(marker_start)
@@ -86,7 +166,10 @@ if start_idx != -1:
 with open(dashboard_path, 'w') as f:
     f.write(html)
 print('Dashboard refreshed')
-" "${TEMPLATE}" "${DASHBOARD}" "${STATES_FILE}" "${TIMELINE_FILE}"
+PYEOF
+
+  python3 "${PY_SCRIPT}" "${TEMPLATE}" "${DASHBOARD}" "${STATES_FILE}" "${TIMELINE_FILE}" || { echo "Dashboard refresh failed"; exit 1; }
+  rm -f "${PY_SCRIPT}"
 else
   echo "No dashboard template found" >&2
 fi
