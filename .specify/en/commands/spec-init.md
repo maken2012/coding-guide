@@ -1,11 +1,27 @@
 ---
 description: "Architecture Selection + High-Level Requirements (Spec-Driven Development Step 1)"
+agent:
+  id: spec-init
+  type: core
+  order: 1
+  gate: null
+  produces_gate: "spec.feedback.verdict = approved"
+  requires_feature: false
+  writes_state: true
+  output_files: [spec.html, spec.feedback.json, arch-diagram.html]
+  templates: [spec-template.html]
+  components: [exploration-approaches, exploration-visual-designs, flowchart-diagram]
 ---
 
 # /spec-init — Architecture Selection + High-Level Requirements
 
 ## Input
 User provides a feature description text: $ARGUMENTS
+
+## Feature Targeting
+- If `$ARGUMENTS` contains a feature ID matching `YYYYMMDD-NNN`, target that feature directory
+- Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` where this command's gate condition is met
+- If no matching feature found, output an error message
 
 ## Prerequisites
 - `.specify/constitution.md` exists
@@ -44,8 +60,25 @@ Referenced component files (read as structure and style reference):
 ### 4. Generate Feedback Skeleton
 For each generated HTML file, generate a corresponding `.feedback.json`.
 
-### 5. Update Dashboard
-Update `dashboard-state.json` and `dashboard.html`.
+### 5. Update State
+- Update `.feature-state.json` pipeline status
+- Append event to `registry.jsonl`
+- Run `.claude/hooks/refresh-dashboard.sh`
+
+### 5.1 Reactive Wait for Approval
+After generating documents, enter polling mode:
+- Use ScheduleWakeup to check `spec.feedback.json` every 60-120 seconds for `review.verdict`
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../spec.html
+- If `verdict` is `"approved"`:
+  - Update `.feature-state.json`: set `pipeline.spec.status` to `"approved"`
+  - Append `phase_approved` event to `registry.jsonl`
+  - Output: ✅ Requirements spec approved. Ready for /spec-detail
+  - End polling
+- If `verdict` is `"rejected"`:
+  - Read `review.feedback` for rejection reason
+  - Modify spec.html based on feedback
+  - Resubmit for approval
+  - Output: 🔄 Revised based on feedback, resubmitting for approval
 
 ### 6. Output
 ```
@@ -54,5 +87,7 @@ Update `dashboard-state.json` and `dashboard.html`.
 📄 Requirements Spec: file:///<absolute-path>/.specify/specs/YYYYMMDD-NNN-<name>/spec.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
 
-Next step: Run /spec-detail for detailed requirements
+⏳ Waiting for approval... (polling spec.feedback.json)
+
+Next step after approval: /spec-detail
 ```

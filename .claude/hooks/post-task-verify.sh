@@ -1,31 +1,45 @@
 #!/bin/bash
-# post-task-verify.sh — 任务完成后验证
+# post-task-verify.sh — Validate .feature-state.json and feedback files
 set -e
 
 PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 SPECIFY_DIR="$PROJECT_ROOT/.specify"
 SPECS_DIR="$SPECIFY_DIR/specs"
 
-# 检查 dashboard-state.json 是否是合法 JSON
-if [ -f "$SPECS_DIR/dashboard-state.json" ]; then
-  python3 -c "import json; json.load(open('$SPECS_DIR/dashboard-state.json'))" 2>/dev/null || {
-    echo "WARNING: dashboard-state.json 格式异常"
+# Validate all .feature-state.json files
+for state_file in "$SPECS_DIR"/20*/.feature-state.json; do
+  [ -f "$state_file" ] || continue
+  python3 -c "import json; json.load(open('$state_file'))" 2>/dev/null || {
+    echo "WARNING: $(basename $(dirname $state_file))/.feature-state.json has invalid JSON"
   }
-fi
+done
 
-# 检查当前功能的 feedback.json 格式
-STATE=$(cat "$SPECS_DIR/dashboard-state.json" 2>/dev/null)
-if [ -n "$STATE" ]; then
-  FEATURE=$(echo "$STATE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('current_feature',''))" 2>/dev/null)
-  if [ -n "$FEATURE" ] && [ -d "$SPECS_DIR/$FEATURE" ]; then
-    for fb in "$SPECS_DIR/$FEATURE/"*.feedback.json; do
-      if [ -f "$fb" ]; then
-        python3 -c "import json; json.load(open('$fb'))" 2>/dev/null || {
-          echo "WARNING: $(basename $fb) 格式异常"
-        }
-      fi
-    done
+# Validate feedback files in all feature directories
+for feat_dir in "$SPECS_DIR"/20*/; do
+  [ -d "$feat_dir" ] || continue
+  for fb in "$feat_dir"*.feedback.json "$feat_dir"design/*.feedback.json; do
+    [ -f "$fb" ] || continue
+    python3 -c "import json; json.load(open('$fb'))" 2>/dev/null || {
+      echo "WARNING: $(basename $fb) has invalid JSON"
+    }
+  done
+done
+
+# Validate registry.jsonl (each line should be valid JSON)
+if [ -f "$SPECS_DIR/registry.jsonl" ]; then
+  INVALID=$(python3 -c "
+import json, sys
+bad = 0
+for i, line in enumerate(open('$SPECS_DIR/registry.jsonl'), 1):
+    line = line.strip()
+    if line:
+        try: json.loads(line)
+        except: bad += 1
+if bad > 0: print(f'{bad} invalid lines in registry.jsonl')
+" 2>/dev/null || echo "validation error")
+  if [ -n "$INVALID" ]; then
+    echo "WARNING: $INVALID"
   fi
 fi
 
-echo "OK: 产出文件验证完成"
+echo "OK: Output file validation complete"

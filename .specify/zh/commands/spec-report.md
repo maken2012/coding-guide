@@ -1,5 +1,15 @@
 ---
 description: "状态报告 / 事故复盘（辅助命令）"
+agent:
+  id: spec-report
+  type: auxiliary
+  order: null
+  gate: null
+  requires_feature: true
+  writes_state: false
+  output_files: [report.html]
+  templates: [report-template.html]
+  components: [status-report, incident-report]
 ---
 
 # /spec-report — 报告
@@ -8,6 +18,11 @@ description: "状态报告 / 事故复盘（辅助命令）"
 
 ## 输入
 报告类型和描述：$ARGUMENTS
+
+## 功能定向
+- 如果 `$ARGUMENTS` 包含功能编号（`YYYYMMDD-NNN` 格式），定位到该功能目录
+- 否则，扫描 `.specify/specs/*/` 中 `.feature-state.json`，找到当前活跃功能
+- 辅助命令不更新 .feature-state.json 和 registry.jsonl
 
 ## 执行步骤
 

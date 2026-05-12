@@ -1,5 +1,15 @@
 ---
 description: "Technical Research (Auxiliary Command)"
+agent:
+  id: spec-research
+  type: auxiliary
+  order: null
+  gate: null
+  requires_feature: true
+  writes_state: false
+  output_files: [research.html]
+  templates: [research-template.html]
+  components: [feature-explainer, concept-explainer, code-understanding]
 ---
 
 # /spec-research — Technical Research
@@ -8,6 +18,11 @@ Independent from the main workflow, used for in-depth research on a specific tec
 
 ## Input
 Research topic: $ARGUMENTS
+
+## Feature Targeting
+- If `$ARGUMENTS` contains a feature ID matching `YYYYMMDD-NNN`, target that feature directory
+- Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` with an active feature
+- Auxiliary commands do not update .feature-state.json or registry.jsonl
 
 ## Execution Steps
 

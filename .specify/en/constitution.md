@@ -29,3 +29,9 @@
 - Constitution changes require an explicit version number record
 - Approved reviews cannot be rolled back (only overridden by a new review)
 - Generated code must pass spec-review to be considered complete
+
+### Reactive Agent Protocol
+- Each feature directory owns its `.feature-state.json` as the single source of truth for that feature's pipeline state
+- Feature locking (`.agent-lock`) ensures at most one agent operates on a feature at any time
+- `registry.jsonl` event log records all state changes for cross-agent observability
+- Direct modification of `dashboard-state.json` (deprecated) is prohibited; state is distributed across feature directories

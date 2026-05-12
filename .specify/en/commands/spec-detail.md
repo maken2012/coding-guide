@@ -1,5 +1,16 @@
 ---
 description: "Detailed Requirements (Spec-Driven Development Step 2)"
+agent:
+  id: spec-detail
+  type: core
+  order: 2
+  gate: "spec.feedback.verdict = approved"
+  produces_gate: "detail.feedback.verdict = approved"
+  requires_feature: true
+  writes_state: true
+  output_files: [detail.html, detail.feedback.json]
+  templates: [detail-template.html]
+  components: [flowchart-diagram, exploration-approaches, feature-explainer]
 ---
 
 # /spec-detail — Detailed Requirements
@@ -7,10 +18,17 @@ description: "Detailed Requirements (Spec-Driven Development Step 2)"
 ## Prerequisites (Gate)
 `spec.feedback.verdict === "approved"`
 
+## Feature Targeting
+- If `$ARGUMENTS` contains a feature ID matching `YYYYMMDD-NNN`, target that feature directory
+- Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` where this command's gate condition is met
+- If no matching feature found, output an error message
+
 ## Execution Steps
 
 ### 1. Locate Current Feature
-Read `dashboard-state.json` to get `current_feature`.
+- If $ARGUMENTS contains a feature ID (YYYYMMDD-NNN pattern), use that feature directory
+- Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` where the gate condition for THIS command is met
+- Read `.feature-state.json` to get feature context
 
 ### 2. Read Upstream Documents
 - `spec.html`, `spec.feedback.json`
@@ -31,7 +49,26 @@ AI intelligently decides based on project type:
 - Has complex business logic? → Generate sequence diagram / state machine
 - Has multiple approach requirements? → Embed approach comparison
 
-### 4. Generate Feedback Skeleton + Update Dashboard
+### 4. Generate Feedback Skeleton + Update State
+
+- Update `.feature-state.json` pipeline status
+- Append event to `registry.jsonl`
+- Run `.claude/hooks/refresh-dashboard.sh`
+
+### 4.1 Reactive Wait for Approval
+After generating documents, enter polling mode:
+- Use ScheduleWakeup to check `detail.feedback.json` every 60-120 seconds for `review.verdict`
+- If `verdict` is `null`, continue waiting. Output: ⏳ Pending review: file:///.../detail.html
+- If `verdict` is `"approved"`:
+  - Update `.feature-state.json`: set `pipeline.detail.status` to `"approved"`
+  - Append `phase_approved` event to `registry.jsonl`
+  - Output: ✅ Detailed requirements approved. Ready for /spec-design
+  - End polling
+- If `verdict` is `"rejected"`:
+  - Read `review.feedback` for rejection reason
+  - Modify detail.html based on feedback
+  - Resubmit for approval
+  - Output: 🔄 Revised based on feedback, resubmitting for approval
 
 ### 5. Output
 ```
@@ -40,5 +77,7 @@ AI intelligently decides based on project type:
 📄 Detailed Requirements: file:///<absolute-path>/.specify/specs/<current_feature>/detail.html
 📋 Dashboard: file:///<absolute-path>/.specify/specs/dashboard.html
 
-Next step: Run /spec-design for design
+⏳ Waiting for approval... (polling detail.feedback.json)
+
+Next step after approval: /spec-design
 ```
