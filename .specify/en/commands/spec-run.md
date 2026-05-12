@@ -55,12 +55,14 @@ After generating documents, enter polling mode:
 - After each phase is approved, update: set the corresponding phase status to `"approved"`
 - Append `phase_started` and `phase_completed` events to `registry.jsonl`
 - Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 
 ### 4. Lifecycle Complete
 When phase 6 (review) is approved:
 - Update `.feature-state.json`: set `pipeline.review.status` to `"approved"`
 - Append `lifecycle_complete` event to `registry.jsonl`
 - Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 - Output completion summary
 
 ### 5. Output

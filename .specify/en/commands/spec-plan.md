@@ -60,6 +60,7 @@ Based on tasks-template.html, generate task list:
 - Update `.feature-state.json` pipeline status
 - Append event to `registry.jsonl`
 - Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 
 ### 6.1 Reactive Wait for Approval
 After generating documents, enter polling mode:

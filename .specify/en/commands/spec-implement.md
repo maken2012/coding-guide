@@ -41,6 +41,7 @@ Read spec, detail, design/*, plan, tasks.
 - Update `.feature-state.json` pipeline status every 3-5 tasks
 - Append event to `registry.jsonl` every 3-5 tasks
 - Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not) every 3-5 tasks
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 
 ### 4. Generate Integration Tests
 After all tasks are completed, generate integration tests based on API contracts and interaction flows.

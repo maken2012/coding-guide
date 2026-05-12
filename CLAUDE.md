@@ -211,6 +211,7 @@ specs/<NNN>-<name>/
 - 所有面向人的文档必须以自包含 HTML 输出（内联 CSS/JS，零外部依赖）
 - HTML 必须参照 .specify/templates/ 中对应模板的结构和样式
 - 每个阶段完成后更新 .feature-state.json 并确保反馈服务正在运行（bash .claude/hooks/start-feedback-server.sh），dashboard 通过 http://localhost:8421 实时查询 SQLite 数据库
+- **状态同步**：写入 .feature-state.json、.feedback.json 或 registry.jsonl 后，必须主动通知服务器同步：`curl -s -X POST http://localhost:8421/api/sync`（同步是幂等全量对账，每次调用扫描所有文件，失败后重试自然覆盖之前未同步的数据）
 - 终端输出格式：📄 待审核: http://localhost:8421/specs/<feature_id>/xxx.html
 - 生成待审核 HTML 后自动执行 `open http://localhost:8421` 在浏览器中打开 dashboard，用户可在 dashboard 中审核所有文档
 - 阶段门禁：读取 .feedback.json 中 review.verdict，只有 "approved" 才进入下一阶段

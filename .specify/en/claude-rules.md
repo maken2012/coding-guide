@@ -209,7 +209,7 @@ specs/YYYYMMDD-NNN-<name>/
 ### Document Generation Rules
 - All human-facing documents must be output as self-contained HTML (inline CSS/JS, zero external dependencies)
 - HTML must follow the structure and styles of the corresponding template in .specify/templates/
-- After each phase is completed, automatically update .feature-state.json, append to registry.jsonl, ensure feedback server is running (bash .claude/hooks/start-feedback-server.sh), dashboard queries SQLite in real-time via http://localhost:8421
+- After each phase is completed, automatically update .feature-state.json, append to registry.jsonl, ensure feedback server is running (bash .claude/hooks/start-feedback-server.sh), then sync to database (`curl -s -X POST http://localhost:8421/api/sync`), dashboard queries SQLite in real-time via http://localhost:8421
 - Terminal output format: 📄 Pending review: http://localhost:8421/specs/<feature_id>/xxx.html
 - After generating HTML for review, automatically run `open http://localhost:8421` to open the dashboard in the browser, users can review all documents from the dashboard
 - Phase gate: read review.verdict from .feedback.json; only "approved" allows proceeding to the next phase

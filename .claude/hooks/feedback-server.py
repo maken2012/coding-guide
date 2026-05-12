@@ -9,6 +9,7 @@ Usage:
 """
 
 import argparse
+import glob
 import json
 import mimetypes
 import os
@@ -80,6 +81,13 @@ def _init_schema(conn):
             description TEXT,
             created_at TEXT
         );
+        CREATE TABLE IF NOT EXISTS sync_log (
+            file_path TEXT PRIMARY KEY,
+            file_mtime TEXT,
+            sync_status TEXT DEFAULT 'pending',
+            synced_at TEXT,
+            error TEXT
+        );
     """)
     conn.commit()
 
@@ -87,6 +95,201 @@ def _init_schema(conn):
 def now_str():
     """Current local time as 'YYYY-MM-DD HH:MM:SS'."""
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+# ---------------------------------------------------------------------------
+# Sync: filesystem → SQLite
+# ---------------------------------------------------------------------------
+
+def _get_mtime(filepath):
+    try:
+        return str(os.path.getmtime(filepath))
+    except OSError:
+        return None
+
+
+def _is_synced(conn, rel_path, mtime):
+    """Check if file was already synced with current mtime."""
+    row = conn.execute(
+        'SELECT sync_status, file_mtime FROM sync_log WHERE file_path = ?',
+        (rel_path,)
+    ).fetchone()
+    return row is not None and row['sync_status'] == 'synced' and row['file_mtime'] == mtime
+
+
+def _mark_synced(conn, rel_path, mtime, now):
+    conn.execute(
+        'INSERT INTO sync_log (file_path, file_mtime, sync_status, synced_at) '
+        'VALUES (?, ?, ?, ?) '
+        'ON CONFLICT(file_path) DO UPDATE SET file_mtime=excluded.file_mtime, '
+        'sync_status=excluded.sync_status, synced_at=excluded.synced_at, error=NULL',
+        (rel_path, mtime, 'synced', now)
+    )
+
+
+def _mark_failed(conn, rel_path, mtime, now, error):
+    conn.execute(
+        'INSERT INTO sync_log (file_path, file_mtime, sync_status, synced_at, error) '
+        'VALUES (?, ?, ?, ?, ?) '
+        'ON CONFLICT(file_path) DO UPDATE SET file_mtime=excluded.file_mtime, '
+        'sync_status=excluded.sync_status, synced_at=excluded.synced_at, error=excluded.error',
+        (rel_path, mtime, 'failed', now, error)
+    )
+
+
+def _process_feature_state(conn, filepath, now):
+    """Parse and upsert a single .feature-state.json."""
+    with open(filepath, 'r', encoding='utf-8') as f:
+        state = json.load(f)
+
+    fid = state.get('id', '')
+    if not VALID_FEATURE_ID.match(fid):
+        return 0
+
+    name = state.get('name', fid)
+    pipeline = state.get('pipeline', {})
+
+    current_phase = ''
+    overall_status = 'draft'
+    for phase_name in ('spec', 'detail', 'design', 'plan', 'implement', 'review'):
+        phase_info = pipeline.get(phase_name, {})
+        if not phase_info:
+            continue
+        status = phase_info.get('status', 'not_started')
+        if status in ('in_progress', 'pending_review'):
+            current_phase = phase_name
+            overall_status = status if status != 'in_progress' else 'implementing'
+        elif status == 'approved':
+            current_phase = phase_name
+            overall_status = 'approved'
+        elif status == 'rejected':
+            current_phase = phase_name
+            overall_status = 'rejected'
+
+    conn.execute(
+        'INSERT INTO features (id, name, current_phase, status, created_at, updated_at) '
+        'VALUES (?, ?, ?, ?, ?, ?) '
+        'ON CONFLICT(id) DO UPDATE SET name=excluded.name, current_phase=excluded.current_phase, '
+        'status=excluded.status, updated_at=excluded.updated_at',
+        (fid, name, current_phase, overall_status, state.get('created_at', now), now)
+    )
+
+    phase_count = 0
+    for phase_name in ('spec', 'detail', 'design', 'plan', 'implement', 'review'):
+        phase_info = pipeline.get(phase_name, {})
+        if not phase_info:
+            continue
+        ps = phase_info.get('status', 'not_started')
+        if ps == 'not_started':
+            continue
+        artifact = phase_info.get('artifact', '')
+        conn.execute(
+            'INSERT INTO phases (feature_id, phase, status, artifact_path, updated_at) '
+            'VALUES (?, ?, ?, ?, ?) '
+            'ON CONFLICT(feature_id, phase) DO UPDATE SET status=excluded.status, '
+            'artifact_path=excluded.artifact_path, updated_at=excluded.updated_at',
+            (fid, phase_name, ps, artifact, now)
+        )
+        phase_count += 1
+
+    return phase_count
+
+
+def _process_feedback_file(conn, filepath, now):
+    """Parse and upsert a single .feedback.json."""
+    with open(filepath, 'r', encoding='utf-8') as f:
+        fb = json.load(f)
+
+    fid = fb.get('feature', '')
+    phase = fb.get('phase', '')
+    if not fid or not phase:
+        return
+
+    decisions = fb.get('decisions', {})
+    if decisions:
+        conn.execute('DELETE FROM decisions WHERE feature_id = ? AND phase = ?', (fid, phase))
+        if isinstance(decisions, dict):
+            for k, v in decisions.items():
+                conn.execute(
+                    'INSERT INTO decisions (feature_id, phase, decision_key, decision_value, created_at) '
+                    'VALUES (?, ?, ?, ?, ?)',
+                    (fid, phase, str(k), json.dumps(v, ensure_ascii=False) if not isinstance(v, str) else v, now)
+                )
+        elif isinstance(decisions, list):
+            for d in decisions:
+                if isinstance(d, dict):
+                    sel = d.get('selected')
+                    if sel:
+                        conn.execute(
+                            'INSERT INTO decisions (feature_id, phase, decision_key, decision_value, created_at) '
+                            'VALUES (?, ?, ?, ?, ?)',
+                            (fid, phase, d.get('id', '?'), str(sel), now)
+                        )
+
+    review = fb.get('review', {})
+    if review.get('verdict'):
+        existing = conn.execute(
+            'SELECT id FROM timeline WHERE feature_id = ? AND event_type LIKE ?',
+            (fid, '%' + review['verdict'])
+        ).fetchone()
+        if not existing:
+            conn.execute(
+                'INSERT INTO timeline (feature_id, event_type, description, created_at) VALUES (?, ?, ?, ?)',
+                (fid, 'phase_' + review['verdict'], f'{fid} {phase} {review["verdict"]}', review.get('timestamp', now))
+            )
+
+
+def sync_from_filesystem(specs_root):
+    """Sync only new/changed/failed files to SQLite. Skip already-synced ones.
+
+    Per-file tracking via sync_log table:
+    - Already synced with same mtime → skip
+    - New / changed mtime / previously failed → process
+    - Success → mark synced
+    - Failure → mark failed (will be retried next call)
+    """
+    state_files = glob.glob(os.path.join(specs_root, '*', '.feature-state.json'))
+    feedback_files = glob.glob(os.path.join(specs_root, '*', '*.feedback.json'))
+
+    if not state_files and not feedback_files:
+        return {'ok': True, 'scanned': 0, 'skipped': 0, 'synced': 0, 'failed': 0, 'details': []}
+
+    result = {'ok': True, 'scanned': 0, 'skipped': 0, 'synced': 0, 'failed': 0, 'details': []}
+    conn = get_db(specs_root)
+    try:
+        now = now_str()
+
+        for filepath in state_files + feedback_files:
+            rel = os.path.relpath(filepath, specs_root)
+            mtime = _get_mtime(filepath)
+            result['scanned'] += 1
+
+            # Skip if already synced with same mtime
+            if mtime and _is_synced(conn, rel, mtime):
+                result['skipped'] += 1
+                result['details'].append({'file': rel, 'action': 'skipped'})
+                continue
+
+            # Process the file
+            try:
+                if filepath.endswith('.feature-state.json'):
+                    _process_feature_state(conn, filepath, now)
+                elif filepath.endswith('.feedback.json'):
+                    _process_feedback_file(conn, filepath, now)
+
+                if mtime:
+                    _mark_synced(conn, rel, mtime, now)
+                result['synced'] += 1
+                result['details'].append({'file': rel, 'action': 'synced'})
+            except Exception as e:
+                if mtime:
+                    _mark_failed(conn, rel, mtime, now, str(e))
+                result['failed'] += 1
+                result['details'].append({'file': rel, 'action': 'failed', 'error': str(e)})
+
+        conn.commit()
+    finally:
+        conn.close()
+    return result
 
 # ---------------------------------------------------------------------------
 # SPECS_ROOT auto-detection
@@ -152,11 +355,9 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         - Source dev: .specify/zh/templates/ or .specify/en/templates/
         """
         project_root = os.path.dirname(os.path.dirname(self.specs_root))
-        # Installed layout: .specify/templates/
         direct = os.path.join(project_root, '.specify', 'templates')
         if os.path.isdir(direct):
             return direct
-        # Source dev layout: .specify/{lang}/templates/
         for lang in ('zh', 'en'):
             d = os.path.join(project_root, '.specify', lang, 'templates')
             if os.path.isdir(d):
@@ -169,23 +370,17 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path.rstrip('/') or '/'
 
-        # Dashboard page
         if path == '/':
             self._serve_template('dashboard.html')
             return
-
-        # Timeline page
         if path == '/timeline':
             self._serve_template('timeline.html')
             return
-
-        # Static files under /specs/
         if path.startswith('/specs/'):
             rel = path[len('/specs/'):]
             self._serve_static(rel)
             return
 
-        # API routes
         if path == '/api/features':
             return self._api_features()
         if path.startswith('/api/phases/'):
@@ -206,6 +401,8 @@ class FeedbackHandler(BaseHTTPRequestHandler):
 
         if path == '/api/feedback':
             return self._api_feedback()
+        if path == '/api/sync':
+            return self._api_sync()
 
         self._send_error_json('Not found', 404)
 
@@ -234,7 +431,6 @@ class FeedbackHandler(BaseHTTPRequestHandler):
             self._send_error_json(str(exc), 500)
 
     def _serve_template(self, filename):
-        """Serve a template file (dashboard.html, timeline.html, etc.) from templates directory."""
         templates_dir = self._detect_lang_dir()
         if templates_dir is None:
             self._send_error_json('No language templates found', 404)
@@ -262,139 +458,19 @@ class FeedbackHandler(BaseHTTPRequestHandler):
 
     # ---- API handlers -----------------------------------------------------
 
-    def _sync_from_files(self):
-        """Scan specs directory for .feature-state.json files and sync to SQLite.
-
-        This bridges the gap between agent-written JSON files and the
-        SQLite-backed dashboard. Called before serving feature data so the
-        dashboard always shows the latest state.
-        """
-        import glob
-        state_files = glob.glob(os.path.join(self.specs_root, '*', '.feature-state.json'))
-        if not state_files:
-            return
-
-        conn = get_db(self.specs_root)
-        try:
-            for sf in state_files:
-                try:
-                    with open(sf, 'r', encoding='utf-8') as f:
-                        state = json.load(f)
-                except (json.JSONDecodeError, OSError):
-                    continue
-
-                fid = state.get('id', '')
-                if not VALID_FEATURE_ID.match(fid):
-                    continue
-
-                name = state.get('name', fid)
-                pipeline = state.get('pipeline', {})
-                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-                # Determine current phase and overall status
-                current_phase = ''
-                overall_status = 'draft'
-                for phase_name in ('spec', 'detail', 'design', 'plan', 'implement', 'review'):
-                    phase_info = pipeline.get(phase_name, {})
-                    if not phase_info:
-                        continue
-                    status = phase_info.get('status', 'not_started')
-                    if status in ('in_progress', 'pending_review'):
-                        current_phase = phase_name
-                        overall_status = status if status != 'in_progress' else 'implementing'
-                    elif status == 'approved':
-                        current_phase = phase_name
-                        overall_status = 'approved'
-                    elif status == 'rejected':
-                        current_phase = phase_name
-                        overall_status = 'rejected'
-
-                # Upsert feature
-                conn.execute(
-                    'INSERT INTO features (id, name, current_phase, status, created_at, updated_at) '
-                    'VALUES (?, ?, ?, ?, ?, ?) '
-                    'ON CONFLICT(id) DO UPDATE SET name=excluded.name, current_phase=excluded.current_phase, '
-                    'status=excluded.status, updated_at=excluded.updated_at',
-                    (fid, name, current_phase, overall_status, state.get('created_at', now), now)
-                )
-
-                # Upsert phases
-                for phase_name in ('spec', 'detail', 'design', 'plan', 'implement', 'review'):
-                    phase_info = pipeline.get(phase_name, {})
-                    if not phase_info:
-                        continue
-                    ps = phase_info.get('status', 'not_started')
-                    if ps == 'not_started':
-                        continue
-                    artifact = phase_info.get('artifact', '')
-                    conn.execute(
-                        'INSERT INTO phases (feature_id, phase, status, artifact_path, updated_at) '
-                        'VALUES (?, ?, ?, ?, ?) '
-                        'ON CONFLICT(feature_id, phase) DO UPDATE SET status=excluded.status, '
-                        'artifact_path=excluded.artifact_path, updated_at=excluded.updated_at',
-                        (fid, phase_name, ps, artifact, now)
-                    )
-
-            # Sync decisions from .feedback.json files
-            feedback_files = glob.glob(os.path.join(self.specs_root, '*', '*.feedback.json'))
-            for ff in feedback_files:
-                try:
-                    with open(ff, 'r', encoding='utf-8') as f:
-                        fb = json.load(f)
-                except (json.JSONDecodeError, OSError):
-                    continue
-
-                fid = fb.get('feature', '')
-                phase = fb.get('phase', '')
-                if not fid or not phase:
-                    continue
-
-                decisions = fb.get('decisions', {})
-                if decisions:
-                    conn.execute('DELETE FROM decisions WHERE feature_id = ? AND phase = ?', (fid, phase))
-                    if isinstance(decisions, dict):
-                        for k, v in decisions.items():
-                            conn.execute(
-                                'INSERT INTO decisions (feature_id, phase, decision_key, decision_value, created_at) '
-                                'VALUES (?, ?, ?, ?, ?)',
-                                (fid, phase, str(k), json.dumps(v, ensure_ascii=False) if not isinstance(v, str) else v, now)
-                            )
-                    elif isinstance(decisions, list):
-                        for d in decisions:
-                            if isinstance(d, dict):
-                                sel = d.get('selected')
-                                if sel:
-                                    conn.execute(
-                                        'INSERT INTO decisions (feature_id, phase, decision_key, decision_value, created_at) '
-                                        'VALUES (?, ?, ?, ?, ?)',
-                                        (fid, phase, d.get('id', '?'), str(sel), now)
-                                    )
-
-                # Sync timeline from verdict
-                review = fb.get('review', {})
-                if review.get('verdict'):
-                    existing = conn.execute(
-                        'SELECT id FROM timeline WHERE feature_id = ? AND phase = ? AND event_type LIKE ?',
-                        (fid, phase, '%' + review['verdict'])
-                    ).fetchone()
-                    if not existing:
-                        conn.execute(
-                            'INSERT INTO timeline (feature_id, event_type, description, created_at) VALUES (?, ?, ?, ?)',
-                            (fid, 'phase_' + review['verdict'], f'{fid} {phase} {review["verdict"]}', review.get('timestamp', now))
-                        )
-
-            conn.commit()
-        finally:
-            conn.close()
-
     def _api_features(self):
-        self._sync_from_files()
         conn = get_db(self.specs_root)
         try:
             rows = conn.execute('SELECT * FROM features ORDER BY created_at DESC').fetchall()
             self._send_json([dict(r) for r in rows])
         finally:
             conn.close()
+
+    def _api_sync(self):
+        """Agent-triggered sync. Only processes new/changed/failed files."""
+        result = sync_from_filesystem(self.specs_root)
+        result['timestamp'] = now_str()
+        self._send_json(result)
 
     def _api_phases(self, feature_id):
         if not VALID_FEATURE_ID.match(feature_id):
@@ -489,7 +565,6 @@ class FeedbackHandler(BaseHTTPRequestHandler):
             self._send_error_json(err)
             return
 
-        # --- validate fields ---
         feature_id = body.get('feature_id', '')
         if not VALID_FEATURE_ID.match(feature_id):
             self._send_error_json('Invalid feature_id')
@@ -509,31 +584,28 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         decisions = body.get('decisions', {})
         timestamp = body.get('timestamp', '') or now_str()
 
-        # --- sandbox path for feedback JSON ---
+        # --- sandbox path ---
         rel_dir = os.path.join(feature_id)
         safe_dir = self._sandbox_path(rel_dir)
         if safe_dir is None:
             self._send_error_json('Invalid feature path')
             return
 
-        # Ensure the feature directory exists
         os.makedirs(safe_dir, exist_ok=True)
 
         filename = f'{phase}.feedback.json'
         target_path = os.path.join(safe_dir, filename)
 
-        # Verify the resolved target is still inside sandbox
         real_root = os.path.realpath(self.specs_root)
         if not os.path.realpath(target_path).startswith(real_root + os.sep):
             self._send_error_json('Path traversal denied', 403)
             return
 
-        # Only allow writing {phase}.feedback.json files
         if not re.match(r'^[a-z]+\.feedback\.json$', filename):
             self._send_error_json('Invalid feedback filename')
             return
 
-        # --- build feedback JSON (agent-compatible) ---
+        # --- build feedback JSON ---
         now = now_str()
         feedback_obj = {
             'artifact': f'{phase}.html',
@@ -561,7 +633,6 @@ class FeedbackHandler(BaseHTTPRequestHandler):
         # --- write to SQLite ---
         conn = get_db(self.specs_root)
         try:
-            # Upsert features
             conn.execute("""
                 INSERT INTO features (id, name, current_phase, status, created_at, updated_at)
                 VALUES (?, ?, ?, 'active', ?, ?)
@@ -571,7 +642,6 @@ class FeedbackHandler(BaseHTTPRequestHandler):
                     updated_at = excluded.updated_at
             """, (feature_id, feature_id, phase, timestamp, now))
 
-            # Upsert phases
             conn.execute("""
                 INSERT INTO phases (feature_id, phase, status, artifact_path, updated_at)
                 VALUES (?, ?, 'reviewed', ?, ?)
@@ -581,7 +651,6 @@ class FeedbackHandler(BaseHTTPRequestHandler):
                     updated_at = excluded.updated_at
             """, (feature_id, phase, f'{phase}.html', now))
 
-            # Delete old decisions for this feature+phase, then insert new ones
             conn.execute(
                 'DELETE FROM decisions WHERE feature_id = ? AND phase = ?',
                 (feature_id, phase)
@@ -593,13 +662,18 @@ class FeedbackHandler(BaseHTTPRequestHandler):
                         (feature_id, phase, str(key), str(value), now)
                     )
 
-            # Insert timeline event
             event_type = f'phase_{verdict}'
             description = f'{feature_id} {phase} {verdict}'
             conn.execute(
                 'INSERT INTO timeline (feature_id, event_type, description, created_at) VALUES (?, ?, ?, ?)',
                 (feature_id, event_type, description, now)
             )
+
+            # Mark feedback file as synced in sync_log
+            rel_feedback = os.path.relpath(target_path, self.specs_root)
+            mtime = _get_mtime(target_path)
+            if mtime:
+                _mark_synced(conn, rel_feedback, mtime, now)
 
             conn.commit()
         except sqlite3.Error as exc:
@@ -627,10 +701,8 @@ def main():
     parser.add_argument('--root', type=str, default=None, help='Project root directory')
     args = parser.parse_args()
 
-    # Resolve specs_root
     if args.root:
         abs_root = os.path.abspath(args.root)
-        # If user passed the specs dir directly, use it; otherwise append .specify/specs
         if os.path.isdir(abs_root) and abs_root.endswith(os.sep + 'specs'):
             specs_root = abs_root
         else:

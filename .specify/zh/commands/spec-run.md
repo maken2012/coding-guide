@@ -55,12 +55,14 @@ agent:
 - 每个阶段审批后更新：对应 phase status = `"approved"`
 - 向 `registry.jsonl` 追加 `phase_started` 和 `phase_completed` 事件
 - 确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 
 ### 4. 生命周期完成
 当阶段 6 (review) 审批通过后：
 - 更新 `.feature-state.json`：`pipeline.review.status` = `"approved"`
 - 向 `registry.jsonl` 追加 `lifecycle_complete` 事件
 - 确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 - 输出完成总结
 
 ### 5. 输出

@@ -50,6 +50,7 @@ AI determines whether deployment is involved (new configuration, database migrat
 - Update `.feature-state.json` pipeline status
 - Append event to `registry.jsonl`
 - Ensure feedback server is running (run `bash .claude/hooks/start-feedback-server.sh` if not)
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 
 ### 5.1 Reactive Wait for Approval
 After generating review report, enter polling mode:

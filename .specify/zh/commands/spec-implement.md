@@ -34,6 +34,7 @@ agent:
 - 每完成一个任务：编写代码 + 编写对应单元测试
 - 更新 tasks.html 中 checkbox 为 [X]
 - 每 3-5 个任务更新状态：更新 `.feature-state.json`，追加 registry.jsonl 事件，确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 
 ### 3. 生成集成测试
 所有任务完成后，根据 API 契约和交互流程生成集成测试。
@@ -50,6 +51,7 @@ agent:
 - 更新 `.feature-state.json`：`pipeline.implement.status` 改为 `"pending_review"`
 - 向 `.specify/specs/registry.jsonl` 追加 `phase_completed` 事件
 - 确保反馈服务正在运行（如未运行则执行 `bash .claude/hooks/start-feedback-server.sh`）
+- **Sync to database**: `curl -s -X POST http://localhost:8421/api/sync`
 
 ### 5.1 反应式等待审批
 生成文档后，进入轮询等待模式：
