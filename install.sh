@@ -231,7 +231,7 @@ LANG_SOURCE="${SOURCE_DIR}/.specify/${LANG_OPT}"
 cp "${LANG_SOURCE}/constitution.md" "${TARGET_DIR}/.specify/constitution.md"
 
 # Document templates
-for f in "${LANG_SOURCE}/templates/"*-template.html "${LANG_SOURCE}/templates/dashboard.html"; do
+for f in "${LANG_SOURCE}/templates/"*-template.html "${LANG_SOURCE}/templates/dashboard.html" "${LANG_SOURCE}/templates/timeline.html"; do
   if [ -f "$f" ]; then
     cp "$f" "${TARGET_DIR}/.specify/templates/"
   fi

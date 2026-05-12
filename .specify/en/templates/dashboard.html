@@ -850,7 +850,7 @@
     var decisionPanel = document.getElementById('decisionPanel');
     frame.style.display = 'none';
     welcome.style.display = 'flex';
-    reviewBar.style.display = 'flex';
+    reviewBar.style.display = 'none';
     decisionPanel.style.display = 'none';
     if (message) {
       welcome.querySelector('p').textContent = message;
@@ -941,7 +941,7 @@
       verdict: verdict,
       feedback: feedback,
       decisions: {},
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19)
+      timestamp: new Date().toLocaleString('sv-SE')
     };
 
     postJSON(API_BASE + '/api/feedback', data, function(err, resp) {

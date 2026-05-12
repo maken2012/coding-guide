@@ -344,9 +344,9 @@
     /* ===== Color mapping ===== */
     function dotClass(eventType) {
       var t = (eventType || '').toLowerCase();
-      if (t === 'approved') return 'approved';
-      if (t === 'rejected') return 'rejected';
-      if (t === 'started')  return 'started';
+      if (t.indexOf('approved') !== -1) return 'approved';
+      if (t.indexOf('rejected') !== -1) return 'rejected';
+      if (t.indexOf('started') !== -1) return 'started';
       return 'other';
     }
 
