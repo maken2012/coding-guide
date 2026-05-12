@@ -278,11 +278,13 @@ for f in "${SOURCE_DIR}/.claude/hooks/"*.sh; do
   fi
 done
 
-# Copy feedback server
-if [ -f "${SOURCE_DIR}/.claude/hooks/feedback-server.py" ]; then
-  cp "${SOURCE_DIR}/.claude/hooks/feedback-server.py" "${TARGET_DIR}/.claude/hooks/"
-  chmod +x "${TARGET_DIR}/.claude/hooks/feedback-server.py"
-fi
+# Copy feedback server and start script
+for f in feedback-server.py start-feedback-server.sh restart-feedback-server.sh; do
+  if [ -f "${SOURCE_DIR}/.claude/hooks/$f" ]; then
+    cp "${SOURCE_DIR}/.claude/hooks/$f" "${TARGET_DIR}/.claude/hooks/"
+    chmod +x "${TARGET_DIR}/.claude/hooks/$f"
+  fi
+done
 
 echo -e "${GREEN}${MSG_HOOK_DONE}${NC}"
 
@@ -327,8 +329,52 @@ if [ -f "${GITIGNORE}" ]; then
   if ! grep -q ".DS_Store" "${GITIGNORE}"; then
     echo ".DS_Store" >> "${GITIGNORE}"
   fi
+  if ! grep -q "sdd.db" "${GITIGNORE}"; then
+    echo "sdd.db" >> "${GITIGNORE}"
+  fi
 else
-  echo ".DS_Store" > "${GITIGNORE}"
+  printf ".DS_Store\nsdd.db\n" > "${GITIGNORE}"
+fi
+
+# ---- Configure Claude Code SessionStart hook ----
+
+SETTINGS="${TARGET_DIR}/.claude/settings.json"
+HOOK_CMD="bash ${TARGET_DIR}/.claude/hooks/start-feedback-server.sh"
+
+if [ -f "${SETTINGS}" ]; then
+  # Merge hooks into existing settings using Python
+  python3 -c "
+import json, sys
+with open('${SETTINGS}', 'r') as f:
+    s = json.load(f)
+hooks = s.setdefault('hooks', {})
+hooks['SessionStart'] = [{'type': 'command', 'command': \"${HOOK_CMD}\"}]
+# Also add python3 permission for the server
+perms = s.setdefault('permissions', {})
+allow = perms.setdefault('allow', [])
+if 'Bash(python3 *)' not in allow:
+    allow.append('Bash(python3 *)')
+with open('${SETTINGS}', 'w') as f:
+    json.dump(s, f, indent=2)
+    f.write('\n')
+"
+else
+  mkdir -p "${TARGET_DIR}/.claude"
+  cat > "${SETTINGS}" << SETTINGS_EOF
+{
+  "permissions": {
+    "allow": ["Bash(python3 *)"]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "${HOOK_CMD}"
+      }
+    ]
+  }
+}
+SETTINGS_EOF
 fi
 
 # ---- Cleanup ----
