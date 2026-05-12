@@ -1091,7 +1091,12 @@
 
   /* ===== Listen for messages from iframe ===== */
   window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'status') {
+    if (event.data && event.data.verdict && selectedFeatureId) {
+      showToast(event.data.verdict === 'approved' ? 'Approved' : 'Rejected', event.data.verdict === 'approved' ? 'success' : 'error');
+      loadFeatures();
+      loadTimeline();
+      if (selectedFeatureId) selectFeature(selectedFeatureId);
+    } else if (event.data && event.data.type === 'status') {
       showToast('Frame status: ' + event.data.message, 'info');
     }
   });

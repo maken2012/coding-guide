@@ -648,7 +648,7 @@
       var resp = await fetch(API_BASE + '/api/timeline?limit=10');
       if (!resp.ok) throw new Error('Failed to fetch timeline');
       var timeline = await resp.json();
-      renderTimeline(timeline);
+      renderTimeline(timeline.items || []);
     } catch (e) {
       console.error('Failed to load timeline:', e);
       document.getElementById('timeline').innerHTML =
@@ -747,13 +747,8 @@
         if (Array.isArray(decisions) && decisions.length > 0) {
           hasDecisions = true;
           decisions.forEach(function(d) {
-            var key = d.id || d.key || '?';
-            var value = '';
-            if (d.selected) {
-              value = Array.isArray(d.selected) ? d.selected.join(', ') : String(d.selected);
-            } else if (d.note) {
-              value = d.note;
-            }
+            var key = d.key || '?';
+            var value = d.value || '';
             if (value) {
               html += '<div class="decision-item"><span class="check">&#10003;</span>' +
                 escapeHtml(key) + ': ' + escapeHtml(value) + '</div>';
@@ -925,8 +920,15 @@
   /* ===== Submit verdict ===== */
   async function submitVerdict(verdict) {
     var feedback = document.getElementById('feedbackInput').value.trim();
+    var active = phasesCache[selectedFeatureId];
+    var phase = '';
+    if (active && active.length > 0) {
+      var latest = active[active.length - 1];
+      phase = latest.phase || 'spec';
+    }
     var data = {
       feature_id: selectedFeatureId,
+      phase: phase,
       verdict: verdict,
       feedback: feedback,
       timestamp: new Date().toLocaleString('sv-SE')
@@ -978,6 +980,16 @@
     div.textContent = str;
     return div.innerHTML;
   }
+
+  /* ===== Listen for feedback messages from iframe ===== */
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.verdict && selectedFeatureId) {
+      showToast(event.data.verdict === 'approved' ? '已通过' : '已驳回', event.data.verdict === 'approved' ? 'success' : 'error');
+      loadFeatures();
+      loadTimeline();
+      if (selectedFeatureId) selectFeature(selectedFeatureId);
+    }
+  });
 
   /* ===== Start ===== */
   init();
