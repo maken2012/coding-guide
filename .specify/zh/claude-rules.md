@@ -22,6 +22,8 @@
 /spec-research  → 技术调研
 /spec-report    → 状态报告 / 事故复盘
 /spec-present   → 演示文稿
+/spec-fix       → Bug 修复跟踪（implement 后任意阶段可用）
+/spec-close     → 需求关闭（review 通过后，最终闭环）
 ```
 
 ---

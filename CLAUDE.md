@@ -22,6 +22,8 @@
 /spec-research  → 技术调研
 /spec-report    → 状态报告 / 事故复盘
 /spec-present   → 演示文稿
+/spec-fix       → Bug 修复跟踪（implement 后任意阶段可用）
+/spec-close     → 需求关闭（review 通过后，最终闭环）
 ```
 
 ---
@@ -202,6 +204,20 @@ specs/<NNN>-<name>/
 - 模板：`presentation-template.html`
 - 组件：`slide-deck`
 - 产出：`presentation.html`
+
+### /spec-fix（Bug 修复跟踪）
+- 门禁：`implement.status != not_started`
+- 组件：`status-report`、`annotated-pr-review`
+- 产出：`fix-log.jsonl`（修复日志，追加模式）、`fix-plan.html`（复杂修复方案）
+- 记录：问题、根因、修改文件、测试结果，归档到功能目录
+- 支持快速修复和规划修复两种模式，复杂问题先生成修复方案经审批后再实施
+
+### /spec-close（需求关闭）
+- 门禁：`review.feedback.verdict = approved`
+- 组件：`status-report`
+- 产出：`close-report.html`（关闭报告）
+- 验证：管道完整性 + 修复记录 + 自动化检查（测试/lint/构建）+ 人工验证清单
+- 状态：设置 `.feature-state.json` 的 `closed_at`，标记需求已关闭
 
 ---
 

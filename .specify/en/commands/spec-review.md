@@ -30,6 +30,17 @@ Code changes exist
 - Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` where the gate condition for THIS command is met
 - Read `.feature-state.json` to get feature context
 
+### 1.1 Pre-Review Reading
+
+**Review code against requirements and design**, loading docs based on change scope:
+
+| File | Purpose | Required? |
+|------|---------|-----------|
+| `spec.html` | Requirement coverage | ✅ Always |
+| `detail.html` | Business rules implemented | ✅ Always |
+| `*.feedback.json` | User decisions executed | ✅ Always |
+| `design/*.html` | Implementation vs design | 🔍 Load per domain touched by changes |
+
 ### 2. Detect Changes
 Run `git diff` to identify the scope of changes.
 
