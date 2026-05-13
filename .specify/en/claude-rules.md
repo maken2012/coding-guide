@@ -21,6 +21,8 @@ Selection        Requirements    Design          Tasks          + Testing       
 /spec-research  → Technical research
 /spec-report    → Status report / Incident postmortem
 /spec-present   → Presentation slides
+/spec-fix       → Bug fix tracking (available after implement)
+/spec-close     → Feature closure (after review, final sign-off)
 ```
 
 ---

@@ -147,9 +147,12 @@ def _process_feature_state(conn, filepath, now):
 
     name = state.get('name', fid)
     pipeline = state.get('pipeline', {})
+    closed_at = state.get('closed_at')
 
     current_phase = ''
     overall_status = 'draft'
+    if closed_at:
+        overall_status = 'closed'
     for phase_name in ('spec', 'detail', 'design', 'plan', 'implement', 'review'):
         phase_info = pipeline.get(phase_name, {})
         if not phase_info:
@@ -157,20 +160,23 @@ def _process_feature_state(conn, filepath, now):
         status = phase_info.get('status', 'not_started')
         if status in ('in_progress', 'pending_review'):
             current_phase = phase_name
-            overall_status = status if status != 'in_progress' else 'implementing'
+            if not closed_at:
+                overall_status = status if status != 'in_progress' else 'implementing'
         elif status == 'approved':
             current_phase = phase_name
-            overall_status = 'approved'
+            if not closed_at:
+                overall_status = 'approved'
         elif status == 'rejected':
             current_phase = phase_name
-            overall_status = 'rejected'
+            if not closed_at:
+                overall_status = 'rejected'
 
     conn.execute(
         'INSERT INTO features (id, name, current_phase, status, created_at, updated_at) '
         'VALUES (?, ?, ?, ?, ?, ?) '
         'ON CONFLICT(id) DO UPDATE SET name=excluded.name, current_phase=excluded.current_phase, '
         'status=excluded.status, updated_at=excluded.updated_at',
-        (fid, name, current_phase, overall_status, state.get('created_at', now), now)
+        (fid, name, current_phase, overall_status, now, now)
     )
 
     phase_count = 0
@@ -234,7 +240,7 @@ def _process_feedback_file(conn, filepath, now):
         if not existing:
             conn.execute(
                 'INSERT INTO timeline (feature_id, event_type, description, created_at) VALUES (?, ?, ?, ?)',
-                (fid, 'phase_' + review['verdict'], f'{fid} {phase} {review["verdict"]}', review.get('timestamp', now))
+                (fid, 'phase_' + review['verdict'], f'{fid} {phase} {review["verdict"]}', now)
             )
 
 
@@ -582,7 +588,6 @@ class FeedbackHandler(BaseHTTPRequestHandler):
 
         feedback_text = body.get('feedback', '')
         decisions = body.get('decisions', {})
-        timestamp = body.get('timestamp', '') or now_str()
 
         # --- sandbox path ---
         rel_dir = os.path.join(feature_id)
@@ -616,9 +621,9 @@ class FeedbackHandler(BaseHTTPRequestHandler):
             'review': {
                 'verdict': verdict,
                 'feedback': feedback_text,
-                'timestamp': timestamp,
+                'timestamp': now,
             },
-            'created_at': timestamp,
+            'created_at': now,
             'updated_at': now,
         }
 
@@ -640,7 +645,7 @@ class FeedbackHandler(BaseHTTPRequestHandler):
                     current_phase = excluded.current_phase,
                     status = excluded.status,
                     updated_at = excluded.updated_at
-            """, (feature_id, feature_id, phase, timestamp, now))
+            """, (feature_id, feature_id, phase, now, now))
 
             conn.execute("""
                 INSERT INTO phases (feature_id, phase, status, artifact_path, updated_at)

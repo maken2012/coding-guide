@@ -26,15 +26,33 @@ agent:
 
 ## Execution Steps
 
-### 1. Locate Current Feature
-- If $ARGUMENTS contains a feature ID (YYYYMMDD-NNN pattern), use that feature directory
-- Otherwise, scan `.specify/specs/*/` for a `.feature-state.json` where the gate condition for THIS command is met
-- Read `.feature-state.json` to get feature context
+### 1. Pre-Implementation Reading (lean context)
 
-### 2. Load All Design Documents
-Read spec, detail, design/*, plan, tasks.
+**Before writing any code**, read the essential files for global understanding:
 
-### 3. Implement Task by Task
+| File | Purpose | Required? |
+|------|---------|-----------|
+| `spec.html` | Understand WHAT / WHY | ✅ Always |
+| `tasks.html` | Know what to implement | ✅ Always |
+| `plan.html` | Know which phase you're in | ✅ Always |
+| `detail.html` | Business rules, error handling | ✅ Always |
+| `design/flow-design.html` | Flow/sequence/state machine | 🔍 Per-task |
+| `design/db-design.html` | Table structure, ER relations | 🔍 When touching DB |
+| `design/api-design.html` | API contracts | 🔍 When touching API |
+| `design/ui-design.html` | Components/layout/interaction | 🔍 When touching frontend |
+| `*.feedback.json` | User decision records | 🔍 When task involves decisions |
+
+**Validation**: ✅ marked files must exist (and phase is approved), otherwise abort with error.
+
+### 1.1 Per-Task Just-In-Time Loading
+
+Before starting each task:
+1. Read task description, determine which domains it touches (data/API/frontend/flow)
+2. Load only the 🔍 design docs relevant to this task
+3. Check corresponding feedback.json for any decisions to follow
+4. Then start coding
+
+### 2. Implement Task by Task
 - Execute in numbered order
 - After completing each task: write code + write corresponding unit tests
 - Update checkbox in tasks.html to [X]
